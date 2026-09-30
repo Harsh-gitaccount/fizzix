@@ -1,0 +1,36 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model QuizResult {
+  id          String   @id @default(cuid())
+  sessionId   String
+  topicId     String
+  questionId  String
+  selected    Int
+  correct     Boolean
+  difficulty  String
+  poolVersion Int      @default(1)
+  timestamp   DateTime @default(now())
+
+  @@index([topicId])
+  @@index([sessionId])
+  @@index([timestamp])
+  @@index([poolVersion])
+  @@map("quiz_results")
+}
+
+model QuizAggregate {
+  id         String @id @default(cuid())
+  topicId    String @unique
+  totalAttempts Int  @default(0)
+  totalCorrect  Int  @default(0)
+  updatedAt  DateTime @updatedAt
+
+  @@map("quiz_aggregates")
+}

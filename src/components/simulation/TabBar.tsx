@@ -81,7 +81,7 @@ export default function TabBar() {
           role="tab"
           id={`tab-${tab.id}`}
           aria-selected={activeTab === tab.id}
-          aria-controls={`tabpanel-${tab.id}`}
+          aria-controls="simulation-viewport"
           tabIndex={activeTab === tab.id ? 0 : -1}
           onClick={() => handleTabChange(tab.id)}
           className={`px-4 py-2 text-xs font-bold border-b-2 transition-colors ${

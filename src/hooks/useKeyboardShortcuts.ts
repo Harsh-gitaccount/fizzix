@@ -12,9 +12,14 @@ export function useKeyboardShortcuts(topic: SimulationModule) {
     const tabs = topic.tabs.map(tab => tab.id)
 
     const handler = (e: KeyboardEvent) => {
-      const target = e.target as HTMLElement
-      if (target.tagName === 'INPUT' || target.tagName === 'SELECT' || target.tagName === 'TEXTAREA') return
-      if (target.isContentEditable) return
+      if (e.defaultPrevented) return
+
+      const target = e.target
+      if (target instanceof HTMLElement) {
+        if (target.tagName === 'INPUT' || target.tagName === 'SELECT' || target.tagName === 'TEXTAREA') return
+        if (target.isContentEditable) return
+        if (target.closest('[role="tablist"], [role="radiogroup"], [data-keyboard-trap]')) return
+      }
 
       const { playbackState, currentTime, speedMultiplier, setPlaybackState, setCurrentTime, setSpeedMultiplier } = usePlaybackStore.getState()
       const { setActiveTab } = useUIStore.getState()
@@ -22,7 +27,7 @@ export function useKeyboardShortcuts(topic: SimulationModule) {
 
       switch (e.code) {
         case 'Space': {
-          if (target.tagName === 'BUTTON') return
+          if (target instanceof HTMLElement && target.tagName === 'BUTTON') return
           e.preventDefault()
           if (playbackState === 'playing') {
             setPlaybackState('paused')

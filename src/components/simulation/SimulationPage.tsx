@@ -132,7 +132,7 @@ export default function SimulationPage() {
               </button>
             </div>
           )}
-          <div className="h-[50vw] min-h-[180px] max-h-[300px] md:flex-1 md:h-auto md:max-h-none md:min-h-0 relative">
+          <div id="simulation-viewport" role="tabpanel" aria-labelledby={`tab-${activeTab}`} className="h-[50vw] min-h-[180px] max-h-[300px] md:flex-1 md:h-auto md:max-h-none md:min-h-0 relative">
             {activeTab === 'long-wave' ? (
               <Scene3DLongWave />
             ) : activeTab === 'field-3d' ? (
@@ -148,12 +148,29 @@ export default function SimulationPage() {
         <div id="control-panel" className="shrink-0 md:flex-none w-full md:w-[320px] md:shrink-0 min-h-0 md:min-h-0 flex flex-col border-t md:border-t-0 border-gray-200 dark:border-slate-700 md:overflow-y-auto">
           {simQuizMode === 'sim' ? (
             <>
-              <div className="flex bg-gray-100 dark:bg-slate-800 border-b border-gray-200 dark:border-slate-700" role="tablist">
+              <div
+                className="flex bg-gray-100 dark:bg-slate-800 border-b border-gray-200 dark:border-slate-700"
+                role="tablist"
+                onKeyDown={(e) => {
+                  const tabs: Array<'params' | 'data'> = ['params', 'data']
+                  const idx = tabs.indexOf(panelTab as 'params' | 'data')
+                  let next = -1
+                  if (e.key === 'ArrowRight') next = (idx + 1) % tabs.length
+                  else if (e.key === 'ArrowLeft') next = (idx - 1 + tabs.length) % tabs.length
+                  else if (e.key === 'Home') next = 0
+                  else if (e.key === 'End') next = tabs.length - 1
+                  if (next >= 0) {
+                    e.preventDefault()
+                    setPanelTab(tabs[next])
+                    document.getElementById(`panel-tab-${tabs[next]}`)?.focus()
+                  }
+                }}
+              >
                 <button
                   role="tab"
                   id="panel-tab-params"
                   aria-selected={panelTab === 'params'}
-                  aria-controls="panel-tabpanel"
+                  aria-controls="panel-tabpanel-params"
                   tabIndex={panelTab === 'params' ? 0 : -1}
                   onClick={() => setPanelTab('params')}
                   className={`flex-1 px-3 py-2 text-[11px] font-bold transition-colors ${
@@ -168,7 +185,7 @@ export default function SimulationPage() {
                   role="tab"
                   id="panel-tab-data"
                   aria-selected={panelTab === 'data'}
-                  aria-controls="panel-tabpanel"
+                  aria-controls="panel-tabpanel-data"
                   tabIndex={panelTab === 'data' ? 0 : -1}
                   onClick={() => setPanelTab('data')}
                   className={`flex-1 px-3 py-2 text-[11px] font-bold transition-colors ${
@@ -180,7 +197,7 @@ export default function SimulationPage() {
                   {t('panel.dataTable', lang)}
                 </button>
               </div>
-              <div id="panel-tabpanel" role="tabpanel" aria-labelledby={`panel-tab-${panelTab}`} className="flex-1 min-h-0 flex flex-col">
+              <div id={`panel-tabpanel-${panelTab}`} role="tabpanel" aria-labelledby={`panel-tab-${panelTab}`} className="flex-1 min-h-0 flex flex-col">
                 {panelTab === 'params' ? (
                   <>
                     <ControlPanel />

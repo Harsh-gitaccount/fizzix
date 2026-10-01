@@ -343,8 +343,9 @@ export default function Scene3DGas() {
     <div
       ref={containerRef}
       role="img"
-      aria-label="3D gas simulation — use arrow keys to rotate, plus/minus to zoom"
+      aria-label="3D gas simulation - use arrow keys to rotate, plus/minus to zoom"
       tabIndex={0}
+      data-keyboard-trap
       className="absolute inset-0 cursor-grab active:cursor-grabbing focus:outline-2 focus:outline-blue-500 focus:outline-offset-[-2px]"
       onMouseDown={handleMouseDown}
       onMouseMove={handleMouseMove}

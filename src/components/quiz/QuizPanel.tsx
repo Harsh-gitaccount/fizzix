@@ -218,7 +218,27 @@ export default function QuizPanel() {
         </p>
 
         {/* Options */}
-        <div role="radiogroup" aria-label="Answer options" className="space-y-2">
+        <div
+          role="radiogroup"
+          aria-label="Answer options"
+          className="space-y-2"
+          onKeyDown={(e) => {
+            if (showResult) return
+            const count = currentQuestion.options.length
+            let next = -1
+            if (e.key === 'ArrowDown' || e.key === 'ArrowRight') {
+              next = selected === null ? 0 : (selected + 1) % count
+            } else if (e.key === 'ArrowUp' || e.key === 'ArrowLeft') {
+              next = selected === null ? count - 1 : (selected - 1 + count) % count
+            }
+            if (next >= 0) {
+              e.preventDefault()
+              handleSelect(next)
+              const el = document.getElementById(`quiz-option-${next}`)
+              el?.focus()
+            }
+          }}
+        >
           {currentQuestion.options.map((opt, idx) => {
             let optClass = 'border-gray-200 dark:border-slate-600 bg-gray-50 dark:bg-slate-800'
             if (showResult) {
@@ -234,8 +254,10 @@ export default function QuizPanel() {
             return (
               <button
                 key={idx}
+                id={`quiz-option-${idx}`}
                 role="radio"
                 aria-checked={selected === idx}
+                tabIndex={selected === idx || (selected === null && idx === 0) ? 0 : -1}
                 onClick={() => handleSelect(idx)}
                 disabled={showResult}
                 className={`w-full flex items-start gap-3 p-3 rounded-lg border-2 transition-colors text-left ${optClass} ${

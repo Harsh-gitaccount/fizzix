@@ -1,8 +1,8 @@
 # Fizzix Audit Fix Status
 
 Tracking fixes for audit findings F01-F26 from the comprehensive audit at commit `7523ff0`.
-Reconciled against independent verification at commits `fcb3b41` and `6be4bac` (1 October 2026).
-Current head includes batch 8 fixes (second verification response).
+Reconciled against independent verification at commits `fcb3b41`, `6be4bac`, and `b9bf820`.
+Current head includes batch 9 fixes (third verification response).
 
 | Finding | Title | Status | Batch | Notes |
 |---------|-------|--------|-------|-------|
@@ -19,15 +19,15 @@ Current head includes batch 8 fixes (second verification response).
 | F11 | Gas PV/pressure inconsistency | PARTIAL | 3 | Pressure uses effectiveVolume for piston mode. Box-volume mapping and distribution/energy-label issues remain separate parts of original finding. |
 | F12 | Disconnected controls | PARTIAL | 4,7 | Removed dead 'graph' layer toggle. Added Speed Distribution histogram overlay to 3D gas scene (`Scene3DGas`) so `histogram` layer toggle now has visible effect. Canvas2D vector gating still uses projectile tab names; broader per-mode layer/tool capability gaps not fully addressed. |
 | F13 | Generic data table | DONE | 2 | DataTable rewritten to use topic.derivedValues/derivedValueKeys. |
-| F14 | Small-screen layout | PARTIAL | 2,7,8 | Canvas container given responsive height (`h-[50vw] min-h-[180px] max-h-[300px]`). Main content area scrollable on mobile (`overflow-y-auto`). Control panel no longer competes for flex space on mobile. Full touch/zoom/assistive-technology verification not performed. |
+| F14 | Small-screen layout | PARTIAL | 2,7,8,9 | Canvas container given responsive height. Main content area scrollable on mobile. Control panel no longer competes for flex space. TopBar secondary actions (Screenshot, Share, Fullscreen, Language) moved into overflow menu on mobile. PlaybackBar condensed with responsive sizing, speed selector and time readout hidden on very narrow viewports. Full touch/zoom/assistive-technology verification not performed; header and playback no longer clip at 320/390px widths in layout, but actual device testing has not been done. |
 | F15 | Accessibility | PARTIAL | 2 | Slider ARIA attributes added. Viewport scaling fixed. Complete keyboard navigation, toggle/tab semantics, and nonvisual alternatives not demonstrated. |
 | F16 | 3D screenshot export blank | DONE | 5 | preserveDrawingBuffer:true on WebGLRenderer. |
-| F17 | Quiz API validation | DONE | 4,7,8 | Full envelope validation: null body/items return 400. `topicId` validated against 6 known topics. Question ID validated against actual quiz bank via `questionBank.ts`. Server derives correctness from bank's `correctIndex` rather than trusting client boolean. Sync acknowledgment contract: successful storage returns `{synced, stored:true, acceptedIds}`; no-storage returns `{synced:0, stored:false}`. |
-| F18 | Offline sync chunking | DONE | 5,8 | Chunking with per-chunk markSynced and idempotency via skipDuplicates. Client now checks response body: only marks records synced when `stored:true` and `synced > 0`. Records remain unsynced when server returns `stored:false`. |
+| F17 | Quiz API validation | DONE | 4,7,8,9 | Full envelope validation: null body/items return 400. `topicId` validated against 6 known topics. Question ID validated against actual quiz bank. Server derives correctness from bank's `correctIndex`. Persistence-field validation: `id` must be string or undefined; `poolVersion` must be positive integer or undefined; `timestamp` must produce a valid Date in reasonable range (2021-2100). Numeric ids, string poolVersions, and out-of-range timestamps are rejected with 400. |
+| F18 | Offline sync chunking | DONE | 5,8,9 | Chunking with per-chunk markSynced and idempotency via skipDuplicates. Client requires `stored === true` (not just absence of `stored:false`). Count-only fallback removed. AcceptedIds intersected with submitted chunk IDs; only explicitly acknowledged records are marked synced. Empty acceptedIds, missing stored field, and unrelated IDs do not cause records to be marked synced. |
 | F19 | Adaptive quiz label mismatch | DONE | 2,7 | Badge shows item difficulty. `saveQuizResult` and `trackEvent` now use `q.difficulty` (question's own difficulty) instead of `s.difficulty` (adaptive store difficulty). |
 | F20 | Longitudinal wave speed | DONE | 4 | Correct spring-mass chain dispersion formula. |
 | F21 | Drag coefficient units | PARTIAL | 2 | Symbol/unit renamed. Trajectory cap and acceleration-vs-gravity semantics remain unaddressed. |
-| F22 | Dependency advisories | PARTIAL | 5,7 | 23 vulnerabilities (8 moderate, 13 high, 2 critical). All require breaking changes. Per-advisory reachability analysis completed in `DEPENDENCY_AUDIT.md`. Production-reachable: next framework DoS/cache advisories. Not reachable: hono/prisma chain, vitest/esbuild, glob CLI. Upgrade path: vitest first (dev-only), then next 14->16 (major). Inventory distinguishes package-level vs advisory-level counts. Critical section covers both next and vitest findings. |
+| F22 | Dependency advisories | PARTIAL | 5,7,9 | 23 packages, 79 unique advisories (3 critical, 16 high, 55 moderate, 5 low by own severity). Advisory counts now use deduplicated GHSA URLs with each advisory's own severity. All require breaking changes. Per-advisory reachability analysis in `DEPENDENCY_AUDIT.md`. Production-reachable: next framework DoS/cache advisories. Not reachable (assumed Linux deployment, not verified): hono/prisma chain, vitest/esbuild, glob CLI. Upgrade path: vitest first (dev-only), then next 14->16 (major). Deployment assumptions documented. |
 | F23 | Animation performance | OPEN | - | No profiling performed. Requires representative animation and topic-switching measurement before claiming no regression exists. |
 | F24 | Teaching preset gaps | PARTIAL | - | Original finding includes misleading existing preset questions/explanations, not only new-preset requests. Correcting misleading hooks is a code fix, not a pedagogical addition. |
 | F25 | Threshold preset wording | DONE | 1 | "At Threshold" renamed to "Near Threshold". |
@@ -39,24 +39,28 @@ Current head includes batch 8 fixes (second verification response).
 - **PARTIAL**: 11 findings (F03, F05, F06, F11, F12, F14, F15, F21, F22, F24, F26)
 - **OPEN**: 1 finding (F23 - requires profiling to demonstrate or rule out performance issue)
 
-## Batch 8 changes (second verification response)
+## Batch 9 changes (third verification response)
 
-### Fixes
-- **F17/F18**: End-to-end sync acknowledgment contract. Client (`offlineStorage.ts`) now checks response body for `stored:false` and `synced === 0` before marking records synced. Server returns explicit `{stored:true, acceptedIds:[...]}` on durable persistence and `{stored:false}` when no database is configured. Records remain in the unsynced queue when storage is unavailable.
-- **F09/F08**: Keyboard stepping (`useKeyboardShortcuts.ts`) now reads `compareMode` and `paramsB` from the simulation store and computes `Math.max(tofA, tofB)` for the ArrowRight endpoint, matching PlaybackBar and Canvas2D. ArrowRight at t=5s in Moon/Earth compare no longer jumps backward to 2.886s.
-- **F17**: Question-bank validation. New `src/lib/quiz/questionBank.ts` provides `isValidQuestion()`, `deriveCorrectness()`, and `lookupQuestion()` backed by all six topic quiz pools. API route rejects invented question IDs with 400. Server derives `correct` from the bank's `correctIndex` and submitted `selected`, ignoring client-supplied boolean.
-- **F14**: Mobile layout. Main content area is `overflow-y-auto` on mobile so controls scroll into view rather than being clipped. Canvas has responsive height (`h-[50vw] min-h-[180px] max-h-[300px]`) on mobile. Control panel uses `shrink-0` instead of `flex-1` to avoid competing for viewport space.
+### F14: Mobile TopBar and PlaybackBar layout
+- **TopBar** (`src/components/simulation/TopBar.tsx`): Secondary actions (Screenshot, Copy share link, Fullscreen, Language toggle) moved into a mobile-only overflow menu (`md:hidden`). Desktop layout unchanged (`hidden md:flex`). Title uses `truncate` to handle long topic names. Gaps and padding reduced on mobile (`gap-1 md:gap-2`, `px-3 md:px-4`). Brand badge uses smaller text on mobile (`text-[10px] md:text-xs`).
+- **PlaybackBar** (`src/components/simulation/PlaybackBar.tsx`): Control sizes reduced on mobile (`w-7 h-7 md:w-8 md:h-8`). Speed selector hidden below 390px and available in overflow menu. Time readout hidden below 480px. Gaps reduced (`gap-1 md:gap-2`). Scrubber has `min-w-[60px]` to remain usable. Play/pause button slightly smaller on mobile (`w-9 h-9 md:w-10 md:h-10`). More options button uses `shrink-0` to stay visible.
 
-### Regression tests rewritten
-- `src/__tests__/regression-fixes.test.ts`: 13 tests (up from 6). Tests now exercise production code:
-  - F07: Uses real `QUIZ_POOL` and `ELEC_QUIZ_POOL` instead of mock questions
-  - F09: Tests compare-mode TOF logic and verifies the exact regression (ArrowRight at t=5 jumping to 2.886)
-  - F17: Tests actual `isValidQuestion`, `deriveCorrectness`, `lookupQuestion` from `questionBank.ts`; verifies cross-topic rejection and server-derived correctness
-  - F17/F18: Verifies sync response contract shape
+### F17/F18: Sync acknowledgment contract tightened
+- **offlineStorage.ts**: Client now requires `stored === true` (not just checking `stored === false`). Missing `stored` field causes records to remain unsynced. Count-only fallback removed entirely. Empty `acceptedIds` array does not mark records. `acceptedIds` are intersected with the set of IDs actually submitted in the chunk; unrelated IDs returned by the server cannot mark unsubmitted records.
+
+### F17: Persistence-field validation
+- **route.ts** (`validateItem`): `id` field must be `string` or `undefined` (numeric ids rejected). `poolVersion` must be a positive integer or `undefined` (string/zero/negative rejected). `timestamp` must be in range [2021-01-01, 2100-01-01] (out-of-range values like `1e30` rejected, preventing Invalid Date in persistence).
+
+### Regression tests expanded
+- **regression-fixes.test.ts**: Now 26 tests (up from 13). All six topic quiz pools imported and validated. Cross-topic validation tested for all pool pairs. Sync acknowledgment contract tests verify `stored === true` requirement, empty acceptedIds rejection, missing stored field rejection, and submitted-ID intersection. Persistence validation tests cover numeric id, string poolVersion, out-of-range timestamp, zero/negative poolVersion, and valid ranges.
+- **quiz-handler.test.ts** (new): 14 tests exercising the actual POST handler with mocked database boundary. Tests the real route function with NextRequest objects. Covers: valid payload acceptance, invented question rejection, cross-topic rejection, numeric id rejection, string poolVersion rejection, out-of-range timestamp rejection, stored:false no-database response, empty results rejection, invalid JSON rejection, server correctness override.
+
+### F22: Dependency inventory corrected
+- **DEPENDENCY_AUDIT.md**: Corrected to 79 unique advisories (was 80; GHSA-82fw-gwwq-j7x9 counted once). Advisory severity counts corrected to use each advisory's own severity: 3 critical, 16 high, 55 moderate, 5 low (was incorrectly 25 critical / 52 high / 3 moderate). GHSA-9g9p-9gw9-jx7f correctly identified as moderate (was labeled critical). Vitest section corrected: 1 critical + 1 moderate (was 2 critical). Deployment assumptions marked as unverified.
 
 ### Verification results
 - TypeScript: `tsc --noEmit` exits zero
 - ESLint: 0 errors, 0 warnings (src/)
 - Dash lint: 0 violations
 - Production build: succeeds
-- Unit tests: 288/288 pass (275 original + 13 regression)
+- Unit tests: 315/315 pass (275 golden + 26 regression + 14 handler)

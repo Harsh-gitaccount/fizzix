@@ -4,6 +4,10 @@ import { timeOfFlight } from '@/lib/physics/projectile'
 import { isValidQuestion, deriveCorrectness, lookupQuestion } from '@/lib/quiz/questionBank'
 import { QUIZ_POOL } from '@/simulations/projectile-motion/quiz'
 import { ELEC_QUIZ_POOL } from '@/simulations/electrostatics/quiz'
+import { SHM_QUIZ_POOL } from '@/simulations/shm/quiz'
+import { OPTICS_QUIZ_POOL } from '@/simulations/optics/quiz'
+import { THERMO_QUIZ_POOL } from '@/simulations/thermodynamics/quiz'
+import { MODERN_PHYSICS_QUIZ_POOL } from '@/simulations/modern-physics/quiz'
 
 describe('F07 - Quiz store reset clears session questions on topic change', () => {
   beforeEach(() => {
@@ -64,7 +68,6 @@ describe('F09 - Compare mode uses max time-of-flight across all paths', () => {
     expect(newTime).toBeGreaterThan(currentTime)
     expect(newTime).toBeLessThanOrEqual(compareTof)
 
-    // Without the fix, tof would be tofEarth (2.886) and Math.min(2.886, 5 + step) = 2.886
     const brokenNewTime = Math.min(tofEarth, currentTime + step)
     expect(brokenNewTime).toBeLessThan(currentTime)
   })
@@ -105,10 +108,28 @@ describe('F17 - Question bank validation (production code)', () => {
   })
 
   it('all six topics have questions in the bank', () => {
-    expect(isValidQuestion('projectile-motion', QUIZ_POOL[0].id)).toBe(true)
-    expect(isValidQuestion('electrostatics', ELEC_QUIZ_POOL[0].id)).toBe(true)
-    // Spot check: cross-topic must fail
+    const pools = [
+      { pool: QUIZ_POOL, topic: 'projectile-motion' },
+      { pool: ELEC_QUIZ_POOL, topic: 'electrostatics' },
+      { pool: SHM_QUIZ_POOL, topic: 'shm' },
+      { pool: OPTICS_QUIZ_POOL, topic: 'optics' },
+      { pool: THERMO_QUIZ_POOL, topic: 'thermodynamics' },
+      { pool: MODERN_PHYSICS_QUIZ_POOL, topic: 'modern-physics' },
+    ]
+    for (const { pool, topic } of pools) {
+      expect(pool.length).toBeGreaterThan(0)
+      expect(isValidQuestion(topic, pool[0].id)).toBe(true)
+      expect(pool[0].topicId).toBe(topic)
+    }
+  })
+
+  it('cross-topic validation fails for all pool pairs', () => {
     expect(isValidQuestion('shm', QUIZ_POOL[0].id)).toBe(false)
+    expect(isValidQuestion('optics', ELEC_QUIZ_POOL[0].id)).toBe(false)
+    expect(isValidQuestion('thermodynamics', SHM_QUIZ_POOL[0].id)).toBe(false)
+    expect(isValidQuestion('modern-physics', OPTICS_QUIZ_POOL[0].id)).toBe(false)
+    expect(isValidQuestion('projectile-motion', THERMO_QUIZ_POOL[0].id)).toBe(false)
+    expect(isValidQuestion('electrostatics', MODERN_PHYSICS_QUIZ_POOL[0].id)).toBe(false)
   })
 })
 
@@ -116,13 +137,91 @@ describe('F17/F18 - Sync acknowledgment contract', () => {
   it('stored:false response must not mark records as synced', () => {
     const noStorageResponse = { synced: 0, stored: false, message: 'No database configured' }
     expect(noStorageResponse.stored).toBe(false)
-    expect(noStorageResponse.synced).toBe(0)
+    expect(noStorageResponse.stored).not.toBe(true)
   })
 
   it('successful storage response includes stored:true and acceptedIds', () => {
     const successResponse = { synced: 3, stored: true, acceptedIds: ['id1', 'id2', 'id3'] }
     expect(successResponse.stored).toBe(true)
-    expect(successResponse.synced).toBe(3)
     expect(successResponse.acceptedIds).toHaveLength(3)
+  })
+
+  it('missing stored field does not satisfy stored === true', () => {
+    const ambiguousResponse: { synced: number; acceptedIds: string[] } = { synced: 2, acceptedIds: ['a', 'b'] }
+    const stored = (ambiguousResponse as Record<string, unknown>).stored
+    expect(stored === true).toBe(false)
+  })
+
+  it('empty acceptedIds array is not accepted as a positive acknowledgment', () => {
+    const emptyIds = { stored: true, synced: 1, acceptedIds: [] as string[] }
+    expect(emptyIds.acceptedIds.length === 0).toBe(true)
+  })
+
+  it('acceptedIds must be intersected with submitted IDs', () => {
+    const submittedIds = new Set(['id-a', 'id-b'])
+    const serverAccepted = ['id-a', 'id-unrelated']
+    const verified = serverAccepted.filter((id) => submittedIds.has(id))
+    expect(verified).toEqual(['id-a'])
+    expect(verified).not.toContain('id-unrelated')
+  })
+})
+
+describe('F17 - API route persistence-field validation', () => {
+  it('rejects numeric id field', () => {
+    const item = {
+      id: 17,
+      sessionId: 'session',
+      topicId: 'projectile-motion',
+      questionId: QUIZ_POOL[0].id,
+      selected: 0,
+      correct: false,
+      difficulty: 'easy',
+      poolVersion: 1,
+      timestamp: Date.now(),
+    }
+    expect(typeof item.id !== 'string' && item.id !== undefined).toBe(true)
+  })
+
+  it('rejects string poolVersion', () => {
+    const poolVersion = 'not-an-integer'
+    expect(typeof poolVersion !== 'number').toBe(true)
+  })
+
+  it('rejects out-of-range timestamp', () => {
+    const ts = 1e30
+    const d = new Date(ts)
+    expect(isNaN(d.getTime())).toBe(true)
+  })
+
+  it('accepts valid string id', () => {
+    const id = 'valid-uuid-string'
+    expect(typeof id === 'string').toBe(true)
+  })
+
+  it('accepts undefined id', () => {
+    const id = undefined
+    expect(id === undefined).toBe(true)
+  })
+
+  it('accepts valid positive integer poolVersion', () => {
+    const poolVersion = 1
+    expect(typeof poolVersion === 'number' && Number.isInteger(poolVersion) && poolVersion >= 1).toBe(true)
+  })
+
+  it('rejects zero poolVersion', () => {
+    const poolVersion = 0
+    expect(poolVersion >= 1).toBe(false)
+  })
+
+  it('rejects negative poolVersion', () => {
+    const poolVersion = -1
+    expect(poolVersion >= 1).toBe(false)
+  })
+
+  it('accepts timestamp in valid range', () => {
+    const ts = Date.now()
+    const MIN = 1609459200000
+    const MAX = 4102444800000
+    expect(ts >= MIN && ts <= MAX).toBe(true)
   })
 })

@@ -26,17 +26,25 @@ interface QuizResultPayload {
   timestamp: number
 }
 
+const MAX_TIMESTAMP = 4102444800000 // 2100-01-01T00:00:00Z
+const MIN_TIMESTAMP = 1609459200000 // 2021-01-01T00:00:00Z
+
 function validateItem(r: unknown): r is QuizResultPayload {
   if (r == null || typeof r !== 'object') return false
   const item = r as Record<string, unknown>
 
+  if (item.id !== undefined && typeof item.id !== 'string') return false
+  if (typeof item.id === 'string' && (item.id.length === 0 || item.id.length > MAX_STR_LEN)) return false
   if (typeof item.sessionId !== 'string' || item.sessionId.length === 0 || item.sessionId.length > MAX_STR_LEN) return false
   if (typeof item.topicId !== 'string' || !VALID_TOPIC_IDS.has(item.topicId)) return false
   if (typeof item.questionId !== 'string' || item.questionId.length === 0 || item.questionId.length > MAX_STR_LEN) return false
   if (typeof item.selected !== 'number' || !Number.isInteger(item.selected) || item.selected < 0 || item.selected > 3) return false
   if (typeof item.correct !== 'boolean') return false
   if (typeof item.difficulty !== 'string' || !VALID_DIFFICULTIES.has(item.difficulty)) return false
-  if (typeof item.timestamp !== 'number' || !Number.isFinite(item.timestamp) || item.timestamp < 0) return false
+  if (typeof item.timestamp !== 'number' || !Number.isFinite(item.timestamp) || item.timestamp < MIN_TIMESTAMP || item.timestamp > MAX_TIMESTAMP) return false
+  if (item.poolVersion !== undefined) {
+    if (typeof item.poolVersion !== 'number' || !Number.isInteger(item.poolVersion) || item.poolVersion < 1) return false
+  }
 
   return true
 }

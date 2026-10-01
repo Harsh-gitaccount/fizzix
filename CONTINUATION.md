@@ -26,7 +26,8 @@
 12. `1119f50` -- Batch 12: F11 gas PV/labels, F23 animation performance profiling
 13. `2f04877` -- Batch 13: F15 accessibility, F21 trajectory cap
 14. `5affd8b` -- Batch 14a: F15 arrow key tab navigation
-15. (pending) -- Batch 14b: F22 dependency upgrades (vitest 2→5, eslint-config-next 14→15)
+15. `79611eb` -- Batch 14b: F22 dependency upgrades (vitest 2→5, eslint-config-next 14→15)
+16. `9933f38` -- Batch 14c: F15 3D keyboard camera controls
 
 ## Batch 11 Changes
 

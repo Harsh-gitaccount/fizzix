@@ -1,4 +1,5 @@
 import * as THREE from 'three'
+import { effectiveVolume, idealGasPressure } from '@/lib/physics/thermodynamics'
 
 const BOX_SIZE = 5
 
@@ -221,11 +222,8 @@ export function createGasBox3D(setup: GasBox3DSetup) {
       pressureArrows = null
     }
     if (showPressure) {
-      const n = params.moles ?? 1
-      const T = params.temperature ?? 300
-      const V = params.volume ?? 22.4
-      const effectiveV = (params.thermoType ?? 0) === 1 ? V * (params.pistonPos ?? 0.7) : V
-      const P_kPa = (n * 8.314 * T) / (effectiveV / 1000) / 1000
+      const V_eff = effectiveVolume(params)
+      const P_kPa = idealGasPressure(params.moles ?? 1, params.temperature ?? 300, V_eff) / 1000
       const arrowLen = Math.min(1.5, Math.max(0.3, P_kPa / 150))
 
       pressureArrows = new THREE.Group()

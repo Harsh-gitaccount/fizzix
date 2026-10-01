@@ -3,7 +3,7 @@
 ## Session State
 - **Branch**: `claude/brave-ramanujan-s4hhf9`
 - **Base commit**: `7523ff0c2e3164d205036a85d81d12ae0312f997`
-- **Last batch**: batch-11 (physics/content corrections)
+- **Last batch**: batch-12 (gas PV/labels, animation performance profiling)
 - **TypeScript**: 0 errors
 - **ESLint**: 0 errors, 0 warnings (src/)
 - **Dash lint**: 0 violations
@@ -20,7 +20,9 @@
 7. `6be4bac` -- Batch 7: Verification response (F01/F07/F09/F10/F12/F14/F17/F19/F22/F26)
 8. `b9bf820` -- Batch 8: Second verification response
 9. `e97d111` -- Batch 9: Third verification response
-10. (pending) -- Batch 10: Test gaps closed, poolVersion policy
+10. `40854b6` -- Batch 10: Test gaps closed, poolVersion policy
+11. `d54583a` -- Batch 11: F03/F05/F06/F12/F21/F24 physics/content corrections
+12. (pending) -- Batch 12: F11 gas PV/labels, F23 animation performance profiling
 
 ## Batch 11 Changes
 
@@ -47,20 +49,29 @@
   - `moon-vs-earth`: hookQuestion changed from statement "Same throw, different worlds" to question "How far would this same throw go on the Moon?"
   - `does-mass-matter`: hookQuestion reworded to "Does changing the mass change the trajectory?", added `compareParams` with identical params, `defaultTab` set to `compare` so students see overlapping trajectories.
 
+## Batch 12 Changes
+
+### F11: Gas PV/pressure deduplication and PV derived value
+- `src/lib/physics/thermodynamics.ts`: Added PV product derived value (`PV = P * V/1000` in Joules). avgKE symbol changed from `KE` to `⟨KE⟩` for disambiguation.
+- `src/simulations/thermodynamics/module.ts`: Added `pv` to `derivedValueKeys`.
+- `src/lib/three/gasBox3D.ts`: Replaced inline pressure calculation with `idealGasPressure()`/`effectiveVolume()` imports.
+- `src/lib/canvas/thermoRenderer.ts`: Replaced inline pressure calculation with `idealGasPressure()`/`effectiveVolume()`.
+
+### F23: Animation performance profiling
+- `e2e/perf-profile.spec.ts` (new): Playwright-based test measuring rAF frame times (idle + active) across all 6 topics and topic-switching latency.
+- Results: all topics avg ~16.5ms (~60fps), p95 < 33ms (30fps budget). Topic switching 0.9-1.4s. No regression.
+
 ## Remaining Work
 
 ### PARTIAL (8 findings)
-- **F03**: Small-angle approximation disclosure/restriction for large angles
+- **F03**: Small-angle approximation disclosure; full nonlinear solver not implemented
 - **F06**: `opt-e8` mirage TIR explanation simplified but curriculum-aligned; not changing
-- **F11**: Box-volume mapping and distribution/energy-label issues
+- **F11**: Visual box volume not proportional to physics volume (1D scaling with clamping); visualization simplification
 - **F14**: True touch/zoom/assistive-technology verification; actual device testing
 - **F15**: Complete keyboard navigation, toggle/tab semantics, nonvisual alternatives
 - **F21**: Trajectory cap (100s max from RK4 step limit)
-- **F22**: No package upgrades applied; next 14->16 migration needed
+- **F22**: No package upgrades applied; vitest 2→5 and next 14→16 needed
 - **F26**: Multi-build updates, truly uncached navigation, production offline verification
-
-### OPEN (1 finding)
-- **F23**: Animation performance profiling required
 
 ### Not verifiable in current environment
 - Real mobile touch interaction

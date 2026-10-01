@@ -144,6 +144,8 @@ export function thermoDerivedValues(
   const vavg = avgSpeed(T, M)
   const keTotal = totalKineticEnergy(n, T)
 
+  const PV = P * (V / 1000)
+
   return {
     pressure: {
       value: P / 1000,
@@ -151,10 +153,16 @@ export function thermoDerivedValues(
       symbol: 'P',
       label: 'Pressure',
     },
+    pv: {
+      value: PV,
+      unit: 'J',
+      symbol: 'PV',
+      label: 'PV Product',
+    },
     avgKE: {
       value: ke * 1e21,
       unit: '×10⁻²¹ J',
-      symbol: 'KE',
+      symbol: '⟨KE⟩',
       label: 'Avg KE per molecule',
     },
     rmsSpeed: {

@@ -2,7 +2,7 @@
 
 Tracking fixes for audit findings F01-F26 from the comprehensive audit at commit `7523ff0`.
 Reconciled against independent verification at commits `fcb3b41`, `6be4bac`, `b9bf820`, and `e97d111`.
-Current head includes batch 11 fixes (physics/content corrections, preset hookQuestions).
+Current head includes batch 12 fixes (gas PV/labels, animation performance profiling).
 
 | Finding | Title | Status | Batch | Notes |
 |---------|-------|--------|-------|-------|
@@ -16,7 +16,7 @@ Current head includes batch 11 fixes (physics/content corrections, preset hookQu
 | F08 | Keyboard shortcuts topic-locked | DONE | 1,8,10 | Rewrote to accept SimulationModule, uses topic.tabs and topic.timeOfFlight. Keyboard stepping now uses compare-mode max(tofA, tofB) matching PlaybackBar and Canvas2D. New keyboard-shortcuts test dispatches actual KeyboardEvents through `useKeyboardShortcuts` hook via `renderHook`, verifying ArrowRight at t=5 in compare mode advances (not jumps backward). |
 | F09 | Compare mode truncated playback | DONE | 1,7,8 | PlaybackBar, Canvas2D animation loop, and keyboard stepping all use max(tofA, tofB) in compare mode. All input paths now share the same comparison time domain. |
 | F10 | Gas worker sync | DONE | 3,7 | Worker reset handler added. `Scene3DGas` passes `deltaReal * speed` (scaled time) to `builder.step()` so simulation clock matches display at all playback speeds. |
-| F11 | Gas PV/pressure inconsistency | PARTIAL | 3 | Pressure uses effectiveVolume for piston mode. Box-volume mapping and distribution/energy-label issues remain separate parts of original finding. |
+| F11 | Gas PV/pressure inconsistency | PARTIAL | 3,12 | Pressure uses effectiveVolume for piston mode. Inline pressure calculations in gasBox3D.ts and thermoRenderer.ts deduplicated to use centralized `idealGasPressure` and `effectiveVolume`. PV product added as derived value so students can verify PV = nRT. avgKE symbol disambiguated to `⟨KE⟩`. Remaining: visual box volume not proportional to physics volume due to 1D scaling with clamping; this is a visualization simplification, not a physics error. |
 | F12 | Disconnected controls | DONE | 4,7,11 | Removed dead 'graph' layer toggle. Added Speed Distribution histogram overlay to 3D gas scene. Canvas2D vector layer gating removed: velocity/acceleration/components layers are now controlled solely by their toggle switches, not restricted to specific tab names. All topics' vector layers are available on any tab. |
 | F13 | Generic data table | DONE | 2 | DataTable rewritten to use topic.derivedValues/derivedValueKeys. |
 | F14 | Small-screen layout | PARTIAL | 2,7,8,9 | Canvas container given responsive height. Main content area scrollable on mobile. Control panel no longer competes for flex space. TopBar secondary actions (Screenshot, Share, Fullscreen, Language) moved into overflow menu on mobile. PlaybackBar condensed with responsive sizing, speed selector and time readout hidden on very narrow viewports. Full touch/zoom/assistive-technology verification not performed; header and playback no longer clip at 320/390px widths in layout, but actual device testing has not been done. |
@@ -28,16 +28,15 @@ Current head includes batch 11 fixes (physics/content corrections, preset hookQu
 | F20 | Longitudinal wave speed | DONE | 4 | Correct spring-mass chain dispersion formula. |
 | F21 | Drag coefficient units | PARTIAL | 2,11 | Symbol/unit renamed. Compare-mode legend symbol corrected from 'Cd' to 'b' matching module definition. Acceleration vector now shows actual net acceleration (gravity + drag) when drag > 0, with correct direction and magnitude. Legend label switches from "Gravity" to "Net Acceleration" when drag is enabled. Trajectory cap (100s max from RK4 step limit) not addressed; edge case for very high altitude/low drag launches. |
 | F22 | Dependency advisories | PARTIAL | 5,7,9 | 23 packages, 79 unique advisories (3 critical, 16 high, 55 moderate, 5 low by own severity). Advisory counts now use deduplicated GHSA URLs with each advisory's own severity. All require breaking changes. Per-advisory reachability analysis in `DEPENDENCY_AUDIT.md`. Production-reachable: next framework DoS/cache advisories. Not reachable (assumed Linux deployment, not verified): hono/prisma chain, vitest/esbuild, glob CLI. Upgrade path: vitest first (dev-only), then next 14->16 (major). Deployment assumptions documented. |
-| F23 | Animation performance | OPEN | - | No profiling performed. Requires representative animation and topic-switching measurement before claiming no regression exists. |
+| F23 | Animation performance | DONE | 12 | Playwright-based performance profiling test added (e2e/perf-profile.spec.ts). Measures rAF frame times (idle and active animation) across all 6 topics and topic-switching latency. Results: all topics p95 < 33ms (30fps budget); avg ~16.5ms (~60fps). Topic switching 0.9-1.4s. Thermodynamics occasional 3D init spikes (82ms max) but p95=21ms. No performance regression detected. |
 | F24 | Teaching preset gaps | DONE | 11 | `low-drive` hookQuestion fixed from false premise ("Why does a low throw cover more ground?") to neutral "How does a low angle change the trajectory shape?". `moon-vs-earth` hookQuestion fixed from statement to question "How far would this same throw go on the Moon?". `does-mass-matter` hookQuestion reworded to "Does changing the mass change the trajectory?" with compareParams showing identical trajectories, defaultTab set to compare. |
 | F25 | Threshold preset wording | DONE | 1 | "At Threshold" renamed to "Near Threshold". |
 | F26 | Offline caching | PARTIAL | 7 | Fixed: cache cleanup now only deletes `fizzix-` prefixed caches (was deleting all). Navigation fallback returns home-page shell for uncached routes and 503 Response as last resort (was returning undefined). Remaining: topic pages not precached; full offline navigation requires visited-page caching which is already implemented via stale-while-revalidate. Multi-build update behavior and truly uncached navigation not verified. |
 
 ## Summary
 
-- **DONE**: 17 findings (F01, F02, F04, F05, F07, F08, F09, F10, F12, F13, F16, F17, F18, F19, F20, F24, F25)
+- **DONE**: 18 findings (F01, F02, F04, F05, F07, F08, F09, F10, F12, F13, F16, F17, F18, F19, F20, F23, F24, F25)
 - **PARTIAL**: 8 findings (F03, F06, F11, F14, F15, F21, F22, F26)
-- **OPEN**: 1 finding (F23 - requires profiling to demonstrate or rule out performance issue)
 
 ## Batch 9 changes (third verification response)
 

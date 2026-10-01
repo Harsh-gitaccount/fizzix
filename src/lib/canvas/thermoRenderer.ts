@@ -7,6 +7,7 @@ import {
   stepParticles,
   rescaleParticleSpeeds,
   effectiveVolume,
+  idealGasPressure,
 } from '@/lib/physics/thermodynamics'
 import type { RulerState, ProtractorState } from '@/store/toolStore'
 import { drawRuler, drawProtractor } from './measurementTools'
@@ -483,9 +484,8 @@ export function renderThermoFrame(
   drawParticles(ctx, ox, oy, showSpeedColors, isDark)
 
   if (options.activeLayers.pressure) {
-    const V_raw = params.volume ?? 22.4
-    const effectiveV = (params.thermoType ?? 0) === 1 ? V_raw * (params.pistonPos ?? 0.7) : V_raw
-    const P_kPa = (params.moles ?? 1) * 8.314 * (params.temperature ?? 300) / (effectiveV / 1000) / 1000
+    const V_eff = effectiveVolume(params)
+    const P_kPa = idealGasPressure(params.moles ?? 1, params.temperature ?? 300, V_eff) / 1000
     drawPressureArrows(ctx, ox, oy, containerW, containerH, P_kPa)
   }
 

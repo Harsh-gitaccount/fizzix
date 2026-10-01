@@ -1,5 +1,6 @@
 'use client'
 
+import { useCallback } from 'react'
 import { useUIStore } from '@/store/uiStore'
 import { useSimulationStore } from '@/store/simulationStore'
 import { usePlaybackStore } from '@/store/playbackStore'
@@ -17,7 +18,7 @@ export default function TabBar() {
   const setCurrentTime = usePlaybackStore((s) => s.setCurrentTime)
   const setPlaybackState = usePlaybackStore((s) => s.setPlaybackState)
 
-  const handleTabChange = (tabId: string) => {
+  const handleTabChange = useCallback((tabId: string) => {
     setActiveTab(tabId)
     setCurrentTime(0)
     setPlaybackState('ready')
@@ -54,10 +55,26 @@ export default function TabBar() {
       const modernType = typeMap[tabId] ?? 0
       setParams({ ...topic.defaultParams, ...params, modernType })
     }
-  }
+  }, [topic.slug, topic.defaultParams, params, setActiveTab, setCurrentTime, setPlaybackState, setParams])
+
+  const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
+    const tabs = topic.tabs
+    const idx = tabs.findIndex((tab) => tab.id === activeTab)
+    let next = -1
+    if (e.key === 'ArrowRight') next = (idx + 1) % tabs.length
+    else if (e.key === 'ArrowLeft') next = (idx - 1 + tabs.length) % tabs.length
+    else if (e.key === 'Home') next = 0
+    else if (e.key === 'End') next = tabs.length - 1
+    if (next >= 0) {
+      e.preventDefault()
+      handleTabChange(tabs[next].id)
+      const el = document.getElementById(`tab-${tabs[next].id}`)
+      el?.focus()
+    }
+  }, [topic.tabs, activeTab, handleTabChange])
 
   return (
-    <div role="tablist" className="flex border-b border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-900 shrink-0">
+    <div role="tablist" className="flex border-b border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-900 shrink-0" onKeyDown={handleKeyDown}>
       {topic.tabs.map((tab) => (
         <button
           key={tab.id}

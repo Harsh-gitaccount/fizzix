@@ -1,6 +1,3 @@
-const R = 8.314
-const k_B = 1.38e-23
-
 interface Particle {
   x: number; y: number; z: number
   vx: number; vy: number; vz: number

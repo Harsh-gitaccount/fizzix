@@ -7,7 +7,7 @@ import { useSimulationStore } from '@/store/simulationStore'
 import { useUIStore } from '@/store/uiStore'
 import { useTopic } from '@/simulations/TopicContext'
 import { createGasBox3D } from '@/lib/three/gasBox3D'
-import { t } from '@/lib/i18n'
+
 import { effectiveVolume } from '@/lib/physics/thermodynamics'
 
 const GAS_NAMES: Record<number, string> = {
@@ -129,7 +129,7 @@ export default function Scene3DGas() {
 
         const p = useSimulationStore.getState().params
         const l = useUIStore.getState().activeLayers
-        builder.step(p, deltaReal)
+        builder.step(p, deltaReal * speed)
         builder.update(p, isDark, l)
         needsGLRender = true
       } else {
@@ -224,6 +224,82 @@ export default function Scene3DGas() {
     cameraDirtyRef.current = true
   }, [positionCamera])
 
+  const histCanvasRef = useRef<HTMLCanvasElement>(null)
+  const showHistogram = activeLayers.histogram === true
+
+  useEffect(() => {
+    if (!showHistogram) return
+    const canvas = histCanvasRef.current
+    const builder = builderRef.current
+    if (!canvas || !builder) return
+
+    let running = true
+    const draw = () => {
+      if (!running) return
+      const ctx = canvas.getContext('2d')
+      if (!ctx) return
+
+      const dpr = window.devicePixelRatio || 1
+      const w = 180
+      const h = 110
+      canvas.width = w * dpr
+      canvas.height = h * dpr
+      canvas.style.width = `${w}px`
+      canvas.style.height = `${h}px`
+      ctx.scale(dpr, dpr)
+
+      ctx.clearRect(0, 0, w, h)
+      ctx.fillStyle = isDark ? 'rgba(15,23,42,0.9)' : 'rgba(255,255,255,0.92)'
+      ctx.beginPath()
+      ctx.roundRect(0, 0, w, h, 6)
+      ctx.fill()
+      ctx.strokeStyle = isDark ? '#334155' : '#E5E7EB'
+      ctx.lineWidth = 1
+      ctx.stroke()
+
+      ctx.font = 'bold 10px system-ui'
+      ctx.fillStyle = isDark ? '#D1D5DB' : '#374151'
+      ctx.textAlign = 'left'
+      ctx.fillText(lang === 'hi' ? 'चाल वितरण' : 'Speed Distribution', 8, 16)
+
+      const speeds = builder.getParticleSpeeds()
+      if (speeds.length < 5) {
+        requestAnimationFrame(draw)
+        return
+      }
+
+      const maxSpeed = Math.max(...speeds) * 1.1
+      const bins = 12
+      const counts = new Array(bins).fill(0) as number[]
+      for (const s of speeds) {
+        const bin = Math.min(Math.floor((s / maxSpeed) * bins), bins - 1)
+        counts[bin]++
+      }
+      const maxCount = Math.max(...counts, 1)
+
+      const chartX = 8
+      const chartY = 24
+      const chartW = w - 16
+      const chartH = h - 34
+      const barW = chartW / bins - 1
+
+      for (let i = 0; i < bins; i++) {
+        const barH = (counts[i] / maxCount) * chartH
+        const bx = chartX + i * (barW + 1)
+        const by = chartY + chartH - barH
+        const ratio = i / bins
+        if (ratio < 0.33) ctx.fillStyle = '#3B82F6'
+        else if (ratio < 0.66) ctx.fillStyle = '#10B981'
+        else ctx.fillStyle = '#EF4444'
+        ctx.fillRect(bx, by, barW, barH)
+      }
+
+      requestAnimationFrame(draw)
+    }
+    requestAnimationFrame(draw)
+    return () => { running = false }
+  }, [showHistogram, isDark, lang])
+
   const T = params.temperature ?? 300
   const n = params.moles ?? 1
   const V = effectiveVolume(params)
@@ -247,6 +323,14 @@ export default function Scene3DGas() {
         <p className="text-xs font-semibold text-gray-700 dark:text-gray-300">V = {V.toFixed(1)} L</p>
         <p className="text-xs font-semibold text-gray-700 dark:text-gray-300">{lang === 'hi' ? 'गैस' : 'Gas'}: {gasName}</p>
       </div>
+
+      {/* Speed distribution histogram overlay */}
+      {showHistogram && (
+        <canvas
+          ref={histCanvasRef}
+          className="absolute bottom-10 right-2 z-10 pointer-events-none select-none"
+        />
+      )}
 
       {/* Speed legend */}
       <div className="absolute top-2 right-2 z-10 bg-white/90 dark:bg-slate-900/90 backdrop-blur-sm rounded-lg px-3 py-2 pointer-events-none select-none shadow-sm border border-gray-200 dark:border-slate-700">

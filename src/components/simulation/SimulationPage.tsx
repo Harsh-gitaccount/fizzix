@@ -15,7 +15,6 @@ import OfflineBanner from '@/components/ui/OfflineBanner'
 import { useKeyboardShortcuts } from '@/hooks/useKeyboardShortcuts'
 import { useSoundEffects } from '@/hooks/useSoundEffects'
 import { useServiceWorker } from '@/hooks/useServiceWorker'
-import { useURLParams } from '@/hooks/useURLParams'
 import { useLangSync } from '@/hooks/useLangSync'
 import { setupSyncListeners, syncQuizResults } from '@/lib/quiz/offlineStorage'
 import { initSentry } from '@/lib/sentry'
@@ -38,7 +37,6 @@ export default function SimulationPage() {
   useKeyboardShortcuts(topic)
   useSoundEffects()
   useServiceWorker()
-  useURLParams()
   useLangSync()
 
   useEffect(() => {
@@ -57,6 +55,35 @@ export default function SimulationPage() {
     useQuizStore.getState().resetQuiz()
     useSimulationStore.getState().setCompareMode(false)
     useSimulationStore.getState().clearGhostTrails()
+
+    // Apply URL params after topic defaults so shared links override correctly
+    const url = new URL(window.location.href)
+    const sp = url.searchParams
+    if (sp.size > 0) {
+      const limits = topic.paramLimits ?? {}
+      const parsed: Record<string, number> = {}
+      let hasParam = false
+      for (const key of Object.keys(limits)) {
+        const val = sp.get(key)
+        if (val !== null) {
+          const n = Number(val)
+          if (Number.isFinite(n)) {
+            const [min, max] = limits[key]
+            parsed[key] = Math.max(min, Math.min(max, n))
+            hasParam = true
+          }
+        }
+      }
+      if (hasParam) {
+        const { params, setParams } = useSimulationStore.getState()
+        setParams({ ...params, ...parsed })
+      }
+      const tab = sp.get('tab')
+      if (tab && topic.tabs.some((t: { id: string }) => t.id === tab)) {
+        useUIStore.getState().setActiveTab(tab)
+      }
+      window.history.replaceState({}, '', url.pathname)
+    }
   }, [topic])
 
   const activeTab = useUIStore((s) => s.activeTab)
@@ -105,7 +132,7 @@ export default function SimulationPage() {
               </button>
             </div>
           )}
-          <div className="flex-1 min-h-0 relative">
+          <div className="flex-1 min-h-[180px] md:min-h-0 relative">
             {activeTab === 'long-wave' ? (
               <Scene3DLongWave />
             ) : activeTab === 'field-3d' ? (

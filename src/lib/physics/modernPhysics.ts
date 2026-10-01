@@ -1,4 +1,4 @@
-import { type SimulationState, type PhysicsValue, type CanvasBounds, ZERO_STATE } from './types'
+import { type SimulationState, type PhysicsValue, type CanvasBounds } from './types'
 
 // =====================================================
 // MODERN PHYSICS - NCERT Class 12 Ch.11-13
@@ -247,7 +247,6 @@ export function modernDerivedValues(
   if (modernType === 0) {
     const wavelength = params.wavelength ?? 400
     const phi = params.workFunction ?? 2.14
-    const intensity = params.intensity ?? 50
     const Eph = photonEnergy_eV(wavelength)
     const ke = maxKE_eV(wavelength, phi)
     const V0 = stoppingPotential(wavelength, phi)

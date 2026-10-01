@@ -4,7 +4,7 @@ import { useRef, useEffect, useCallback } from 'react'
 import * as THREE from 'three'
 import { usePlaybackStore } from '@/store/playbackStore'
 import { useSimulationStore } from '@/store/simulationStore'
-import { useUIStore } from '@/store/uiStore'
+
 import { useTopic } from '@/simulations/TopicContext'
 
 export interface Scene3DSetup {

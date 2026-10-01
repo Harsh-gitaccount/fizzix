@@ -71,7 +71,7 @@ function downloadCSV(rows: DerivedRow[], columns: { key: string; label: string; 
 }
 
 function fmt(n: number): string {
-  return Number.isFinite(n) ? n.toFixed(2) : '—'
+  return Number.isFinite(n) ? n.toFixed(2) : '-'
 }
 
 export default function DataTable() {

@@ -175,7 +175,6 @@ export function pendulumTrajectoryBounds(params: Record<string, number>): Canvas
   const theta0Deg = params.theta0 ?? 30
   const theta0 = theta0Deg * Math.PI / 180
   const xMax = length * Math.sin(theta0)
-  const yMax = length * (1 - Math.cos(theta0))
 
   const padding = 0.15
   const halfWidth = Math.max(xMax * 1.2, 0.5)

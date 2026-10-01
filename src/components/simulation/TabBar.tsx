@@ -11,7 +11,7 @@ export default function TabBar() {
   const activeTab = useUIStore((s) => s.activeTab)
   const setActiveTab = useUIStore((s) => s.setActiveTab)
   const lang = useUIStore((s) => s.lang)
-  const setParam = useSimulationStore((s) => s.setParam)
+
   const setParams = useSimulationStore((s) => s.setParams)
   const params = useSimulationStore((s) => s.params)
   const setCurrentTime = usePlaybackStore((s) => s.setCurrentTime)

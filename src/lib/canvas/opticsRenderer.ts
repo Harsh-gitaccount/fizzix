@@ -5,7 +5,7 @@ import {
   criticalAngle,
   lensImageDistance,
   lensMagnification,
-  lensPower,
+
 } from '@/lib/physics/optics'
 import type { RulerState, ProtractorState } from '@/store/toolStore'
 import { drawRuler, drawProtractor } from './measurementTools'
@@ -772,7 +772,7 @@ function drawPrincipalRays(
   imgX: number, imgH: number,
   fpLeft: number, fpRight: number,
   isConvex: boolean, isVirtual: boolean,
-  cw: number, isDark: boolean,
+  cw: number, _isDark: boolean,
 ) {
   const objTop = lensY - objH
   const imgTop = lensY - imgH

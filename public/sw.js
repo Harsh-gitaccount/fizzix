@@ -1,3 +1,4 @@
+const CACHE_PREFIX = 'fizzix-'
 const CACHE_NAME = 'fizzix-v1'
 const PRECACHE = [
   '/',
@@ -16,7 +17,11 @@ self.addEventListener('install', (e) => {
 self.addEventListener('activate', (e) => {
   e.waitUntil(
     caches.keys().then((keys) =>
-      Promise.all(keys.filter((k) => k !== CACHE_NAME).map((k) => caches.delete(k)))
+      Promise.all(
+        keys
+          .filter((k) => k.startsWith(CACHE_PREFIX) && k !== CACHE_NAME)
+          .map((k) => caches.delete(k))
+      )
     )
   )
   self.clients.claim()
@@ -28,7 +33,6 @@ self.addEventListener('fetch', (e) => {
   if (e.request.method !== 'GET') return
   if (url.protocol !== 'https:' && url.hostname !== 'localhost') return
 
-  // Cache-first for immutable static assets (JS/CSS chunks)
   if (url.pathname.startsWith('/_next/static/')) {
     e.respondWith(
       caches.open(CACHE_NAME).then((cache) =>
@@ -41,23 +45,29 @@ self.addEventListener('fetch', (e) => {
     return
   }
 
-  // Stale-while-revalidate for navigation (home page)
-  if (e.request.mode === 'navigate' || url.pathname === '/') {
+  if (e.request.mode === 'navigate') {
     e.respondWith(
       caches.open(CACHE_NAME).then((cache) =>
         cache.match(e.request).then((cached) => {
           const fetchPromise = fetch(e.request).then((res) => {
             if (res.ok) cache.put(e.request, res.clone())
             return res
-          }).catch(() => cached)
+          }).catch(() => cached || null)
           return cached || fetchPromise
+        }).then((response) => {
+          if (response) return response
+          return caches.match('/').then((fallback) =>
+            fallback || new Response('Offline - page not cached', {
+              status: 503,
+              headers: { 'Content-Type': 'text/plain' },
+            })
+          )
         })
       )
     )
     return
   }
 
-  // Network-first for everything else
   e.respondWith(
     fetch(e.request)
       .then((res) => {
@@ -67,6 +77,16 @@ self.addEventListener('fetch', (e) => {
         }
         return res
       })
-      .catch(() => caches.match(e.request).then((hit) => hit || caches.match('/')))
+      .catch(() =>
+        caches.match(e.request).then((hit) => {
+          if (hit) return hit
+          return caches.match('/').then((fallback) =>
+            fallback || new Response('Offline - resource not cached', {
+              status: 503,
+              headers: { 'Content-Type': 'text/plain' },
+            })
+          )
+        })
+      )
   )
 })

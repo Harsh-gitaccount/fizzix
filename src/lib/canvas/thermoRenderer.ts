@@ -1,5 +1,5 @@
 import type { CanvasBounds, CanvasBackground, GhostTrail } from '@/lib/physics/types'
-import { t, type Lang } from '@/lib/i18n'
+import { type Lang } from '@/lib/i18n'
 import {
   type GasParticle,
   initParticles,
@@ -151,7 +151,7 @@ function drawContainer(
   cw: number, ch: number,
   isDark: boolean,
   thermoType: number,
-  pistonFrac: number,
+  _pistonFrac: number,
 ) {
   ctx.fillStyle = isDark ? C.containerFillDark : C.containerFill
   ctx.fillRect(ox, oy, cw, ch)

@@ -1,8 +1,8 @@
 import type { CanvasBounds, GhostTrail, CanvasBackground } from '@/lib/physics/types'
-import { t, type Lang } from '@/lib/i18n'
+import { type Lang } from '@/lib/i18n'
 import {
   coulombForce,
-  electricFieldAt,
+
   traceFieldLine,
   ohmsCurrent,
   seriesResistance,
@@ -329,7 +329,7 @@ function renderFieldLines(
         const numDots = Math.max(2, Math.floor(totalLen / 60))
         const phase = (currentTime * 40) % totalLen
         for (let d = 0; d < numDots; d++) {
-          let pos = (phase + (d / numDots) * totalLen) % totalLen
+          const pos = (phase + (d / numDots) * totalLen) % totalLen
           let acc = 0
           for (let s = 0; s < segs.length; s++) {
             if (acc + segs[s] >= pos) {
@@ -847,7 +847,7 @@ function drawBatterySymbol(
   ctx.font = 'bold 10px system-ui'
   ctx.textAlign = 'center'
   ctx.fillText('+', cx + 8, cy - 18)
-  ctx.fillText('–', cx - 8, cy - 12)
+  ctx.fillText('-', cx - 8, cy - 12)
 }
 
 function drawBatterySymbolVert(
@@ -898,7 +898,7 @@ function drawCurrentDots(
   const phase = (time * speed * 50) % totalLen
 
   for (let i = 0; i < numDots; i++) {
-    let pos = (phase + (i / numDots) * totalLen) % totalLen
+    const pos = (phase + (i / numDots) * totalLen) % totalLen
     let acc = 0
     for (let s = 0; s < segs.length; s++) {
       if (acc + segs[s] >= pos) {
@@ -1017,7 +1017,7 @@ function drawElecLegend(
 
   if (elecType <= 1) {
     entries.push({ color: C.positive, label: lang === 'hi' ? 'धन आवेश (+)' : 'Positive (+)', type: 'circle' })
-    entries.push({ color: C.negative, label: lang === 'hi' ? 'ऋण आवेश (–)' : 'Negative (–)', type: 'circle' })
+    entries.push({ color: C.negative, label: lang === 'hi' ? 'ऋण आवेश (-)' : 'Negative (-)', type: 'circle' })
     if (elecType === 0 && activeLayers.forceVectors !== false) {
       entries.push({ color: C.forceAttr, label: lang === 'hi' ? 'बल' : 'Force', type: 'line' })
     }

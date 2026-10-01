@@ -51,15 +51,6 @@ const COLORS = {
   bgDark: '#0F172A',
 }
 
-function chooseTickSpacing(scale: number): number {
-  const candidates = [0.1, 0.2, 0.5, 1, 2, 5, 10, 20, 50, 100]
-  for (const spacing of candidates) {
-    const px = spacing * scale
-    if (px >= 40 && px <= 100) return spacing
-  }
-  return candidates[candidates.length - 1]
-}
-
 export function computeSHMBounds(
   params: Record<string, number>,
   compareMode: boolean,
@@ -224,7 +215,6 @@ function renderPendulum(
 
   // Angle arc
   if (activeLayers.velocity || activeLayers.components) {
-    const theta0Rad = (params.theta0 ?? 30) * Math.PI / 180
     const currentTheta = Math.asin(Math.max(-1, Math.min(1, state.x / length)))
     drawAngleIndicator(ctx, pivotScreenX, pivotScreenY, currentTheta, displayScale * 0.3, isDark)
   }

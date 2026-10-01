@@ -83,16 +83,10 @@ export function createGasBox3D(setup: GasBox3DSetup) {
 
   startWorker()
 
-  let prevBx = 0
-  let prevBy = 0
-  let prevBz = 0
-
   function buildBox(bx: number, by: number, bz: number, isDark: boolean, thermoType: number) {
     if (boxHelper) { scene.remove(boxHelper); boxHelper.geometry.dispose(); (boxHelper.material as THREE.Material).dispose(); boxHelper = null }
     if (pistonMesh) { scene.remove(pistonMesh); pistonMesh.geometry.dispose(); (pistonMesh.material as THREE.Material).dispose(); pistonMesh = null }
     if (wallsMesh) { scene.remove(wallsMesh); wallsMesh.geometry.dispose(); (wallsMesh.material as THREE.Material).dispose(); wallsMesh = null }
-
-    prevBx = bx; prevBy = by; prevBz = bz
 
     const edgeColor = isDark ? 0x94a3b8 : 0x6b7280
     const boxGeo = new THREE.BoxGeometry(bx, by, bz)
@@ -302,11 +296,25 @@ export function createGasBox3D(setup: GasBox3DSetup) {
     prevHash = ''
   }
 
+  function getParticleSpeeds(): number[] {
+    if (!latestState) return []
+    const numParticles = latestState[0]
+    const speeds: number[] = []
+    for (let i = 0; i < numParticles; i++) {
+      const off = 2 + i * 6
+      if (latestState[off + 5] < 0.5) {
+        speeds.push(latestState[off + 3])
+      }
+    }
+    return speeds
+  }
+
   return {
     update,
     step,
     reset,
     dispose,
+    getParticleSpeeds,
     get hasNewState() { return stateChanged },
     consumeNewState() { stateChanged = false },
   }

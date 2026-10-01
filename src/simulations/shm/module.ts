@@ -45,13 +45,13 @@ const shmModule: SimulationModule = {
   },
 
   paramDefs: [
-    { key: 'length', symbol: 'L', unit: 'm', min: 0.1, max: 5, step: 0.1, help: 'String length — longer string means slower swing', helpHi: 'डोरी की लंबाई — लंबी डोरी = धीमा झूला' },
-    { key: 'theta0', symbol: 'θ₀', unit: '°', min: 1, max: 60, step: 1, help: 'Starting angle — how far you pull the bob to one side', helpHi: 'शुरुआती कोण — गेंद को कितना एक तरफ खींचा' },
-    { key: 'g', symbol: 'g', unit: 'm/s²', min: 0.5, max: 20, step: 0.1, help: 'Gravity — pull of the planet (Earth = 9.8, Moon = 1.6)', helpHi: 'गुरुत्वाकर्षण — ग्रह का खिंचाव (पृथ्वी = 9.8, चंद्रमा = 1.6)' },
-    { key: 'damping', symbol: 'b', unit: 'kg/s', min: 0, max: 5, step: 0.1, help: 'Damping coefficient b — friction force proportional to velocity (0 = no friction)', helpHi: 'अवमंदन गुणांक b — वेग के समानुपाती घर्षण बल (0 = कोई घर्षण नहीं)' },
-    { key: 'k', symbol: 'k', unit: 'N/m', min: 1, max: 100, step: 1, help: 'Spring stiffness — stiffer spring bounces faster', helpHi: 'स्प्रिंग कठोरता — कठोर स्प्रिंग तेज़ उछलती है' },
+    { key: 'length', symbol: 'L', unit: 'm', min: 0.1, max: 5, step: 0.1, help: 'String length - longer string means slower swing', helpHi: 'डोरी की लंबाई - लंबी डोरी = धीमा झूला' },
+    { key: 'theta0', symbol: 'θ₀', unit: '°', min: 1, max: 60, step: 1, help: 'Starting angle - how far you pull the bob to one side', helpHi: 'शुरुआती कोण - गेंद को कितना एक तरफ खींचा' },
+    { key: 'g', symbol: 'g', unit: 'm/s²', min: 0.5, max: 20, step: 0.1, help: 'Gravity - pull of the planet (Earth = 9.8, Moon = 1.6)', helpHi: 'गुरुत्वाकर्षण - ग्रह का खिंचाव (पृथ्वी = 9.8, चंद्रमा = 1.6)' },
+    { key: 'damping', symbol: 'b', unit: 'kg/s', min: 0, max: 5, step: 0.1, help: 'Damping coefficient b - friction force proportional to velocity (0 = no friction)', helpHi: 'अवमंदन गुणांक b - वेग के समानुपाती घर्षण बल (0 = कोई घर्षण नहीं)' },
+    { key: 'k', symbol: 'k', unit: 'N/m', min: 1, max: 100, step: 1, help: 'Spring stiffness - stiffer spring bounces faster', helpHi: 'स्प्रिंग कठोरता - कठोर स्प्रिंग तेज़ उछलती है' },
     { key: 'mass', symbol: 'm', unit: 'kg', min: 0.1, max: 10, step: 0.1, help: 'Mass of the object attached to the spring', helpHi: 'स्प्रिंग से जुड़ी वस्तु का द्रव्यमान' },
-    { key: 'amplitude', symbol: 'A', unit: 'm', min: 0.01, max: 1, step: 0.01, help: 'Amplitude — maximum stretch from rest position', helpHi: 'आयाम — विराम स्थिति से अधिकतम खिंचाव' },
+    { key: 'amplitude', symbol: 'A', unit: 'm', min: 0.01, max: 1, step: 0.01, help: 'Amplitude - maximum stretch from rest position', helpHi: 'आयाम - विराम स्थिति से अधिकतम खिंचाव' },
   ],
 
   tabs: [

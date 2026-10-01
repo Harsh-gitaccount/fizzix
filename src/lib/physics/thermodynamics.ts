@@ -3,7 +3,7 @@ import { type SimulationState, type PhysicsValue, type CanvasBounds, ZERO_STATE 
 // ===== CONSTANTS (NCERT Class 11 Ch.13 Kinetic Theory) =====
 const R = 8.314       // J/(mol·K) - universal gas constant
 const k_B = 1.38e-23  // J/K - Boltzmann constant
-const N_A = 6.022e23  // Avogadro's number
+
 
 // ===== IDEAL GAS LAW =====
 // PV = nRT  (NCERT Class 11 Ch.13)

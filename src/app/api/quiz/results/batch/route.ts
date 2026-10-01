@@ -1,6 +1,18 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { rateLimit } from '@/lib/rateLimit'
 
+const VALID_TOPIC_IDS = new Set([
+  'projectile-motion',
+  'shm',
+  'optics',
+  'electrostatics',
+  'thermodynamics',
+  'modern-physics',
+])
+
+const VALID_DIFFICULTIES = new Set(['easy', 'medium', 'hard'])
+const MAX_STR_LEN = 100
+
 interface QuizResultPayload {
   id?: string
   sessionId: string
@@ -11,6 +23,21 @@ interface QuizResultPayload {
   difficulty: string
   poolVersion?: number
   timestamp: number
+}
+
+function validateItem(r: unknown): r is QuizResultPayload {
+  if (r == null || typeof r !== 'object') return false
+  const item = r as Record<string, unknown>
+
+  if (typeof item.sessionId !== 'string' || item.sessionId.length === 0 || item.sessionId.length > MAX_STR_LEN) return false
+  if (typeof item.topicId !== 'string' || !VALID_TOPIC_IDS.has(item.topicId)) return false
+  if (typeof item.questionId !== 'string' || item.questionId.length === 0 || item.questionId.length > MAX_STR_LEN) return false
+  if (typeof item.selected !== 'number' || !Number.isInteger(item.selected) || item.selected < 0 || item.selected > 3) return false
+  if (typeof item.correct !== 'boolean') return false
+  if (typeof item.difficulty !== 'string' || !VALID_DIFFICULTIES.has(item.difficulty)) return false
+  if (typeof item.timestamp !== 'number' || !Number.isFinite(item.timestamp) || item.timestamp < 0) return false
+
+  return true
 }
 
 export async function POST(req: NextRequest) {
@@ -24,48 +51,37 @@ export async function POST(req: NextRequest) {
     )
   }
 
-  let body: { results: QuizResultPayload[] }
+  let body: unknown
   try {
     body = await req.json()
   } catch {
     return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 })
   }
 
-  if (!Array.isArray(body.results) || body.results.length === 0 || body.results.length > 100) {
+  if (body == null || typeof body !== 'object') {
+    return NextResponse.json({ error: 'Request body must be an object' }, { status: 400 })
+  }
+
+  const envelope = body as Record<string, unknown>
+  if (!Array.isArray(envelope.results) || envelope.results.length === 0 || envelope.results.length > 100) {
     return NextResponse.json({ error: 'results must be an array of 1-100 items' }, { status: 400 })
   }
 
-  const VALID_DIFFICULTIES = new Set(['easy', 'medium', 'hard'])
-  const MAX_STR_LEN = 100
-
-  for (const r of body.results) {
-    if (!r.sessionId || !r.topicId || !r.questionId || typeof r.selected !== 'number' || typeof r.correct !== 'boolean') {
-      return NextResponse.json({ error: 'Invalid result entry' }, { status: 400 })
+  const validated: QuizResultPayload[] = []
+  for (let i = 0; i < envelope.results.length; i++) {
+    if (!validateItem(envelope.results[i])) {
+      return NextResponse.json({ error: `Invalid result entry at index ${i}` }, { status: 400 })
     }
-    if (typeof r.sessionId !== 'string' || r.sessionId.length > MAX_STR_LEN ||
-        typeof r.topicId !== 'string' || r.topicId.length > MAX_STR_LEN ||
-        typeof r.questionId !== 'string' || r.questionId.length > MAX_STR_LEN) {
-      return NextResponse.json({ error: 'Invalid string field' }, { status: 400 })
-    }
-    if (!Number.isInteger(r.selected) || r.selected < 0 || r.selected > 3) {
-      return NextResponse.json({ error: 'selected must be 0-3' }, { status: 400 })
-    }
-    if (typeof r.difficulty !== 'string' || !VALID_DIFFICULTIES.has(r.difficulty)) {
-      return NextResponse.json({ error: 'difficulty must be easy, medium, or hard' }, { status: 400 })
-    }
-    if (typeof r.timestamp !== 'number' || !Number.isFinite(r.timestamp) || r.timestamp < 0) {
-      return NextResponse.json({ error: 'Invalid timestamp' }, { status: 400 })
-    }
+    validated.push(envelope.results[i] as QuizResultPayload)
   }
 
-  // Persist to PostgreSQL when DATABASE_URL is configured
   if (process.env.DATABASE_URL) {
     try {
       const { getPrisma } = await import('@/lib/db')
       const prisma = await getPrisma()
       if (prisma) {
         await prisma.quizResult.createMany({
-          data: body.results.map((r: QuizResultPayload) => ({
+          data: validated.map((r) => ({
             ...(r.id ? { id: r.id } : {}),
             sessionId: r.sessionId,
             topicId: r.topicId,
@@ -78,6 +94,10 @@ export async function POST(req: NextRequest) {
           })),
           skipDuplicates: true,
         })
+        return NextResponse.json(
+          { synced: validated.length },
+          { headers: { 'X-RateLimit-Remaining': String(remaining) } }
+        )
       }
     } catch (err) {
       console.error('Failed to persist quiz results:', err)
@@ -86,7 +106,7 @@ export async function POST(req: NextRequest) {
   }
 
   return NextResponse.json(
-    { synced: body.results.length },
+    { synced: 0, stored: false, message: 'No database configured; results accepted but not persisted' },
     { headers: { 'X-RateLimit-Remaining': String(remaining) } }
   )
 }

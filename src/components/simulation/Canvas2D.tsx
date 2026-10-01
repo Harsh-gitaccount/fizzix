@@ -120,7 +120,8 @@ export default function Canvas2D() {
   useEffect(() => {
     if (playbackState !== 'playing') return
 
-    const tof = topic.timeOfFlight(params)
+    const tofA = topic.timeOfFlight(params)
+    const tof = compareMode ? Math.max(tofA, topic.timeOfFlight(paramsB)) : tofA
 
     lastTimeRef.current = performance.now()
     prevVyRef.current = null
@@ -157,7 +158,7 @@ export default function Canvas2D() {
     return () => {
       if (rafRef.current) cancelAnimationFrame(rafRef.current)
     }
-  }, [playbackState, params, speedMultiplier, pauseAtKeyPoints, setCurrentTime, setPlaybackState, topic])
+  }, [playbackState, params, speedMultiplier, pauseAtKeyPoints, setCurrentTime, setPlaybackState, topic, compareMode, paramsB])
 
   // Aria-live updates
   useEffect(() => {

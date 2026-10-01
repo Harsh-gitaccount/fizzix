@@ -13,7 +13,7 @@ export default function PresetStrip() {
   const topic = useTopic()
   const [activePreset, setActivePreset] = useState<string | null>(null)
   const setParams = useSimulationStore((s) => s.setParams)
-  const setParam = useSimulationStore((s) => s.setParam)
+
   const clearGhostTrails = useSimulationStore((s) => s.clearGhostTrails)
   const addGhostTrail = useSimulationStore((s) => s.addGhostTrail)
   const setCompareMode = useSimulationStore((s) => s.setCompareMode)

@@ -6,55 +6,60 @@ import { useUIStore } from '@/store/uiStore'
 import { useTopic } from '@/simulations/TopicContext'
 import { showToast } from '@/components/ui/Toast'
 import { t } from '@/lib/i18n'
+import type { PhysicsValue } from '@/lib/physics/types'
+import type { SimulationModule } from '@/simulations/types'
 
-interface Row {
+interface DerivedRow {
   t: number
-  x: number
-  y: number
-  vx: number
-  vy: number
-  speed: number
+  values: Record<string, PhysicsValue>
 }
 
 function generateRows(
-  stateAtTime: (params: Record<string, number>, t: number) => { t: number; x: number; y: number; vx: number; vy: number },
-  timeOfFlight: (params: Record<string, number>) => number,
+  topic: SimulationModule,
   params: Record<string, number>,
-): Row[] {
-  const tof = timeOfFlight(params)
+): DerivedRow[] {
+  const tof = topic.timeOfFlight(params)
   if (tof <= 0) return []
 
   const steps = Math.min(Math.max(Math.ceil(tof / 0.05), 10), 500)
   const dt = tof / steps
-  const rows: Row[] = []
+  const rows: DerivedRow[] = []
 
   for (let i = 0; i <= steps; i++) {
-    const t = Math.min(i * dt, tof)
-    const s = stateAtTime(params, t)
-    rows.push({
-      t: s.t,
-      x: s.x,
-      y: s.y,
-      vx: s.vx,
-      vy: s.vy,
-      speed: Math.sqrt(s.vx * s.vx + s.vy * s.vy),
-    })
+    const time = Math.min(i * dt, tof)
+    const state = topic.stateAtTime(params, time)
+    const values = topic.derivedValues(params, state)
+    rows.push({ t: state.t, values })
   }
 
   return rows
 }
 
-function toCSV(rows: Row[]): string {
-  const header = 'Time (s),X (m),Y (m),Vx (m/s),Vy (m/s),Speed (m/s)'
-  const lines = rows.map(
-    (r) =>
-      `${r.t.toFixed(4)},${r.x.toFixed(4)},${r.y.toFixed(4)},${r.vx.toFixed(4)},${r.vy.toFixed(4)},${r.speed.toFixed(4)}`
+function getColumns(rows: DerivedRow[], keys: string[]): { key: string; label: string; unit: string }[] {
+  if (rows.length === 0) return []
+  const first = rows[0].values
+  return keys
+    .filter((k) => k in first && Number.isFinite(first[k].value))
+    .map((k) => ({
+      key: k,
+      label: first[k].symbol || first[k].label,
+      unit: first[k].unit,
+    }))
+}
+
+function toCSV(rows: DerivedRow[], columns: { key: string; label: string; unit: string }[]): string {
+  const header = ['Time (s)', ...columns.map((c) => `${c.label} (${c.unit})`)].join(',')
+  const lines = rows.map((r) =>
+    [r.t.toFixed(4), ...columns.map((c) => {
+      const v = r.values[c.key]
+      return v ? v.value.toFixed(4) : ''
+    })].join(',')
   )
   return header + '\n' + lines.join('\n')
 }
 
-function downloadCSV(rows: Row[]) {
-  const csv = toCSV(rows)
+function downloadCSV(rows: DerivedRow[], columns: { key: string; label: string; unit: string }[]) {
+  const csv = toCSV(rows, columns)
   const blob = new Blob([csv], { type: 'text/csv' })
   const url = URL.createObjectURL(blob)
   const a = document.createElement('a')
@@ -66,7 +71,7 @@ function downloadCSV(rows: Row[]) {
 }
 
 function fmt(n: number): string {
-  return n.toFixed(2)
+  return Number.isFinite(n) ? n.toFixed(2) : '—'
 }
 
 export default function DataTable() {
@@ -74,8 +79,12 @@ export default function DataTable() {
   const params = useSimulationStore((s) => s.params)
   const lang = useUIStore((s) => s.lang)
   const rows = useMemo(
-    () => generateRows(topic.stateAtTime, topic.timeOfFlight, params),
+    () => generateRows(topic, params),
     [topic, params]
+  )
+  const columns = useMemo(
+    () => getColumns(rows, topic.derivedValueKeys),
+    [rows, topic.derivedValueKeys]
   )
 
   if (rows.length === 0) {
@@ -93,7 +102,7 @@ export default function DataTable() {
           {t('data.header', lang)} ({rows.length} {t('data.points', lang)})
         </span>
         <button
-          onClick={() => downloadCSV(rows)}
+          onClick={() => downloadCSV(rows, columns)}
           className="px-3 py-1 text-[11px] font-bold rounded bg-blue-600 hover:bg-blue-700 text-white"
         >
           {t('data.export', lang)}
@@ -104,11 +113,11 @@ export default function DataTable() {
           <thead className="sticky top-0 bg-gray-50 dark:bg-slate-800">
             <tr>
               <th className="px-2 py-1.5 text-left font-bold text-gray-600 dark:text-gray-400">t (s)</th>
-              <th className="px-2 py-1.5 text-right font-bold text-gray-600 dark:text-gray-400">x (m)</th>
-              <th className="px-2 py-1.5 text-right font-bold text-gray-600 dark:text-gray-400">y (m)</th>
-              <th className="px-2 py-1.5 text-right font-bold text-gray-600 dark:text-gray-400">v<sub>x</sub> (m/s)</th>
-              <th className="px-2 py-1.5 text-right font-bold text-gray-600 dark:text-gray-400">v<sub>y</sub> (m/s)</th>
-              <th className="px-2 py-1.5 text-right font-bold text-gray-600 dark:text-gray-400">|v| (m/s)</th>
+              {columns.map((c) => (
+                <th key={c.key} className="px-2 py-1.5 text-right font-bold text-gray-600 dark:text-gray-400">
+                  {c.label}{c.unit ? ` (${c.unit})` : ''}
+                </th>
+              ))}
             </tr>
           </thead>
           <tbody>
@@ -118,11 +127,11 @@ export default function DataTable() {
                 className={i % 2 === 0 ? 'bg-white dark:bg-slate-900' : 'bg-gray-50/50 dark:bg-slate-800/50'}
               >
                 <td className="px-2 py-1 text-gray-900 dark:text-gray-100">{fmt(r.t)}</td>
-                <td className="px-2 py-1 text-right text-gray-900 dark:text-gray-100">{fmt(r.x)}</td>
-                <td className="px-2 py-1 text-right text-gray-900 dark:text-gray-100">{fmt(r.y)}</td>
-                <td className="px-2 py-1 text-right text-gray-900 dark:text-gray-100">{fmt(r.vx)}</td>
-                <td className="px-2 py-1 text-right text-gray-900 dark:text-gray-100">{fmt(r.vy)}</td>
-                <td className="px-2 py-1 text-right text-gray-900 dark:text-gray-100">{fmt(r.speed)}</td>
+                {columns.map((c) => (
+                  <td key={c.key} className="px-2 py-1 text-right text-gray-900 dark:text-gray-100">
+                    {fmt(r.values[c.key]?.value ?? NaN)}
+                  </td>
+                ))}
               </tr>
             ))}
           </tbody>

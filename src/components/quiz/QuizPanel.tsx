@@ -198,8 +198,8 @@ export default function QuizPanel() {
           <span className="text-xs font-bold text-gray-400 uppercase tracking-wider">
             {t('quiz.question', lang)} {currentIndex + 1} {t('quiz.of', lang)} {sessionQuestions.length}
           </span>
-          <span className={`px-2 py-0.5 text-[10px] font-bold rounded-full ${DIFFICULTY_COLORS[difficulty]}`}>
-            {lang === 'hi' ? (difficulty === 'easy' ? 'आसान' : difficulty === 'medium' ? 'मध्यम' : 'कठिन') : difficulty.charAt(0).toUpperCase() + difficulty.slice(1)}
+          <span className={`px-2 py-0.5 text-[10px] font-bold rounded-full ${DIFFICULTY_COLORS[currentQuestion?.difficulty ?? difficulty]}`}>
+            {(() => { const d = currentQuestion?.difficulty ?? difficulty; return lang === 'hi' ? (d === 'easy' ? 'आसान' : d === 'medium' ? 'मध्यम' : 'कठिन') : d.charAt(0).toUpperCase() + d.slice(1) })()}
           </span>
         </div>
         {/* Progress bar */}

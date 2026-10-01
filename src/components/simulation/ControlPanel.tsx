@@ -133,6 +133,10 @@ export default function ControlPanel() {
                 step={def.step}
                 value={params[def.key] ?? topic.defaultParams[def.key] ?? def.min}
                 onChange={(e) => changeParam(def.key, parseFloat(e.target.value))}
+                aria-label={`${def.symbol} — ${lang === 'hi' && def.helpHi ? def.helpHi : def.help}`}
+                aria-valuemin={def.min}
+                aria-valuemax={def.max}
+                aria-valuenow={params[def.key] ?? topic.defaultParams[def.key] ?? def.min}
                 className="flex-1 h-2 bg-gray-200 dark:bg-slate-700 rounded-lg appearance-none cursor-pointer accent-blue-600"
               />
               <span className="w-20 text-right text-sm font-medium text-gray-600 dark:text-gray-400 tabular-nums">

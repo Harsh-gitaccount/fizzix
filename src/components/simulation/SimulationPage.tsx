@@ -22,6 +22,9 @@ import { initSentry } from '@/lib/sentry'
 import { t } from '@/lib/i18n'
 import { useUIStore } from '@/store/uiStore'
 import { useSimulationStore } from '@/store/simulationStore'
+import { usePlaybackStore } from '@/store/playbackStore'
+import { useUndoStore } from '@/store/undoStore'
+import { useQuizStore } from '@/store/quizStore'
 import { useTopic } from '@/simulations/TopicContext'
 
 const Canvas2D = dynamic(() => import('./Canvas2D'), { ssr: false })
@@ -48,6 +51,12 @@ export default function SimulationPage() {
     useSimulationStore.getState().initTopic(topic.defaultParams, topic.paramLimits)
     useUIStore.getState().setActiveTab(topic.defaultTab)
     useUIStore.getState().setActiveLayers(topic.defaultLayers)
+    usePlaybackStore.getState().setCurrentTime(0)
+    usePlaybackStore.getState().setPlaybackState('ready')
+    useUndoStore.setState({ entries: [], pointer: -1 })
+    useQuizStore.getState().resetQuiz()
+    useSimulationStore.getState().setCompareMode(false)
+    useSimulationStore.getState().clearGhostTrails()
   }, [topic])
 
   const activeTab = useUIStore((s) => s.activeTab)
@@ -81,7 +90,7 @@ export default function SimulationPage() {
       <TopBar />
 
       <div className="flex flex-col md:flex-row flex-1 min-h-0">
-        <div className="flex-1 md:flex-[2] min-w-0 min-h-0 flex flex-col">
+        <div className="flex-1 md:flex-[2] min-w-0 min-h-[200px] md:min-h-0 flex flex-col">
           {simQuizMode === 'sim' && !showMeHint && <TabBar />}
           {simQuizMode === 'sim' && !showMeHint && <PresetStrip />}
           {showMeHint && (

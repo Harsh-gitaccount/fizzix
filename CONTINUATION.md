@@ -23,7 +23,7 @@
 10. `40854b6` -- Batch 10: Test gaps closed, poolVersion policy
 11. `d54583a` -- Batch 11: F03/F05/F06/F12/F21/F24 physics/content corrections
 12. `1119f50` -- Batch 12: F11 gas PV/labels, F23 animation performance profiling
-13. (pending) -- Batch 13: F15 accessibility improvements
+13. (pending) -- Batch 13: F15 accessibility, F21 trajectory cap
 
 ## Batch 11 Changes
 
@@ -62,15 +62,30 @@
 - `e2e/perf-profile.spec.ts` (new): Playwright-based test measuring rAF frame times (idle + active) across all 6 topics and topic-switching latency.
 - Results: all topics avg ~16.5ms (~60fps), p95 < 33ms (30fps budget). Topic switching 0.9-1.4s. No regression.
 
+## Batch 13 Changes
+
+### F15: Accessibility improvements
+- `src/components/simulation/LayerToggles.tsx`: `aria-pressed` on layer and tool toggles.
+- `src/components/simulation/TabBar.tsx`: `role="tablist"`, `aria-controls`, `tabIndex` roving.
+- `src/components/simulation/SimulationPage.tsx`: Panel tabs get `role="tabpanel"`, `aria-labelledby`.
+- `src/components/simulation/PlaybackBar.tsx`: `aria-pressed` on sound/pause toggles, "Replay" label.
+- `src/components/simulation/PresetStrip.tsx`: `aria-pressed` on active preset.
+- `src/components/quiz/QuizPanel.tsx`: `role="radiogroup"` + `role="radio"` + `aria-checked`.
+- `src/components/ui/Toast.tsx`: `role="status"` + `aria-live="polite"`.
+- `src/components/simulation/Scene3D.tsx`, `Scene3DGas.tsx`: `role="img"` + `aria-label`.
+- `src/components/simulation/TopBar.tsx`: Language toggle `aria-label`.
+
+### F21: Trajectory cap raised
+- `src/lib/physics/drag.ts`: maxSteps raised from 100001 to 250001 (100s → 250s), covering worst-case slider combo (v0=50, theta=90, g=0.5, y0=50 → ~214s TOF).
+
 ## Remaining Work
 
-### PARTIAL (8 findings)
+### PARTIAL (7 findings)
 - **F03**: Small-angle approximation disclosure; full nonlinear solver not implemented
 - **F06**: `opt-e8` mirage TIR explanation simplified but curriculum-aligned; not changing
 - **F11**: Visual box volume not proportional to physics volume (1D scaling with clamping); visualization simplification
 - **F14**: True touch/zoom/assistive-technology verification; actual device testing
-- **F15**: Complete keyboard navigation, toggle/tab semantics, nonvisual alternatives
-- **F21**: Trajectory cap (100s max from RK4 step limit)
+- **F15**: Arrow key tab navigation, 3D keyboard camera controls, full assistive technology testing
 - **F22**: No package upgrades applied; vitest 2→5 and next 14→16 needed
 - **F26**: Multi-build updates, truly uncached navigation, production offline verification
 

@@ -53,7 +53,7 @@ function buildCache(params: Record<string, number>): TrajectoryCache {
   const vx0 = v0 * Math.cos(thetaRad)
   const vy0 = v0 * Math.sin(thetaRad)
 
-  const maxSteps = 100001
+  const maxSteps = 250001
   const data = new Float64Array(maxSteps * 4)
 
   let state: Vec4 = [0, y0, vx0, vy0]

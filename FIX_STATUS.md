@@ -2,7 +2,7 @@
 
 Tracking fixes for audit findings F01-F26 from the comprehensive audit at commit `7523ff0`.
 Reconciled against independent verification at commits `fcb3b41`, `6be4bac`, `b9bf820`, and `e97d111`.
-Current head includes batch 13 fixes (accessibility improvements).
+Current head includes batch 13 fixes (accessibility, trajectory cap, F21 done).
 
 | Finding | Title | Status | Batch | Notes |
 |---------|-------|--------|-------|-------|
@@ -26,7 +26,7 @@ Current head includes batch 13 fixes (accessibility improvements).
 | F18 | Offline sync chunking | DONE | 5,8,9,10 | Chunking with per-chunk markSynced and idempotency via skipDuplicates. Client requires `stored === true` (not just absence of `stored:false`). Count-only fallback removed. AcceptedIds intersected with submitted chunk IDs; only explicitly acknowledged records are marked synced. New sync-client test calls actual `syncQuizResults` with mocked IDB and fetch, verifying records are correctly marked or kept pending for all edge cases. |
 | F19 | Adaptive quiz label mismatch | DONE | 2,7 | Badge shows item difficulty. `saveQuizResult` and `trackEvent` now use `q.difficulty` (question's own difficulty) instead of `s.difficulty` (adaptive store difficulty). |
 | F20 | Longitudinal wave speed | DONE | 4 | Correct spring-mass chain dispersion formula. |
-| F21 | Drag coefficient units | PARTIAL | 2,11 | Symbol/unit renamed. Compare-mode legend symbol corrected from 'Cd' to 'b' matching module definition. Acceleration vector now shows actual net acceleration (gravity + drag) when drag > 0, with correct direction and magnitude. Legend label switches from "Gravity" to "Net Acceleration" when drag is enabled. Trajectory cap (100s max from RK4 step limit) not addressed; edge case for very high altitude/low drag launches. |
+| F21 | Drag coefficient units | DONE | 2,11,13 | Symbol/unit renamed. Compare-mode legend symbol corrected from 'Cd' to 'b' matching module definition. Acceleration vector now shows actual net acceleration (gravity + drag) when drag > 0, with correct direction and magnitude. Legend label switches from "Gravity" to "Net Acceleration" when drag is enabled. Trajectory cap raised from 100s (100001 steps) to 250s (250001 steps), covering worst-case slider combination (v0=50, theta=90, g=0.5, y0=50 → ~214s TOF). |
 | F22 | Dependency advisories | PARTIAL | 5,7,9 | 23 packages, 79 unique advisories (3 critical, 16 high, 55 moderate, 5 low by own severity). Advisory counts now use deduplicated GHSA URLs with each advisory's own severity. All require breaking changes. Per-advisory reachability analysis in `DEPENDENCY_AUDIT.md`. Production-reachable: next framework DoS/cache advisories. Not reachable (assumed Linux deployment, not verified): hono/prisma chain, vitest/esbuild, glob CLI. Upgrade path: vitest first (dev-only), then next 14->16 (major). Deployment assumptions documented. |
 | F23 | Animation performance | DONE | 12 | Playwright-based performance profiling test added (e2e/perf-profile.spec.ts). Measures rAF frame times (idle and active animation) across all 6 topics and topic-switching latency. Results: all topics p95 < 33ms (30fps budget); avg ~16.5ms (~60fps). Topic switching 0.9-1.4s. Thermodynamics occasional 3D init spikes (82ms max) but p95=21ms. No performance regression detected. |
 | F24 | Teaching preset gaps | DONE | 11 | `low-drive` hookQuestion fixed from false premise ("Why does a low throw cover more ground?") to neutral "How does a low angle change the trajectory shape?". `moon-vs-earth` hookQuestion fixed from statement to question "How far would this same throw go on the Moon?". `does-mass-matter` hookQuestion reworded to "Does changing the mass change the trajectory?" with compareParams showing identical trajectories, defaultTab set to compare. |
@@ -35,8 +35,8 @@ Current head includes batch 13 fixes (accessibility improvements).
 
 ## Summary
 
-- **DONE**: 18 findings (F01, F02, F04, F05, F07, F08, F09, F10, F12, F13, F16, F17, F18, F19, F20, F23, F24, F25)
-- **PARTIAL**: 8 findings (F03, F06, F11, F14, F15, F21, F22, F26)
+- **DONE**: 19 findings (F01, F02, F04, F05, F07, F08, F09, F10, F12, F13, F16, F17, F18, F19, F20, F21, F23, F24, F25)
+- **PARTIAL**: 7 findings (F03, F06, F11, F14, F15, F22, F26)
 
 ## Batch 9 changes (third verification response)
 

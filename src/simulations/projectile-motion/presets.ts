@@ -83,9 +83,9 @@ export const PRESETS: TeachingPreset[] = [
   {
     id: 'does-mass-matter',
     label: 'Does Mass Matter?',
-    hookQuestion: 'Does changing the mass change the trajectory?',
-    params: { v0: 20, theta: 45, g: 9.8, y0: 0 },
-    compareParams: { v0: 20, theta: 45, g: 9.8, y0: 0 },
+    hookQuestion: 'A 1 kg ball and a 10 kg ball are launched identically (no air resistance). Do their paths differ?',
+    params: { v0: 20, theta: 45, g: 9.8, y0: 0, drag: 0, mass: 1 },
+    compareParams: { v0: 20, theta: 45, g: 9.8, y0: 0, drag: 0, mass: 10 },
     defaultLayers: ['grid', 'trajectory'],
     defaultTab: 'compare',
     canvasBackground: 'default-sky',

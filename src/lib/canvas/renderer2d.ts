@@ -31,7 +31,7 @@ const COLORS = {
 }
 
 const PARAM_SYMBOLS: Record<string, string> = {
-  v0: 'v₀', theta: 'θ', g: 'g', y0: 'y₀', drag: 'b',
+  v0: 'v₀', theta: 'θ', g: 'g', y0: 'y₀', drag: 'b', mass: 'm',
 }
 
 function getDiffLabel(
@@ -49,6 +49,7 @@ function getDiffLabel(
       } else {
         const v = key === 'theta' ? `${a}°`
           : key === 'drag' ? a.toFixed(2)
+          : key === 'mass' ? `${a} kg`
           : Number.isInteger(a) ? String(a)
           : String(parseFloat(a.toFixed(2)))
         parts.push(`${sym}=${v}`)

@@ -198,20 +198,24 @@ function renderRefraction(
   const incStartX = midX - rayLen * Math.cos(theta1Rad)
   const incStartY = midY - rayLen * Math.sin(theta1Rad)
 
-  const animIncX = incStartX + (midX - incStartX) * progress
-  const animIncY = incStartY + (midY - incStartY) * progress
-
-  ctx.strokeStyle = C.incidentRay
-  ctx.lineWidth = 2.5
-  ctx.beginPath()
-  ctx.moveTo(incStartX, incStartY)
-  ctx.lineTo(animIncX, animIncY)
-  ctx.stroke()
-  drawArrowHead(ctx, incStartX, incStartY, animIncX, animIncY, C.incidentRay, 10)
+  const showRays = opts.activeLayers.rays !== false
 
   let refEndX = midX
   let refEndY = midY
   let outRayDrawn = false
+
+  if (showRays) {
+    const animIncX = incStartX + (midX - incStartX) * progress
+    const animIncY = incStartY + (midY - incStartY) * progress
+
+    ctx.strokeStyle = C.incidentRay
+    ctx.lineWidth = 2.5
+    ctx.beginPath()
+    ctx.moveTo(incStartX, incStartY)
+    ctx.lineTo(animIncX, animIncY)
+    ctx.stroke()
+    drawArrowHead(ctx, incStartX, incStartY, animIncX, animIncY, C.incidentRay, 10)
+  }
 
   if (theta2 !== null && progress > 0.35) {
     const theta2Rad = theta2 * Math.PI / 180
@@ -219,16 +223,18 @@ function renderRefraction(
     refEndY = midY + rayLen * Math.sin(theta2Rad)
     const refProgress = Math.min((currentTime * 0.25 - 0.35) / 0.65, 1)
 
-    const animRefX = midX + (refEndX - midX) * Math.max(0, refProgress)
-    const animRefY = midY + (refEndY - midY) * Math.max(0, refProgress)
+    if (showRays) {
+      const animRefX = midX + (refEndX - midX) * Math.max(0, refProgress)
+      const animRefY = midY + (refEndY - midY) * Math.max(0, refProgress)
 
-    ctx.strokeStyle = C.refractedRay
-    ctx.lineWidth = 2.5
-    ctx.beginPath()
-    ctx.moveTo(midX, midY)
-    ctx.lineTo(animRefX, animRefY)
-    ctx.stroke()
-    if (refProgress > 0.1) drawArrowHead(ctx, midX, midY, animRefX, animRefY, C.refractedRay, 10)
+      ctx.strokeStyle = C.refractedRay
+      ctx.lineWidth = 2.5
+      ctx.beginPath()
+      ctx.moveTo(midX, midY)
+      ctx.lineTo(animRefX, animRefY)
+      ctx.stroke()
+      if (refProgress > 0.1) drawArrowHead(ctx, midX, midY, animRefX, animRefY, C.refractedRay, 10)
+    }
     outRayDrawn = refProgress >= 1
 
     if (opts.activeLayers.angles !== false) {
@@ -240,16 +246,18 @@ function renderRefraction(
     refEndY = midY + rayLen * Math.sin(theta1Rad)
     const refProgress = Math.min((currentTime * 0.25 - 0.35) / 0.65, 1)
 
-    const animReflX = midX + (refEndX - midX) * Math.max(0, refProgress)
-    const animReflY = midY + (refEndY - midY) * Math.max(0, refProgress)
+    if (showRays) {
+      const animReflX = midX + (refEndX - midX) * Math.max(0, refProgress)
+      const animReflY = midY + (refEndY - midY) * Math.max(0, refProgress)
 
-    ctx.strokeStyle = C.reflectedRay
-    ctx.lineWidth = 2.5
-    ctx.beginPath()
-    ctx.moveTo(midX, midY)
-    ctx.lineTo(animReflX, animReflY)
-    ctx.stroke()
-    if (refProgress > 0.1) drawArrowHead(ctx, midX, midY, animReflX, animReflY, C.reflectedRay, 10)
+      ctx.strokeStyle = C.reflectedRay
+      ctx.lineWidth = 2.5
+      ctx.beginPath()
+      ctx.moveTo(midX, midY)
+      ctx.lineTo(animReflX, animReflY)
+      ctx.stroke()
+      if (refProgress > 0.1) drawArrowHead(ctx, midX, midY, animReflX, animReflY, C.reflectedRay, 10)
+    }
     outRayDrawn = refProgress >= 1
 
     ctx.fillStyle = C.reflectedRay
@@ -259,7 +267,7 @@ function renderRefraction(
   }
 
   // Continuous photon pulse traveling along ray path
-  if (progress >= 1 && outRayDrawn) {
+  if (showRays && progress >= 1 && outRayDrawn) {
     const pulseLen = 3
     const p = (currentTime % pulseLen) / pulseLen
     if (p < 0.5) {
@@ -511,16 +519,20 @@ function renderTIR(
   const incStartX = midX - rayLen * Math.sin(theta1Rad)
   const incStartY = midY + rayLen * Math.cos(theta1Rad)
 
-  const animIncX = incStartX + (midX - incStartX) * progress
-  const animIncY = incStartY + (midY - incStartY) * progress
+  const showRays = opts.activeLayers.rays !== false
 
-  ctx.strokeStyle = C.incidentRay
-  ctx.lineWidth = 2.5
-  ctx.beginPath()
-  ctx.moveTo(incStartX, incStartY)
-  ctx.lineTo(animIncX, animIncY)
-  ctx.stroke()
-  drawArrowHead(ctx, incStartX, incStartY, animIncX, animIncY, C.incidentRay, 10)
+  if (showRays) {
+    const animIncX = incStartX + (midX - incStartX) * progress
+    const animIncY = incStartY + (midY - incStartY) * progress
+
+    ctx.strokeStyle = C.incidentRay
+    ctx.lineWidth = 2.5
+    ctx.beginPath()
+    ctx.moveTo(incStartX, incStartY)
+    ctx.lineTo(animIncX, animIncY)
+    ctx.stroke()
+    drawArrowHead(ctx, incStartX, incStartY, animIncX, animIncY, C.incidentRay, 10)
+  }
 
   let outEndX = midX
   let outEndY = midY
@@ -536,16 +548,18 @@ function renderTIR(
       outEndX = refEndX
       outEndY = refEndY
 
-      const animRefX = midX + (refEndX - midX) * Math.max(0, refProgress)
-      const animRefY = midY + (refEndY - midY) * Math.max(0, refProgress)
+      if (showRays) {
+        const animRefX = midX + (refEndX - midX) * Math.max(0, refProgress)
+        const animRefY = midY + (refEndY - midY) * Math.max(0, refProgress)
 
-      ctx.strokeStyle = C.refractedRay
-      ctx.lineWidth = 2.5
-      ctx.beginPath()
-      ctx.moveTo(midX, midY)
-      ctx.lineTo(animRefX, animRefY)
-      ctx.stroke()
-      if (refProgress > 0.1) drawArrowHead(ctx, midX, midY, animRefX, animRefY, C.refractedRay, 10)
+        ctx.strokeStyle = C.refractedRay
+        ctx.lineWidth = 2.5
+        ctx.beginPath()
+        ctx.moveTo(midX, midY)
+        ctx.lineTo(animRefX, animRefY)
+        ctx.stroke()
+        if (refProgress > 0.1) drawArrowHead(ctx, midX, midY, animRefX, animRefY, C.refractedRay, 10)
+      }
     }
 
     const reflEndX = midX + rayLen * Math.sin(theta1Rad)
@@ -554,24 +568,27 @@ function renderTIR(
     const reflAlpha = isTIR ? 1 : Math.max(0, (theta1 - (crit ?? 90) * 0.5) / ((crit ?? 90) * 0.5))
     if (reflAlpha > 0.05) {
       if (isTIR) { outEndX = reflEndX; outEndY = reflEndY }
-      const animReflX = midX + (reflEndX - midX) * Math.max(0, refProgress)
-      const animReflY = midY + (reflEndY - midY) * Math.max(0, refProgress)
 
-      ctx.globalAlpha = isTIR ? 1 : reflAlpha * 0.5
-      ctx.strokeStyle = C.reflectedRay
-      ctx.lineWidth = isTIR ? 2.5 : 1.5
-      ctx.beginPath()
-      ctx.moveTo(midX, midY)
-      ctx.lineTo(animReflX, animReflY)
-      ctx.stroke()
-      if (refProgress > 0.1) drawArrowHead(ctx, midX, midY, animReflX, animReflY, C.reflectedRay, 10)
-      ctx.globalAlpha = 1
+      if (showRays) {
+        const animReflX = midX + (reflEndX - midX) * Math.max(0, refProgress)
+        const animReflY = midY + (reflEndY - midY) * Math.max(0, refProgress)
+
+        ctx.globalAlpha = isTIR ? 1 : reflAlpha * 0.5
+        ctx.strokeStyle = C.reflectedRay
+        ctx.lineWidth = isTIR ? 2.5 : 1.5
+        ctx.beginPath()
+        ctx.moveTo(midX, midY)
+        ctx.lineTo(animReflX, animReflY)
+        ctx.stroke()
+        if (refProgress > 0.1) drawArrowHead(ctx, midX, midY, animReflX, animReflY, C.reflectedRay, 10)
+        ctx.globalAlpha = 1
+      }
     }
     allDrawn = refProgress >= 1
   }
 
   // Continuous photon pulse
-  if (progress >= 1 && allDrawn) {
+  if (showRays && progress >= 1 && allDrawn) {
     const pulseLen = 3
     const p = (currentTime % pulseLen) / pulseLen
     if (p < 0.5) {

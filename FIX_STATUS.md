@@ -11,13 +11,13 @@ Current head includes batch 14 fixes (F15 arrow key nav, F22 dependency upgrades
 | F03 | Pendulum energy inconsistency | PARTIAL | 1,11 | PE switched to small-angle quadratic form. UI now shows amber warning when theta0 > 15°, displaying the approximation error percentage. The simulation model still uses small-angle formulas; a full nonlinear solver is not implemented. |
 | F04 | Bohr model ignores Z | DONE | 1 | modernStateAtTime passes Z to bohrRadiusPm, electronSpeed, bohrRadius. |
 | F05 | Optics f=0 / virtual ray issues | DONE | 1,6,11 | lensPower null for f=0; virtual ray rendering improved. `drawPrincipalRays` now receives `imgScreenH` (final image height) instead of `animImgH`. Principal rays point to the correct final image position throughout the reveal animation. |
-| F06 | Quiz answer errors | PARTIAL | 2,11 | Two numerical corrections applied (thermo-h1, opt-h1). `elec-e4` fake distractor `P = IV²` replaced with real formula `F = qE`. Remaining: `opt-e8` mirage TIR explanation is simplified but curriculum-aligned (CBSE); not changing. |
+| F06 | Quiz answer errors | PARTIAL | 2,11 | Two numerical corrections applied (thermo-h1, opt-h1). `elec-e4` fake distractor `P = IV²` replaced with real formula `F = qE`. Remaining subcriteria: `pm-m7` (drag formula wording), `pm-h7` (trajectory shape claim), `thermo-h8` (adiabatic speed), `mp-e9` (wave equation units), `mp-h6` (standing wave boundary). `opt-e8` mirage TIR explanation simplified but curriculum-aligned (CBSE); not changing. |
 | F07 | Topic lifecycle leaks | DONE | 2,7 | `resetQuiz()` now clears `sessionQuestions`. URL param restoration moved after topic defaults in init effect with clamping/validation. Topic change resets playback, undo, quiz, compare, ghosts. |
 | F08 | Keyboard shortcuts topic-locked | DONE | 1,8,10 | Rewrote to accept SimulationModule, uses topic.tabs and topic.timeOfFlight. Keyboard stepping now uses compare-mode max(tofA, tofB) matching PlaybackBar and Canvas2D. New keyboard-shortcuts test dispatches actual KeyboardEvents through `useKeyboardShortcuts` hook via `renderHook`, verifying ArrowRight at t=5 in compare mode advances (not jumps backward). |
 | F09 | Compare mode truncated playback | DONE | 1,7,8 | PlaybackBar, Canvas2D animation loop, and keyboard stepping all use max(tofA, tofB) in compare mode. All input paths now share the same comparison time domain. |
 | F10 | Gas worker sync | DONE | 3,7 | Worker reset handler added. `Scene3DGas` passes `deltaReal * speed` (scaled time) to `builder.step()` so simulation clock matches display at all playback speeds. |
 | F11 | Gas PV/pressure inconsistency | PARTIAL | 3,12 | Pressure uses effectiveVolume for piston mode. Inline pressure calculations in gasBox3D.ts and thermoRenderer.ts deduplicated to use centralized `idealGasPressure` and `effectiveVolume`. PV product added as derived value so students can verify PV = nRT. avgKE symbol disambiguated to `⟨KE⟩`. Remaining: visual box volume not proportional to physics volume due to 1D scaling with clamping; this is a visualization simplification, not a physics error. |
-| F12 | Disconnected controls | DONE | 4,7,11 | Removed dead 'graph' layer toggle. Added Speed Distribution histogram overlay to 3D gas scene. Canvas2D vector layer gating removed: velocity/acceleration/components layers are now controlled solely by their toggle switches, not restricted to specific tab names. All topics' vector layers are available on any tab. |
+| F12 | Disconnected controls | PARTIAL | 4,7,11,16 | Removed dead 'graph' layer toggle. Added Speed Distribution histogram overlay to 3D gas scene. Canvas2D vector layer gating removed. Optics refraction/TIR renderers now gate ray drawing on `activeLayers.rays`, so the Rays toggle actually controls incident/refracted/reflected rays while leaving angle arcs and labels visible. Not browser-verified. |
 | F13 | Generic data table | DONE | 2 | DataTable rewritten to use topic.derivedValues/derivedValueKeys. |
 | F14 | Small-screen layout | PARTIAL | 2,7,8,9 | Canvas container given responsive height. Main content area scrollable on mobile. Control panel no longer competes for flex space. TopBar secondary actions (Screenshot, Share, Fullscreen, Language) moved into overflow menu on mobile. PlaybackBar condensed with responsive sizing, speed selector and time readout hidden on very narrow viewports. Full touch/zoom/assistive-technology verification not performed; header and playback no longer clip at 320/390px widths in layout, but actual device testing has not been done. |
 | F15 | Accessibility | PARTIAL | 2,13,14 | Slider ARIA attributes added. Viewport scaling fixed. Layer/tool toggles: `aria-pressed`. TabBar: `role="tablist"`, `aria-controls`, `tabIndex` roving, ArrowLeft/ArrowRight/Home/End keyboard navigation. SimulationPage panel tabs: `role="tabpanel"`, `aria-labelledby`. PlaybackBar: `aria-pressed` on sound/pause-at-key-points toggles, "Replay" label for landed state. PresetStrip: `aria-pressed` on active preset. QuizPanel: `role="radiogroup"` + `role="radio"` + `aria-checked`. Toast: `role="status"` + `aria-live="polite"`. 3D scenes: `role="img"` + `aria-label`, `tabIndex=0`, keyboard camera controls (arrow keys rotate, +/- zoom), focus outline. Language toggle: `aria-label`. Remaining: full assistive technology testing not performed. |
@@ -28,15 +28,15 @@ Current head includes batch 14 fixes (F15 arrow key nav, F22 dependency upgrades
 | F20 | Longitudinal wave speed | DONE | 4 | Correct spring-mass chain dispersion formula. |
 | F21 | Drag coefficient units | DONE | 2,11,13 | Symbol/unit renamed. Compare-mode legend symbol corrected from 'Cd' to 'b' matching module definition. Acceleration vector now shows actual net acceleration (gravity + drag) when drag > 0, with correct direction and magnitude. Legend label switches from "Gravity" to "Net Acceleration" when drag is enabled. Trajectory cap raised from 100s (100001 steps) to 250s (250001 steps), covering worst-case slider combination (v0=50, theta=90, g=0.5, y0=50 → ~214s TOF). |
 | F22 | Dependency advisories | PARTIAL | 5,7,9,14 | Upgraded vitest 2→5 (dev-only, resolves @vitest/mocker path traversal + vite/esbuild advisories). Upgraded eslint-config-next 14→15 (resolves glob CLI injection). Reduced from 23 to 15 vulnerable packages, 79 to 72 unique advisories. Remaining 15 packages (1 critical, 9 high, 5 moderate) all in next 14.x (23 advisories + postcss) and prisma chain (hono/valibot/lodash). Both require major framework upgrades (next 14→16, prisma 7). Per-advisory reachability analysis in `DEPENDENCY_AUDIT.md`. |
-| F23 | Animation performance | DONE | 12 | Playwright-based performance profiling test added (e2e/perf-profile.spec.ts). Measures rAF frame times (idle and active animation) across all 6 topics and topic-switching latency. Results: all topics p95 < 33ms (30fps budget); avg ~16.5ms (~60fps). Topic switching 0.9-1.4s. Thermodynamics occasional 3D init spikes (82ms max) but p95=21ms. No performance regression detected. |
-| F24 | Teaching preset gaps | DONE | 11 | `low-drive` hookQuestion fixed from false premise ("Why does a low throw cover more ground?") to neutral "How does a low angle change the trajectory shape?". `moon-vs-earth` hookQuestion fixed from statement to question "How far would this same throw go on the Moon?". `does-mass-matter` hookQuestion reworded to "Does changing the mass change the trajectory?" with compareParams showing identical trajectories, defaultTab set to compare. |
+| F23 | Animation performance | PARTIAL | 12,16 | Playwright-based performance profiling test added. `clearScene()` in fieldView3D.ts now disposes label textures/materials via `disposeSprite()` and force arrow geometries/materials via `disposeGroup()`, preventing GPU memory leaks on topic change. Browser profiling not performed. |
+| F24 | Teaching preset gaps | PARTIAL | 11,16 | `low-drive` and `moon-vs-earth` hookQuestions fixed. `does-mass-matter` preset now uses distinct masses: `mass: 1` in params, `mass: 10` in compareParams, both with `drag: 0`. hookQuestion updated to "A 1 kg ball and a 10 kg ball are launched identically (no air resistance). Do their paths differ?". Mass symbol added to renderer2d `PARAM_SYMBOLS` and `getDiffLabel`. Not browser-verified. |
 | F25 | Threshold preset wording | DONE | 1 | "At Threshold" renamed to "Near Threshold". |
-| F26 | Offline caching | PARTIAL | 7 | Fixed: cache cleanup now only deletes `fizzix-` prefixed caches (was deleting all). Navigation fallback returns home-page shell for uncached routes and 503 Response as last resort (was returning undefined). Remaining: topic pages not precached; full offline navigation requires visited-page caching which is already implemented via stale-while-revalidate. Multi-build update behavior and truly uncached navigation not verified. |
+| F26 | Offline caching | PARTIAL | 7,16 | Fixed: cache cleanup only deletes `fizzix-` prefixed caches. Navigation fallback returns home-page shell or 503. Static asset handler (`/_next/static/`) now checks `res.ok` before caching, preventing error responses from being cached. Remaining: topic pages not precached; multi-build update behavior not verified. |
 
 ## Summary
 
-- **DONE**: 19 findings (F01, F02, F04, F05, F07, F08, F09, F10, F12, F13, F16, F17, F18, F19, F20, F21, F23, F24, F25)
-- **PARTIAL**: 7 findings (F03, F06, F11, F14, F15, F22, F26)
+- **DONE**: 16 findings (F01, F02, F04, F05, F07, F08, F09, F10, F13, F16, F17, F18, F19, F20, F21, F25)
+- **PARTIAL**: 10 findings (F03, F06, F11, F12, F14, F15, F22, F23, F24, F26)
 
 ## Batch 9 changes (third verification response)
 
@@ -101,3 +101,48 @@ Current head includes batch 14 fixes (F15 arrow key nav, F22 dependency upgrades
 - Production build: succeeds
 - Unit tests: 339/339 pass
 - npm audit: 15 vulnerabilities (was 23), 72 unique advisories (was 79)
+
+## Batch 15 changes (keyboard integration, ARIA panel targets)
+
+### F15: Keyboard widget isolation
+- **useKeyboardShortcuts.ts**: Global handler now skips events from `[role="tablist"]`, `[role="radiogroup"]`, and `[data-keyboard-trap]` via `closest()`. `instanceof HTMLElement` guard prevents crash when `e.target` is `window`. Space case also guarded for button elements.
+- **SimulationPage.tsx**: Panel tabs get arrow key navigation via onKeyDown on the tablist div. Each panel tab has distinct `aria-controls` (`panel-tabpanel-params`/`panel-tabpanel-data`). Tabpanel id is dynamic.
+- **TabBar.tsx**: `aria-controls` changed from `tabpanel-${tab.id}` (nonexistent) to `"simulation-viewport"` (actual DOM element).
+- **QuizPanel.tsx**: Radiogroup gets ArrowDown/ArrowRight/ArrowUp/ArrowLeft with wrap-around. Roving tabIndex on radio buttons.
+- **Scene3D.tsx**, **Scene3DGas.tsx**: Added `data-keyboard-trap` attribute.
+- **keyboard-integration.test.ts** (new): 7 tests verifying tablist, radiogroup, keyboard-trap, plain element, Space on radiogroup, defaultPrevented, and input exclusion.
+
+### F22: @types/node alignment
+- **package.json**: `@types/node` changed from `"^20"` to `"^22.20.4"` for vitest 5 peer alignment.
+
+### Verification results (batch 15)
+- TypeScript: `tsc --noEmit` exits zero
+- ESLint: 0 errors, 0 warnings (src/)
+- Dash lint: 0 violations
+- Production build: succeeds
+- Unit tests: 346/346 pass (339 + 7 keyboard integration)
+
+## Batch 16 changes (F12 rays toggle, F23 disposal, F24 mass preset, F26 static caching)
+
+### F12: Optics rays toggle (reopened as PARTIAL)
+- **opticsRenderer.ts**: `renderRefraction()` and `renderTIR()` now gate ray drawing on `opts.activeLayers.rays !== false`. Incident ray, refracted ray, reflected ray, and photon pulse all wrapped in `if (showRays)` blocks. Angle arcs and medium labels remain visible when rays are hidden.
+
+### F23: Three.js resource disposal (reopened as PARTIAL)
+- **fieldView3D.ts**: Added `disposeSprite()` helper (disposes material.map + material) and `disposeGroup()` helper (traverses children, disposes mesh geometry + material). `clearScene()` now calls these for label1, label2, forceArrow1, forceArrow2.
+
+### F24: Mass preset distinct masses (reopened as PARTIAL)
+- **presets.ts**: `does-mass-matter` preset now uses `mass: 1` / `mass: 10` with `drag: 0`. hookQuestion updated to mention specific masses and "(no air resistance)".
+- **renderer2d.ts**: Added `mass: 'm'` to `PARAM_SYMBOLS`. `getDiffLabel` formats mass with "kg" unit suffix.
+
+### F26: Static asset caching res.ok check
+- **sw.js**: Static asset handler (`/_next/static/`) now checks `res.ok` before calling `cache.put()`, preventing error responses from being cached.
+
+### Tests
+- **batch16-fixes.test.ts** (new): 5 tests — F12 rays toggle (stroke count with/without), F26 source inspection for res.ok, F24 mass preset distinct values, F23 source inspection for dispose calls.
+
+### Verification results (batch 16)
+- TypeScript: `tsc --noEmit` exits zero
+- ESLint: 0 errors, 0 warnings (src/)
+- Dash lint: 0 violations
+- Production build: succeeds
+- Unit tests: 351/351 pass (346 + 5 batch 16)

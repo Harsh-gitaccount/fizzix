@@ -3,11 +3,11 @@
 ## Session State
 - **Branch**: `claude/brave-ramanujan-s4hhf9`
 - **Base commit**: `7523ff0c2e3164d205036a85d81d12ae0312f997`
-- **Last batch**: batch-14 (F15 arrow key nav, F22 dependency upgrades)
+- **Last batch**: batch-16 (F12 rays toggle, F23 disposal, F24 mass preset, F26 static caching)
 - **TypeScript**: 0 errors
 - **ESLint**: 0 errors, 0 warnings (src/)
 - **Dash lint**: 0 violations
-- **Unit tests**: 339/339 passing
+- **Unit tests**: 351/351 passing
 - **Production build**: succeeds
 - **npm audit**: 15 vulnerabilities (down from 23)
 
@@ -28,6 +28,8 @@
 14. `5affd8b` -- Batch 14a: F15 arrow key tab navigation
 15. `79611eb` -- Batch 14b: F22 dependency upgrades (vitest 2→5, eslint-config-next 14→15)
 16. `9933f38` -- Batch 14c: F15 3D keyboard camera controls
+17. `a44769f` -- Batch 15: Keyboard widget isolation, ARIA panel targets, @types/node alignment
+18. *(pending)* -- Batch 16: F12 rays toggle, F23 resource disposal, F24 mass preset, F26 static caching
 
 ## Batch 11 Changes
 
@@ -93,16 +95,37 @@
 - **Resolved advisories**: `@vitest/mocker` path traversal, vite dev server exposure, esbuild dev server CORS, glob CLI injection (7 unique GHSAs).
 - **Remaining**: 15 packages, 72 unique advisories — all in next 14.x chain (postcss, next framework) and prisma chain (hono, valibot, lodash). Both require major framework upgrades not safe to attempt in this session.
 
+## Batch 16 Changes
+
+### F12: Optics rays toggle (reopened as PARTIAL)
+- `src/lib/canvas/opticsRenderer.ts`: `renderRefraction()` and `renderTIR()` gate ray drawing on `opts.activeLayers.rays !== false`. Angle arcs and labels stay visible.
+
+### F23: Three.js resource disposal (reopened as PARTIAL)
+- `src/lib/three/fieldView3D.ts`: `disposeSprite()` and `disposeGroup()` helpers. `clearScene()` disposes label1/label2 textures+materials and forceArrow1/forceArrow2 geometries+materials.
+
+### F24: Mass preset distinct masses (reopened as PARTIAL)
+- `src/simulations/projectile-motion/presets.ts`: `does-mass-matter` uses `mass: 1` / `mass: 10`, `drag: 0`.
+- `src/lib/canvas/renderer2d.ts`: `mass: 'm'` in PARAM_SYMBOLS, "kg" unit in getDiffLabel.
+
+### F26: Static asset caching
+- `public/sw.js`: Static asset handler checks `res.ok` before `cache.put()`.
+
+### Tests
+- `src/__tests__/batch16-fixes.test.ts` (new): 5 tests for F12, F23, F24, F26.
+
 ## Remaining Work
 
-### PARTIAL (7 findings)
-- **F03**: Small-angle approximation disclosure; full nonlinear solver not implemented
-- **F06**: `opt-e8` mirage TIR explanation simplified but curriculum-aligned; not changing
-- **F11**: Visual box volume not proportional to physics volume (1D scaling with clamping); visualization simplification
-- **F14**: True touch/zoom/assistive-technology verification; actual device testing
-- **F15**: Full assistive technology testing not performed
-- **F22**: vitest/eslint-config-next upgraded; next 14→16 and prisma 7 remain (major, breaking)
-- **F26**: Multi-build updates, truly uncached navigation, production offline verification
+### PARTIAL (10 findings)
+- **F03**: Small-angle approximation disclosure; full nonlinear solver not implemented. Error metric definition needed.
+- **F06**: Remaining quiz subcriteria: `pm-m7`, `pm-h7`, `thermo-h8`, `mp-e9`, `mp-h6`. `opt-e8` curriculum-aligned; not changing.
+- **F11**: Visual box volume not proportional; KE qualifier; histogram meaning. Visualization simplification.
+- **F12**: Rays toggle wired for refraction/TIR; not browser-verified.
+- **F14**: True touch/zoom/assistive-technology verification; actual device testing.
+- **F15**: Full assistive technology testing not performed.
+- **F22**: vitest/eslint-config-next upgraded; next 14→16 and prisma 7 remain (major, breaking).
+- **F23**: Resource disposal added; browser profiling not performed.
+- **F24**: Mass preset fixed; not browser-verified.
+- **F26**: res.ok check added; multi-build updates, production offline verification not done.
 
 ### Not verifiable in current environment
 - Real mobile touch interaction

@@ -131,13 +131,27 @@ export function createFieldView3D(setup: Scene3DSetup): ReturnType<Scene3DBuilde
     scene.add(flowDotsGroup)
   }
 
+  function disposeGroup(group: THREE.Group) {
+    group.traverse((child) => {
+      if (child instanceof THREE.Mesh) {
+        child.geometry.dispose()
+        ;(child.material as THREE.Material).dispose()
+      }
+    })
+  }
+
+  function disposeSprite(sprite: THREE.Sprite) {
+    if (sprite.material.map) sprite.material.map.dispose()
+    sprite.material.dispose()
+  }
+
   function clearScene() {
     if (charge1Mesh) { scene.remove(charge1Mesh); (charge1Mesh.material as THREE.Material).dispose() }
     if (charge2Mesh) { scene.remove(charge2Mesh); (charge2Mesh.material as THREE.Material).dispose() }
-    if (label1) scene.remove(label1)
-    if (label2) scene.remove(label2)
-    if (forceArrow1) scene.remove(forceArrow1)
-    if (forceArrow2) scene.remove(forceArrow2)
+    if (label1) { scene.remove(label1); disposeSprite(label1) }
+    if (label2) { scene.remove(label2); disposeSprite(label2) }
+    if (forceArrow1) { scene.remove(forceArrow1); disposeGroup(forceArrow1) }
+    if (forceArrow2) { scene.remove(forceArrow2); disposeGroup(forceArrow2) }
     if (fieldLineGroup) {
       fieldLineGroup.traverse((child) => {
         if (child instanceof THREE.Mesh) {

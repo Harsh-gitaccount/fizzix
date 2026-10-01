@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { rateLimit } from '@/lib/rateLimit'
 import { isValidQuestion, deriveCorrectness } from '@/lib/quiz/questionBank'
+import { QUIZ_POOL_VERSION } from '@/data/quiz/poolVersion'
 
 const VALID_TOPIC_IDS = new Set([
   'projectile-motion',
@@ -44,6 +45,7 @@ function validateItem(r: unknown): r is QuizResultPayload {
   if (typeof item.timestamp !== 'number' || !Number.isFinite(item.timestamp) || item.timestamp < MIN_TIMESTAMP || item.timestamp > MAX_TIMESTAMP) return false
   if (item.poolVersion !== undefined) {
     if (typeof item.poolVersion !== 'number' || !Number.isInteger(item.poolVersion) || item.poolVersion < 1) return false
+    if (item.poolVersion > QUIZ_POOL_VERSION) return false
   }
 
   return true

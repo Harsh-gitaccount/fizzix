@@ -122,6 +122,16 @@ describe('POST /api/quiz/results/batch - handler tests', () => {
     expect(res.status).toBe(200)
   })
 
+  it('rejects poolVersion higher than current bank version', async () => {
+    const res = await callHandler({ results: [validPayload({ poolVersion: 999 })] })
+    expect(res.status).toBe(400)
+  })
+
+  it('accepts poolVersion equal to current bank version', async () => {
+    const res = await callHandler({ results: [validPayload({ poolVersion: 1 })] })
+    expect(res.status).toBe(200)
+  })
+
   it('returns stored:false when DATABASE_URL is not set', async () => {
     delete process.env.DATABASE_URL
     const { POST } = await import('@/app/api/quiz/results/batch/route')
@@ -149,12 +159,36 @@ describe('POST /api/quiz/results/batch - handler tests', () => {
     expect(res.status).toBe(400)
   })
 
-  it('server overrides client correctness claim', async () => {
+  it('server overrides false client claim to true when answer is correct', async () => {
     const q = QUIZ_POOL[0]
+    const { __mockCreateMany } = await import('@/lib/db') as unknown as { __mockCreateMany: ReturnType<typeof vi.fn> }
+    __mockCreateMany.mockClear()
+    __mockCreateMany.mockResolvedValue({ count: 1 })
+
+    const res = await callHandler({
+      results: [validPayload({ selected: q.correctIndex, correct: false })],
+    })
+    expect(res.status).toBe(200)
+
+    expect(__mockCreateMany).toHaveBeenCalledTimes(1)
+    const createManyArg = __mockCreateMany.mock.calls[0][0]
+    expect(createManyArg.data[0].correct).toBe(true)
+  })
+
+  it('server overrides true client claim to false when answer is wrong', async () => {
+    const q = QUIZ_POOL[0]
+    const { __mockCreateMany } = await import('@/lib/db') as unknown as { __mockCreateMany: ReturnType<typeof vi.fn> }
+    __mockCreateMany.mockClear()
+    __mockCreateMany.mockResolvedValue({ count: 1 })
+
     const wrongIndex = (q.correctIndex + 1) % 4
     const res = await callHandler({
       results: [validPayload({ selected: wrongIndex, correct: true })],
     })
     expect(res.status).toBe(200)
+
+    expect(__mockCreateMany).toHaveBeenCalledTimes(1)
+    const createManyArg = __mockCreateMany.mock.calls[0][0]
+    expect(createManyArg.data[0].correct).toBe(false)
   })
 })

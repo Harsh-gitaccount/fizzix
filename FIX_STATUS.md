@@ -1,8 +1,8 @@
 # Fizzix Audit Fix Status
 
 Tracking fixes for audit findings F01-F26 from the comprehensive audit at commit `7523ff0`.
-Reconciled against independent verification at commits `fcb3b41`, `6be4bac`, and `b9bf820`.
-Current head includes batch 9 fixes (third verification response).
+Reconciled against independent verification at commits `fcb3b41`, `6be4bac`, `b9bf820`, and `e97d111`.
+Current head includes batch 10 fixes (test gaps, poolVersion policy, physics/content corrections).
 
 | Finding | Title | Status | Batch | Notes |
 |---------|-------|--------|-------|-------|
@@ -13,7 +13,7 @@ Current head includes batch 9 fixes (third verification response).
 | F05 | Optics f=0 / virtual ray issues | PARTIAL | 1,6 | lensPower null for f=0; virtual ray rendering improved. `drawPrincipalRays` still receives animated `animImgH`; intermediate-frame geometry remains tied to changing image height during reveal. |
 | F06 | Quiz answer errors | PARTIAL | 2 | Two numerical corrections applied (thermo-h1, opt-h1). Other conceptual wording/assumption issues not all addressed. |
 | F07 | Topic lifecycle leaks | DONE | 2,7 | `resetQuiz()` now clears `sessionQuestions`. URL param restoration moved after topic defaults in init effect with clamping/validation. Topic change resets playback, undo, quiz, compare, ghosts. |
-| F08 | Keyboard shortcuts topic-locked | DONE | 1,8 | Rewrote to accept SimulationModule, uses topic.tabs and topic.timeOfFlight. Keyboard stepping now uses compare-mode max(tofA, tofB) matching PlaybackBar and Canvas2D. |
+| F08 | Keyboard shortcuts topic-locked | DONE | 1,8,10 | Rewrote to accept SimulationModule, uses topic.tabs and topic.timeOfFlight. Keyboard stepping now uses compare-mode max(tofA, tofB) matching PlaybackBar and Canvas2D. New keyboard-shortcuts test dispatches actual KeyboardEvents through `useKeyboardShortcuts` hook via `renderHook`, verifying ArrowRight at t=5 in compare mode advances (not jumps backward). |
 | F09 | Compare mode truncated playback | DONE | 1,7,8 | PlaybackBar, Canvas2D animation loop, and keyboard stepping all use max(tofA, tofB) in compare mode. All input paths now share the same comparison time domain. |
 | F10 | Gas worker sync | DONE | 3,7 | Worker reset handler added. `Scene3DGas` passes `deltaReal * speed` (scaled time) to `builder.step()` so simulation clock matches display at all playback speeds. |
 | F11 | Gas PV/pressure inconsistency | PARTIAL | 3 | Pressure uses effectiveVolume for piston mode. Box-volume mapping and distribution/energy-label issues remain separate parts of original finding. |
@@ -22,8 +22,8 @@ Current head includes batch 9 fixes (third verification response).
 | F14 | Small-screen layout | PARTIAL | 2,7,8,9 | Canvas container given responsive height. Main content area scrollable on mobile. Control panel no longer competes for flex space. TopBar secondary actions (Screenshot, Share, Fullscreen, Language) moved into overflow menu on mobile. PlaybackBar condensed with responsive sizing, speed selector and time readout hidden on very narrow viewports. Full touch/zoom/assistive-technology verification not performed; header and playback no longer clip at 320/390px widths in layout, but actual device testing has not been done. |
 | F15 | Accessibility | PARTIAL | 2 | Slider ARIA attributes added. Viewport scaling fixed. Complete keyboard navigation, toggle/tab semantics, and nonvisual alternatives not demonstrated. |
 | F16 | 3D screenshot export blank | DONE | 5 | preserveDrawingBuffer:true on WebGLRenderer. |
-| F17 | Quiz API validation | DONE | 4,7,8,9 | Full envelope validation: null body/items return 400. `topicId` validated against 6 known topics. Question ID validated against actual quiz bank. Server derives correctness from bank's `correctIndex`. Persistence-field validation: `id` must be string or undefined; `poolVersion` must be positive integer or undefined; `timestamp` must produce a valid Date in reasonable range (2021-2100). Numeric ids, string poolVersions, and out-of-range timestamps are rejected with 400. |
-| F18 | Offline sync chunking | DONE | 5,8,9 | Chunking with per-chunk markSynced and idempotency via skipDuplicates. Client requires `stored === true` (not just absence of `stored:false`). Count-only fallback removed. AcceptedIds intersected with submitted chunk IDs; only explicitly acknowledged records are marked synced. Empty acceptedIds, missing stored field, and unrelated IDs do not cause records to be marked synced. |
+| F17 | Quiz API validation | DONE | 4,7,8,9,10 | Full envelope validation: null body/items return 400. `topicId` validated against 6 known topics. Question ID validated against actual quiz bank. Server derives correctness from bank's `correctIndex`. Persistence-field validation: `id` must be string or undefined; `poolVersion` must be positive integer in range [1, QUIZ_POOL_VERSION] or undefined; `timestamp` must produce a valid Date in reasonable range (2021-2100). Unsupported poolVersion (e.g. 999) now rejected with 400. Handler correctness tests assert both directions of server override via captured `createMany` data. |
+| F18 | Offline sync chunking | DONE | 5,8,9,10 | Chunking with per-chunk markSynced and idempotency via skipDuplicates. Client requires `stored === true` (not just absence of `stored:false`). Count-only fallback removed. AcceptedIds intersected with submitted chunk IDs; only explicitly acknowledged records are marked synced. New sync-client test calls actual `syncQuizResults` with mocked IDB and fetch, verifying records are correctly marked or kept pending for all edge cases. |
 | F19 | Adaptive quiz label mismatch | DONE | 2,7 | Badge shows item difficulty. `saveQuizResult` and `trackEvent` now use `q.difficulty` (question's own difficulty) instead of `s.difficulty` (adaptive store difficulty). |
 | F20 | Longitudinal wave speed | DONE | 4 | Correct spring-mass chain dispersion formula. |
 | F21 | Drag coefficient units | PARTIAL | 2 | Symbol/unit renamed. Trajectory cap and acceleration-vs-gravity semantics remain unaddressed. |
@@ -58,9 +58,30 @@ Current head includes batch 9 fixes (third verification response).
 ### F22: Dependency inventory corrected
 - **DEPENDENCY_AUDIT.md**: Corrected to 79 unique advisories (was 80; GHSA-82fw-gwwq-j7x9 counted once). Advisory severity counts corrected to use each advisory's own severity: 3 critical, 16 high, 55 moderate, 5 low (was incorrectly 25 critical / 52 high / 3 moderate). GHSA-9g9p-9gw9-jx7f correctly identified as moderate (was labeled critical). Vitest section corrected: 1 critical + 1 moderate (was 2 critical). Deployment assumptions marked as unverified.
 
-### Verification results
+### Verification results (batch 9)
 - TypeScript: `tsc --noEmit` exits zero
 - ESLint: 0 errors, 0 warnings (src/)
 - Dash lint: 0 violations
 - Production build: succeeds
 - Unit tests: 315/315 pass (275 golden + 26 regression + 14 handler)
+
+## Batch 10 changes (test gaps, poolVersion policy)
+
+### Sync client test (F18 test gap closed)
+- **sync-client.test.ts** (new): 10 tests calling the actual `syncQuizResults` function with mocked IndexedDB and controlled `fetch`. Verifies: partial acknowledgment marks only acknowledged IDs; `stored:false` leaves records pending; missing `stored` field leaves records pending; empty `acceptedIds` leaves records pending; unrelated IDs filtered out; positive count without `acceptedIds` leaves records pending; offline skips fetch; no unsynced records skips fetch; correct payload shape sent; full acknowledgment marks all. Reverting the production sync fix would cause these tests to fail.
+
+### Keyboard hook test (F08 test gap closed)
+- **keyboard-shortcuts.test.ts** (new): 11 tests dispatching actual `KeyboardEvent`s through `useKeyboardShortcuts` via `renderHook`. Verifies: ArrowRight advances by 1/60; ArrowRight at t=5 in compare mode uses max TOF and does not jump backward; ArrowRight without compare mode clamps to single TOF; Space toggles play/pause; Escape resets; ArrowLeft steps back; ArrowLeft clamps to 0; Shift+ArrowRight steps 0.5s; Equal/Minus adjust speed; landed state set at TOF.
+
+### Handler correctness assertion (F17 test gap closed)
+- **quiz-handler.test.ts**: Split "server overrides client correctness claim" into two tests that assert captured `createMany` data: (1) false client claim → true when answer correct; (2) true client claim → false when answer wrong. Now 17 tests.
+
+### poolVersion policy (F17 policy gap closed)
+- **route.ts**: `poolVersion` now validated against `QUIZ_POOL_VERSION` (imported from `@/data/quiz/poolVersion`). Values > current version (e.g. 999) rejected with 400. Historical offline records with unknown future versions are rejected rather than silently graded against the current bank, preventing incorrect scoring of questions that may have changed between versions.
+- **quiz-handler.test.ts**: Added tests for poolVersion > current version (rejected) and poolVersion === current version (accepted).
+
+### Verification results (batch 10)
+- TypeScript: `tsc --noEmit` exits zero
+- ESLint: 0 errors, 0 warnings (src/)
+- Production build: succeeds
+- Unit tests: 339/339 pass (275 golden + 26 regression + 17 handler + 10 sync-client + 11 keyboard-shortcuts)

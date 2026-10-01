@@ -216,5 +216,15 @@ self.onmessage = (e: MessageEvent) => {
     handleStep(params, dt)
     const data = serializeState()
     ;(self as unknown as Worker).postMessage({ type: 'state', data }, [data.buffer])
+  } else if (type === 'reset') {
+    particles = []
+    brownianTrace = []
+    lastHash = ''
+    lastTemp = 0
+    if (params) {
+      handleInit(params)
+      const data = serializeState()
+      ;(self as unknown as Worker).postMessage({ type: 'state', data }, [data.buffer])
+    }
   }
 }

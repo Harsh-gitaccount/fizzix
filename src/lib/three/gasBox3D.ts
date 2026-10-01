@@ -230,7 +230,8 @@ export function createGasBox3D(setup: GasBox3DSetup) {
       const n = params.moles ?? 1
       const T = params.temperature ?? 300
       const V = params.volume ?? 22.4
-      const P_kPa = (n * 8.314 * T) / (V / 1000) / 1000
+      const effectiveV = (params.thermoType ?? 0) === 1 ? V * (params.pistonPos ?? 0.7) : V
+      const P_kPa = (n * 8.314 * T) / (effectiveV / 1000) / 1000
       const arrowLen = Math.min(1.5, Math.max(0.3, P_kPa / 150))
 
       pressureArrows = new THREE.Group()
@@ -292,9 +293,19 @@ export function createGasBox3D(setup: GasBox3DSetup) {
     if (workerRef) { workerRef.terminate(); workerRef = null }
   }
 
+  function reset(params?: Record<string, number>) {
+    if (workerReady && workerRef) {
+      workerRef.postMessage({ type: 'reset', params: params ?? null })
+    }
+    latestState = null
+    stateChanged = false
+    prevHash = ''
+  }
+
   return {
     update,
     step,
+    reset,
     dispose,
     get hasNewState() { return stateChanged },
     consumeNewState() { stateChanged = false },

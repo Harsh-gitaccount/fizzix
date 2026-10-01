@@ -93,12 +93,22 @@ export default function Scene3DGas() {
     renderer.render(scene, camera)
 
     lastWallRef.current = performance.now()
+    let prevPlayState = usePlaybackStore.getState().playbackState
 
     const animate = () => {
       rafRef.current = requestAnimationFrame(animate)
 
       const playState = usePlaybackStore.getState().playbackState
       let needsGLRender = false
+
+      if (prevPlayState !== 'ready' && playState === 'ready') {
+        const p = useSimulationStore.getState().params
+        builder.reset(p)
+        const l = useUIStore.getState().activeLayers
+        builder.update(p, isDark, l)
+        needsGLRender = true
+      }
+      prevPlayState = playState
 
       if (playState === 'playing') {
         const now = performance.now()

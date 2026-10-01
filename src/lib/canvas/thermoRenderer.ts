@@ -483,7 +483,9 @@ export function renderThermoFrame(
   drawParticles(ctx, ox, oy, showSpeedColors, isDark)
 
   if (options.activeLayers.pressure) {
-    const P_kPa = (params.moles ?? 1) * 8.314 * (params.temperature ?? 300) / ((params.volume ?? 22.4) / 1000) / 1000
+    const V_raw = params.volume ?? 22.4
+    const effectiveV = (params.thermoType ?? 0) === 1 ? V_raw * (params.pistonPos ?? 0.7) : V_raw
+    const P_kPa = (params.moles ?? 1) * 8.314 * (params.temperature ?? 300) / (effectiveV / 1000) / 1000
     drawPressureArrows(ctx, ox, oy, containerW, containerH, P_kPa)
   }
 

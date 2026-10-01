@@ -162,8 +162,8 @@ export function thermoDerivedValues(
     avgKE: {
       value: ke * 1e21,
       unit: '×10⁻²¹ J',
-      symbol: '⟨KE⟩',
-      label: 'Avg KE per molecule',
+      symbol: '⟨KE⟩ₜᵣ',
+      label: 'Avg translational KE',
     },
     rmsSpeed: {
       value: vrms,

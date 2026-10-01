@@ -205,7 +205,7 @@ const dict: Record<string, Record<Lang, string>> = {
   'offline.banner': { en: 'You are offline. The simulation still works!', hi: 'आप ऑफ़लाइन हैं। सिमुलेशन अभी भी काम करता है!' },
 
   'unit.warning': { en: 'Did you mean m/s? {value} km/h = {converted} m/s', hi: 'क्या आपका मतलब m/s था? {value} km/h = {converted} m/s' },
-  'approx.warning': { en: 'Small-angle approximation: results are less accurate above ~15°. Error at {value}° is ~{error}%.', hi: 'लघु-कोण सन्निकटन: ~15° से ऊपर परिणाम कम सटीक हैं। {value}° पर त्रुटि ~{error}% है।' },
+  'approx.warning': { en: 'Small-angle approximation: period error at {value}° ≈ {error}% (Borda, θ²/16).', hi: 'लघु-कोण सन्निकटन: {value}° पर आवर्तकाल त्रुटि ≈ {error}% (Borda, θ²/16)।' },
 
   'topic.optics': { en: 'Optics & Light', hi: 'प्रकाशिकी और प्रकाश' },
 
@@ -273,7 +273,7 @@ const dict: Record<string, Record<Lang, string>> = {
   'preset.co2-heavy': { en: 'Heavy CO₂', hi: 'भारी CO₂' },
 
   'val.pressure': { en: 'Pressure', hi: 'दाब' },
-  'val.avgKE': { en: 'Avg KE per molecule', hi: 'प्रति अणु औसत KE' },
+  'val.avgKE': { en: 'Avg translational KE', hi: 'औसत स्थानान्तरीय KE' },
   'val.rmsSpeed': { en: 'RMS Speed', hi: 'RMS चाल' },
   'val.avgSpeed': { en: 'Avg Speed', hi: 'औसत चाल' },
   'val.totalKE': { en: 'Total KE', hi: 'कुल KE' },

@@ -55,7 +55,7 @@ export default function ControlPanel() {
 
   const theta0 = params.theta0 ?? 0
   const showApproxWarning = topic.slug === 'shm' && theta0 > 15
-  const approxError = showApproxWarning ? Math.round((1 / Math.cos(theta0 * Math.PI / 360) - 1) * 100) : 0
+  const approxError = showApproxWarning ? +(((theta0 * Math.PI / 180) ** 2 / 16) * 100).toFixed(1) : 0
 
   const flagText = (label: string) =>
     tOr('flag.' + label.toLowerCase().replace(/ /g, '_'), lang, label)

@@ -8,15 +8,15 @@ Current head includes batch 14 fixes (F15 arrow key nav, F22 dependency upgrades
 |---------|-------|--------|-------|-------|
 | F01 | Type-check & lint errors | DONE | 1,7 | TS errors fixed. ESLint 53 errors fixed (unused vars/imports/prefer-const). 50 dash-lint violations fixed. E2E route corrected (`/projectile-motion`). Production build passes. |
 | F02 | Damping model wrong frequency | DONE | 1 | Rewrote pendulum & spring to three-regime damped oscillator (underdamped/critical/overdamped). |
-| F03 | Pendulum energy inconsistency | PARTIAL | 1,11 | PE switched to small-angle quadratic form. UI now shows amber warning when theta0 > 15°, displaying the approximation error percentage. The simulation model still uses small-angle formulas; a full nonlinear solver is not implemented. |
+| F03 | Pendulum energy inconsistency | PARTIAL | 1,11,17 | PE switched to small-angle quadratic form. Warning now uses Borda approximation (θ²/16) and labels the metric as "period error." The simulation model still uses small-angle formulas; a full nonlinear solver is not implemented. |
 | F04 | Bohr model ignores Z | DONE | 1 | modernStateAtTime passes Z to bohrRadiusPm, electronSpeed, bohrRadius. |
 | F05 | Optics f=0 / virtual ray issues | DONE | 1,6,11 | lensPower null for f=0; virtual ray rendering improved. `drawPrincipalRays` now receives `imgScreenH` (final image height) instead of `animImgH`. Principal rays point to the correct final image position throughout the reveal animation. |
-| F06 | Quiz answer errors | PARTIAL | 2,11 | Two numerical corrections applied (thermo-h1, opt-h1). `elec-e4` fake distractor `P = IV²` replaced with real formula `F = qE`. Remaining subcriteria: `pm-m7` (drag formula wording), `pm-h7` (trajectory shape claim), `thermo-h8` (adiabatic speed), `mp-e9` (wave equation units), `mp-h6` (standing wave boundary). `opt-e8` mirage TIR explanation simplified but curriculum-aligned (CBSE); not changing. |
+| F06 | Quiz answer errors | PARTIAL | 2,11,17 | Two numerical corrections (thermo-h1, opt-h1). `elec-e4` distractor fixed. `pm-m7`: added "without air resistance" qualifier, showMe now isolates Vy (same Vy, different Vx → same TOF). `pm-h7`: added showMe with drag comparison, improved explanation. `thermo-h8`: explanation now addresses why T=0 and heavy-particle aren't the fundamental answer. `mp-e9`: question now says "for a given metal." `mp-h6`: question wording and explanation clarified. Remaining: `opt-e8` curriculum-aligned, not changing. |
 | F07 | Topic lifecycle leaks | DONE | 2,7 | `resetQuiz()` now clears `sessionQuestions`. URL param restoration moved after topic defaults in init effect with clamping/validation. Topic change resets playback, undo, quiz, compare, ghosts. |
 | F08 | Keyboard shortcuts topic-locked | DONE | 1,8,10 | Rewrote to accept SimulationModule, uses topic.tabs and topic.timeOfFlight. Keyboard stepping now uses compare-mode max(tofA, tofB) matching PlaybackBar and Canvas2D. New keyboard-shortcuts test dispatches actual KeyboardEvents through `useKeyboardShortcuts` hook via `renderHook`, verifying ArrowRight at t=5 in compare mode advances (not jumps backward). |
 | F09 | Compare mode truncated playback | DONE | 1,7,8 | PlaybackBar, Canvas2D animation loop, and keyboard stepping all use max(tofA, tofB) in compare mode. All input paths now share the same comparison time domain. |
 | F10 | Gas worker sync | DONE | 3,7 | Worker reset handler added. `Scene3DGas` passes `deltaReal * speed` (scaled time) to `builder.step()` so simulation clock matches display at all playback speeds. |
-| F11 | Gas PV/pressure inconsistency | PARTIAL | 3,12 | Pressure uses effectiveVolume for piston mode. Inline pressure calculations in gasBox3D.ts and thermoRenderer.ts deduplicated to use centralized `idealGasPressure` and `effectiveVolume`. PV product added as derived value so students can verify PV = nRT. avgKE symbol disambiguated to `⟨KE⟩`. Remaining: visual box volume not proportional to physics volume due to 1D scaling with clamping; this is a visualization simplification, not a physics error. |
+| F11 | Gas PV/pressure inconsistency | PARTIAL | 3,12,17 | Pressure uses effectiveVolume. Inline calculations deduplicated. PV product added. avgKE symbol changed to `⟨KE⟩ₜᵣ` and label to "Avg translational KE" to clarify it's translational-only (3/2 kT). Speed histogram now has axis labels (N, Speed →). Remaining: visual box volume not proportional to physics volume (1D clamping); this is a visualization simplification. |
 | F12 | Disconnected controls | PARTIAL | 4,7,11,16 | Removed dead 'graph' layer toggle. Added Speed Distribution histogram overlay to 3D gas scene. Canvas2D vector layer gating removed. Optics refraction/TIR renderers now gate ray drawing on `activeLayers.rays`, so the Rays toggle actually controls incident/refracted/reflected rays while leaving angle arcs and labels visible. Not browser-verified. |
 | F13 | Generic data table | DONE | 2 | DataTable rewritten to use topic.derivedValues/derivedValueKeys. |
 | F14 | Small-screen layout | PARTIAL | 2,7,8,9 | Canvas container given responsive height. Main content area scrollable on mobile. Control panel no longer competes for flex space. TopBar secondary actions (Screenshot, Share, Fullscreen, Language) moved into overflow menu on mobile. PlaybackBar condensed with responsive sizing, speed selector and time readout hidden on very narrow viewports. Full touch/zoom/assistive-technology verification not performed; header and playback no longer clip at 320/390px widths in layout, but actual device testing has not been done. |
@@ -146,3 +146,27 @@ Current head includes batch 14 fixes (F15 arrow key nav, F22 dependency upgrades
 - Dash lint: 0 violations
 - Production build: succeeds
 - Unit tests: 351/351 pass (346 + 5 batch 16)
+
+## Batch 17 changes (F03 error metric, F06 quiz subcriteria, F11 KE qualifier + histogram)
+
+### F03: Period error metric defined
+- **ControlPanel.tsx**: Error formula changed from `1/cos(θ/2) - 1` to Borda approximation `θ²/16`. Warning text now labels it as "period error" with the formula reference.
+- **i18n.ts**: Warning text updated to "period error at {value}° ≈ {error}% (Borda, θ²/16)."
+
+### F06: Five quiz subcriteria addressed
+- **pm-m7**: Added "Without air resistance" qualifier. ShowMe now uses same Vy (v0=20,θ=30 vs v0=10,θ=90) to demonstrate TOF depends only on vertical velocity.
+- **pm-h7**: Added showMe with drag=0 vs drag=0.01 comparison. Explanation improved: drag decelerates horizontal continuously, vertical effect partially offsets via slowed descent.
+- **thermo-h8**: Explanation expanded to address why T=0 (quantum zero-point energy) and heavy particle (still jiggles) aren't fundamental answers.
+- **mp-e9**: Question now says "For a given metal" to avoid φ-ambiguity in "only frequency" answer.
+- **mp-h6**: Question changed from "photoelectric current" to "photoelectrons." Explanation rewritten: removes trailing fragment, adds reverse-potential context.
+
+### F11: KE qualifier and histogram labels
+- **thermodynamics.ts**: avgKE symbol changed to `⟨KE⟩ₜᵣ`, label to "Avg translational KE."
+- **i18n.ts**: English and Hindi labels updated.
+- **thermoRenderer.ts**: Speed histogram now has axis labels: "N" (y-axis) and "Speed →" (x-axis).
+
+### Verification results (batch 17)
+- TypeScript: `tsc --noEmit` exits zero
+- ESLint: 0 errors, 0 warnings (src/)
+- Production build: succeeds
+- Unit tests: 351/351 pass

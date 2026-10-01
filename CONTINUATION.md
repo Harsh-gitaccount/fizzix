@@ -3,7 +3,7 @@
 ## Session State
 - **Branch**: `claude/brave-ramanujan-s4hhf9`
 - **Base commit**: `7523ff0c2e3164d205036a85d81d12ae0312f997`
-- **Last batch**: batch-16 (F12 rays toggle, F23 disposal, F24 mass preset, F26 static caching)
+- **Last batch**: batch-17 (F03 error metric, F06 quiz subcriteria, F11 KE qualifier + histogram)
 - **TypeScript**: 0 errors
 - **ESLint**: 0 errors, 0 warnings (src/)
 - **Dash lint**: 0 violations
@@ -29,7 +29,8 @@
 15. `79611eb` -- Batch 14b: F22 dependency upgrades (vitest 2→5, eslint-config-next 14→15)
 16. `9933f38` -- Batch 14c: F15 3D keyboard camera controls
 17. `a44769f` -- Batch 15: Keyboard widget isolation, ARIA panel targets, @types/node alignment
-18. *(pending)* -- Batch 16: F12 rays toggle, F23 resource disposal, F24 mass preset, F26 static caching
+18. `8672430` -- Batch 16: F12 rays toggle, F23 resource disposal, F24 mass preset, F26 static caching
+19. *(pending)* -- Batch 17: F03 error metric, F06 quiz subcriteria, F11 KE qualifier + histogram
 
 ## Batch 11 Changes
 
@@ -113,12 +114,28 @@
 ### Tests
 - `src/__tests__/batch16-fixes.test.ts` (new): 5 tests for F12, F23, F24, F26.
 
+## Batch 17 Changes
+
+### F03: Period error metric
+- `src/components/simulation/ControlPanel.tsx`: Borda approximation (θ²/16) replaces 1/cos(θ/2)-1. Warning labels it as "period error."
+- `src/lib/i18n.ts`: Warning text updated.
+
+### F06: Quiz subcriteria
+- `src/simulations/projectile-motion/quiz.ts`: pm-m7 (qualifier + showMe), pm-h7 (showMe + explanation).
+- `src/simulations/thermodynamics/quiz.ts`: thermo-h8 (expanded explanation).
+- `src/simulations/modern-physics/quiz.ts`: mp-e9 ("for a given metal"), mp-h6 (question + explanation).
+
+### F11: KE qualifier and histogram labels
+- `src/lib/physics/thermodynamics.ts`: avgKE symbol `⟨KE⟩ₜᵣ`, label "Avg translational KE".
+- `src/lib/canvas/thermoRenderer.ts`: Histogram axis labels (N, Speed →).
+- `src/lib/i18n.ts`: Updated avgKE label.
+
 ## Remaining Work
 
 ### PARTIAL (10 findings)
-- **F03**: Small-angle approximation disclosure; full nonlinear solver not implemented. Error metric definition needed.
-- **F06**: Remaining quiz subcriteria: `pm-m7`, `pm-h7`, `thermo-h8`, `mp-e9`, `mp-h6`. `opt-e8` curriculum-aligned; not changing.
-- **F11**: Visual box volume not proportional; KE qualifier; histogram meaning. Visualization simplification.
+- **F03**: Period error metric defined (Borda); full nonlinear solver not implemented.
+- **F06**: 5 subcriteria addressed. Remaining: `opt-e8` curriculum-aligned, not changing.
+- **F11**: KE qualified as translational; histogram labeled. Visual box volume not proportional (1D clamping); visualization simplification.
 - **F12**: Rays toggle wired for refraction/TIR; not browser-verified.
 - **F14**: True touch/zoom/assistive-technology verification; actual device testing.
 - **F15**: Full assistive technology testing not performed.

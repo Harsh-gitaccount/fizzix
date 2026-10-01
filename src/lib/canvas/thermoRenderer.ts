@@ -288,6 +288,13 @@ function drawSpeedHistogram(
     ctx.fillStyle = speedToColor(ratio * maxSpeed, maxSpeed)
     ctx.fillRect(bx, by, barW, barH)
   }
+
+  ctx.font = '8px system-ui'
+  ctx.fillStyle = isDark ? '#9CA3AF' : '#6B7280'
+  ctx.textAlign = 'right'
+  ctx.fillText(lang === 'hi' ? 'चाल →' : 'Speed →', x + w, y + h + 10)
+  ctx.textAlign = 'left'
+  ctx.fillText('N', x - pad + 1, y + 4)
 }
 
 function drawPressureArrows(

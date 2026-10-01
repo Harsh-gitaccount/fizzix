@@ -497,7 +497,7 @@ export const THERMO_QUIZ_POOL: QuizQuestion[] = [
       'The microscope is broken',
     ],
     correctIndex: 0,
-    explanation: 'Brownian motion exists because matter is granular (made of molecules). If matter were continuous, the bombardment forces would average to zero from all directions simultaneously, giving smooth motion. The jiggling IS the proof of discrete molecules.',
+    explanation: 'Brownian motion exists because matter is granular (made of molecules). If matter were continuous, forces would average to zero from all directions simultaneously, giving smooth motion. Temperature being absolute zero would reduce but not eliminate motion (quantum zero-point energy persists), and a heavy particle would still jiggle, just less noticeably. Only continuous matter eliminates jiggling entirely.',
     difficulty: 'hard',
     classRange: [11, 11],
   },

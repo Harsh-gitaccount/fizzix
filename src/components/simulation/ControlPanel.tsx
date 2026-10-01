@@ -53,6 +53,10 @@ export default function ControlPanel() {
   const v0 = params.v0 ?? 0
   const showUnitWarning = topic.slug === 'projectile-motion' && v0 > 30
 
+  const theta0 = params.theta0 ?? 0
+  const showApproxWarning = topic.slug === 'shm' && theta0 > 15
+  const approxError = showApproxWarning ? Math.round((1 / Math.cos(theta0 * Math.PI / 360) - 1) * 100) : 0
+
   const flagText = (label: string) =>
     tOr('flag.' + label.toLowerCase().replace(/ /g, '_'), lang, label)
 
@@ -148,6 +152,13 @@ export default function ControlPanel() {
                 {t('unit.warning', lang)
                   .replace('{value}', v0.toFixed(0))
                   .replace('{converted}', (v0 / 3.6).toFixed(1))}
+              </p>
+            )}
+            {def.key === 'theta0' && showApproxWarning && (
+              <p className="ml-9 mt-1 text-[10px] text-amber-600 dark:text-amber-400">
+                {t('approx.warning', lang)
+                  .replace('{value}', theta0.toFixed(0))
+                  .replace('{error}', String(approxError))}
               </p>
             )}
           </div>

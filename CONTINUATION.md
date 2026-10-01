@@ -3,7 +3,7 @@
 ## Session State
 - **Branch**: `claude/brave-ramanujan-s4hhf9`
 - **Base commit**: `7523ff0c2e3164d205036a85d81d12ae0312f997`
-- **Last batch**: batch-10 (test gaps, poolVersion policy)
+- **Last batch**: batch-11 (physics/content corrections)
 - **TypeScript**: 0 errors
 - **ESLint**: 0 errors, 0 warnings (src/)
 - **Dash lint**: 0 violations
@@ -22,33 +22,41 @@
 9. `e97d111` -- Batch 9: Third verification response
 10. (pending) -- Batch 10: Test gaps closed, poolVersion policy
 
-## Batch 10 Changes
+## Batch 11 Changes
 
-### Sync client test (F18 test gap closed)
-- `src/__tests__/sync-client.test.ts` (new): 10 tests calling actual `syncQuizResults` with mocked IDB and controlled fetch. Verifies all acknowledgment edge cases against the real function.
+### F03: Small-angle approximation disclosure
+- `src/components/simulation/ControlPanel.tsx`: Amber warning shown when pendulum theta0 > 15°, displaying approximation error percentage.
+- `src/lib/i18n.ts`: Added `approx.warning` translation key.
 
-### Keyboard hook test (F08 test gap closed)
-- `src/__tests__/keyboard-shortcuts.test.ts` (new): 11 tests dispatching actual `KeyboardEvent`s through `useKeyboardShortcuts` via `renderHook`. Includes the critical compare-mode ArrowRight-at-t=5 test.
+### F05: Principal ray geometry fix
+- `src/lib/canvas/opticsRenderer.ts`: `drawPrincipalRays` now receives `imgScreenH` (final height) instead of `animImgH` (animated). Rays point to the correct image position throughout the reveal.
 
-### Handler correctness assertion (F17 test gap closed)
-- `src/__tests__/quiz-handler.test.ts`: Split correctness override test into two tests asserting captured `createMany` data in both directions (false→true, true→false). Added poolVersion policy tests. Now 17 tests.
+### F12: Vector layer gating fix
+- `src/components/simulation/Canvas2D.tsx`: Removed hardcoded tab-name gating (`showVectors` check). Vector layers now work on any tab in any topic.
 
-### poolVersion policy (F17 policy gap closed)
-- `src/app/api/quiz/results/batch/route.ts`: Imports `QUIZ_POOL_VERSION` and rejects `poolVersion > QUIZ_POOL_VERSION` with 400. Prevents incorrect scoring of questions from unknown future bank versions.
+### F21: Acceleration vector and symbol corrections
+- `src/lib/canvas/renderer2d.ts`: `PARAM_SYMBOLS.drag` changed from 'Cd' to 'b'. `drawAccelerationVector` now computes net acceleration including drag force. Legend label shows "Net Acceleration" when drag > 0.
+- `src/lib/i18n.ts`: Added `canvas.acceleration` translation key.
+
+### F06: Quiz distractor fix
+- `src/simulations/electrostatics/quiz.ts`: `elec-e4` fake distractor `P = IV²` replaced with real formula `F = qE`.
+
+### F24: Preset hookQuestion corrections
+- `src/simulations/projectile-motion/presets.ts`:
+  - `low-drive`: hookQuestion changed from false premise "Why does a low throw cover more ground?" to neutral "How does a low angle change the trajectory shape?"
+  - `moon-vs-earth`: hookQuestion changed from statement "Same throw, different worlds" to question "How far would this same throw go on the Moon?"
+  - `does-mass-matter`: hookQuestion reworded to "Does changing the mass change the trajectory?", added `compareParams` with identical params, `defaultTab` set to `compare` so students see overlapping trajectories.
 
 ## Remaining Work
 
-### PARTIAL (11 findings)
+### PARTIAL (8 findings)
 - **F03**: Small-angle approximation disclosure/restriction for large angles
-- **F05**: `drawPrincipalRays` animated `animImgH` during reveal
-- **F06**: Remaining conceptual wording/assumption issues in quiz questions
+- **F06**: `opt-e8` mirage TIR explanation simplified but curriculum-aligned; not changing
 - **F11**: Box-volume mapping and distribution/energy-label issues
-- **F12**: Canvas2D vector gating uses projectile-specific tab names
 - **F14**: True touch/zoom/assistive-technology verification; actual device testing
 - **F15**: Complete keyboard navigation, toggle/tab semantics, nonvisual alternatives
-- **F21**: Trajectory cap and acceleration-vs-gravity semantics
+- **F21**: Trajectory cap (100s max from RK4 step limit)
 - **F22**: No package upgrades applied; next 14->16 migration needed
-- **F24**: Misleading existing preset hook questions/explanations
 - **F26**: Multi-build updates, truly uncached navigation, production offline verification
 
 ### OPEN (1 finding)

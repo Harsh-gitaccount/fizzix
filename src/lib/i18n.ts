@@ -142,6 +142,7 @@ const dict: Record<string, Record<Lang, string>> = {
   'canvas.trailB': { en: 'Trail B', hi: 'पथ B' },
   'canvas.velocity': { en: 'Velocity', hi: 'वेग' },
   'canvas.gravity': { en: 'Gravity', hi: 'गुरुत्व' },
+  'canvas.acceleration': { en: 'Net Acceleration', hi: 'कुल त्वरण' },
   'canvas.angle': { en: 'Angle (θ)', hi: 'कोण (θ)' },
   'canvas.speed': { en: 'Speed (v₀)', hi: 'गति (v₀)' },
 
@@ -204,6 +205,7 @@ const dict: Record<string, Record<Lang, string>> = {
   'offline.banner': { en: 'You are offline. The simulation still works!', hi: 'आप ऑफ़लाइन हैं। सिमुलेशन अभी भी काम करता है!' },
 
   'unit.warning': { en: 'Did you mean m/s? {value} km/h = {converted} m/s', hi: 'क्या आपका मतलब m/s था? {value} km/h = {converted} m/s' },
+  'approx.warning': { en: 'Small-angle approximation: results are less accurate above ~15°. Error at {value}° is ~{error}%.', hi: 'लघु-कोण सन्निकटन: ~15° से ऊपर परिणाम कम सटीक हैं। {value}° पर त्रुटि ~{error}% है।' },
 
   'topic.optics': { en: 'Optics & Light', hi: 'प्रकाशिकी और प्रकाश' },
 

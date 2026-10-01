@@ -403,7 +403,7 @@ function renderLens(
     drawImageArrow(ctx, imgScreenX, midY, animImgH, isVirtual ? C.imageArrowVirtual : C.imageArrow, isVirtual, lang === 'hi' ? 'प्रतिबिम्ब' : 'Image', cw, focalXs)
 
     if (opts.activeLayers.rays !== false && imgProgress > 0.15) {
-      drawPrincipalRays(ctx, midX, midY, objScreenX, objScreenH, imgScreenX, animImgH, fpLeft, fpRight, isConvex, isVirtual, cw, isDark)
+      drawPrincipalRays(ctx, midX, midY, objScreenX, objScreenH, imgScreenX, imgScreenH, fpLeft, fpRight, isConvex, isVirtual, cw, isDark)
     }
 
     // Continuous photon pulse along ray 1 (parallel → through F)

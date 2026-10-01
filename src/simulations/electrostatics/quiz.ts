@@ -61,7 +61,7 @@ export const ELEC_QUIZ_POOL: QuizQuestion[] = [
     topicId: 'electrostatics',
     type: 'conceptual',
     question: 'What does Ohm\'s law state?',
-    options: ['V = IR', 'F = ma', 'E = mc²', 'P = IV²'],
+    options: ['V = IR', 'F = ma', 'E = mc²', 'F = qE'],
     correctIndex: 0,
     explanation: 'Ohm\'s law states V = IR, meaning the voltage across a conductor equals the current through it multiplied by its resistance.',
     showMe: {

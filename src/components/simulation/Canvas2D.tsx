@@ -71,17 +71,12 @@ export default function Canvas2D() {
       ghostTrails
     )
 
-    const showVectors = activeTab === 'vectors' || activeTab === 'free-play'
-
     topic.renderCanvas(ctx, canvas, {
       params,
       currentTime,
       bounds,
       activeLayers: {
         ...activeLayers,
-        velocity: activeLayers.velocity && showVectors,
-        acceleration: activeLayers.acceleration && showVectors,
-        components: activeLayers.components && showVectors,
       },
       isDark,
       background: canvasBackground,

@@ -31,7 +31,7 @@ const COLORS = {
 }
 
 const PARAM_SYMBOLS: Record<string, string> = {
-  v0: 'v₀', theta: 'θ', g: 'g', y0: 'y₀', drag: 'Cd',
+  v0: 'v₀', theta: 'θ', g: 'g', y0: 'y₀', drag: 'b',
 }
 
 function getDiffLabel(
@@ -586,15 +586,32 @@ function drawAccelerationVector(
   state: SimulationState
 ) {
   const g = params.g ?? 9.8
-  const aScale = 4 // 1px = 0.25 m/s^2
-  const aLen = g * aScale
+  const drag = params.drag ?? 0
+  const aScale = 4
+
+  let ax = 0
+  let ay = -g
+  if (drag > 0 && state.phase === 'flying') {
+    const speed = Math.sqrt(state.vx * state.vx + state.vy * state.vy)
+    if (speed > 0) {
+      ax = -drag * speed * state.vx
+      ay += -drag * speed * state.vy
+    }
+  }
+
+  const aMag = Math.sqrt(ax * ax + ay * ay)
+  if (aMag < 0.01) return
+  const aLen = aMag * aScale
   const clamped = Math.min(Math.max(aLen, 15), 80)
+  const normX = ax / aMag
+  const normY = ay / aMag
 
   const sx = toSX(state.x)
   const sy = toSY(state.y)
-  const ey = sy + clamped // downward on screen
+  const ex = sx + normX * clamped
+  const ey = sy - normY * clamped
 
-  drawArrow(ctx, sx, sy, sx, ey, COLORS.acceleration, COLORS.accelerationOutline, 2.5, 10, 7)
+  drawArrow(ctx, sx, sy, ex, ey, COLORS.acceleration, COLORS.accelerationOutline, 2.5, 10, 7)
 }
 
 function drawComponentVectors(
@@ -735,7 +752,8 @@ function drawLegend(
     entries.push({ color: COLORS.velocity, label: t('canvas.velocity', lang), type: 'line' })
   }
   if (items.showAcceleration) {
-    entries.push({ color: COLORS.acceleration, label: t('canvas.gravity', lang), type: 'line' })
+    const hasDrag = (items.params?.drag ?? 0) > 0
+    entries.push({ color: COLORS.acceleration, label: hasDrag ? t('canvas.acceleration', lang) : t('canvas.gravity', lang), type: 'line' })
   }
   if (items.showComponents) {
     entries.push({ color: COLORS.components, label: 'Vx / Vy', type: 'line' })

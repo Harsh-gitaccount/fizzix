@@ -3,32 +3,32 @@
 ## Session State
 - **Branch**: `claude/brave-ramanujan-s4hhf9`
 - **Base commit**: `7523ff0c2e3164d205036a85d81d12ae0312f997`
-- **Last batch**: batch-1 (F01, F02, F03, F04, F05-partial, F08, F09, F25)
+- **Last batch**: batch-5 (F16, F18, F22)
+- **TypeScript**: 0 errors
+- **Unit tests**: 275/275 passing
 
-## Batch 1 Changes
-Files modified:
-- `src/lib/canvas/thermoRenderer.ts` — F01: ghostTrails type, drawRuler/drawProtractor signatures
-- `src/components/simulation/TabBar.tsx` — F01: explicit Record<string, number> type
-- `src/lib/physics/shm.ts` — F02/F03: three-regime damped oscillator, quadratic PE
-- `src/lib/physics/modernPhysics.ts` — F04: Z parameter in Bohr state
-- `src/lib/physics/optics.ts` — F05: lensPower null for f=0, nature labels
-- `src/hooks/useKeyboardShortcuts.ts` — F08: topic-aware shortcuts
-- `src/components/simulation/SimulationPage.tsx` — F08: pass topic to shortcuts
-- `src/components/simulation/PlaybackBar.tsx` — F09: compare mode max(tofA, tofB)
-- `src/simulations/shm/module.ts` — F02: damping limit 0-5, unit kg/s
-- `src/simulations/modern-physics/module.ts` — F25: near-threshold wording
-- `src/simulations/optics/golden.test.ts` — test update for lensPower null return
-- `src/simulations/shm/golden.test.ts` — test update for damped decay tolerance
+## Commits
+1. `6d3fa31` — Batch 1: F01, F02, F03, F04, F05-partial, F08, F09, F25
+2. `4d7a196` — Batch 2: F06, F07, F13, F14, F15, F19, F21
+3. `845b3b0` — Batch 3: F10, F11
+4. `0f6e0cf` — Batch 4: F12, F17, F20
+5. (pending) — Batch 5: F16, F18, F22-partial
 
-## Verification
-- TypeScript: 0 errors (`npx tsc --noEmit --skipLibCheck`)
-- Unit tests: 275/275 passing
+## Batch 5 Changes
+- `src/lib/quiz/offlineStorage.ts` — F18: chunked sync (50/batch), idempotency via client id
+- `src/app/api/quiz/results/batch/route.ts` — F18: accept optional id, skipDuplicates
+- `src/components/simulation/Scene3D.tsx` — F16: preserveDrawingBuffer:true
+- `src/components/simulation/Scene3DGas.tsx` — F16: preserveDrawingBuffer:true
+- `FIX_STATUS.md` — Updated all findings through batch 5
+- F22: npm audit fix found no non-breaking fixes; remaining 23 advisories all require next@16 or prisma@7 breaking upgrades
 
-## Next Priorities (batch 2+)
-1. F06: Quiz answer corrections (thermo-h1, opt-h1)
-2. F07: Topic lifecycle state leaks
-3. F10/F11: Gas worker synchronization and PV consistency
-4. F12: Disconnected controls
-5. F13: Data table generic state
-6. F05: Virtual ray rendering completion
-7. F14-F26: Remaining findings per dependency order
+## Remaining Work
+
+### PARTIAL
+- **F05**: Virtual lens ray construction in opticsRenderer.ts — diverging lens rays need visual correction
+- **F22**: Breaking-change dependency upgrades (next@16, prisma@7) need integration testing
+
+### DEFERRED (not bugs — recommendations/architectural)
+- **F23**: Animation performance (requestAnimationFrame/GC) — architectural, no specific regression
+- **F24**: Teaching preset additions — pedagogical review required, beyond bug-fix scope
+- **F26**: Service worker offline cache strategy — new feature, not a bug fix

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { rateLimit } from '@/lib/rateLimit'
 
 interface QuizResultPayload {
+  id?: string
   sessionId: string
   topicId: string
   questionId: string
@@ -65,6 +66,7 @@ export async function POST(req: NextRequest) {
       if (prisma) {
         await prisma.quizResult.createMany({
           data: body.results.map((r: QuizResultPayload) => ({
+            ...(r.id ? { id: r.id } : {}),
             sessionId: r.sessionId,
             topicId: r.topicId,
             questionId: r.questionId,
@@ -74,6 +76,7 @@ export async function POST(req: NextRequest) {
             poolVersion: r.poolVersion ?? 1,
             timestamp: new Date(r.timestamp),
           })),
+          skipDuplicates: true,
         })
       }
     } catch (err) {

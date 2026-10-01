@@ -124,6 +124,7 @@ export async function markResultsSynced(ids: string[]): Promise<void> {
   }
 }
 
+const CHUNK_SIZE = 50
 let retryDelay = 0
 
 export async function syncQuizResults(): Promise<void> {
@@ -133,30 +134,38 @@ export async function syncQuizResults(): Promise<void> {
     const unsynced = await getUnsyncedResults()
     if (unsynced.length === 0) return
 
-    const payload = unsynced.map((r) => ({
-      sessionId: r.sessionId,
-      topicId: r.topicId,
-      questionId: r.questionId,
-      selected: r.selectedIndex,
-      correct: r.correct,
-      difficulty: r.difficulty,
-      poolVersion: r.poolVersion ?? 1,
-      timestamp: r.timestamp,
-    }))
+    for (let i = 0; i < unsynced.length; i += CHUNK_SIZE) {
+      const chunk = unsynced.slice(i, i + CHUNK_SIZE)
 
-    const response = await fetch('/api/quiz/results/batch', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ results: payload }),
-    })
+      const payload = chunk.map((r) => ({
+        id: r.id,
+        sessionId: r.sessionId,
+        topicId: r.topicId,
+        questionId: r.questionId,
+        selected: r.selectedIndex,
+        correct: r.correct,
+        difficulty: r.difficulty,
+        poolVersion: r.poolVersion ?? 1,
+        timestamp: r.timestamp,
+      }))
 
-    if (response.ok) {
-      retryDelay = 0
-      await markResultsSynced(unsynced.map((r) => r.id))
-    } else if (response.status === 429 || response.status === 503) {
-      const wait = retryDelay === 0 ? 5_000 : Math.min(retryDelay * 2, 60_000)
-      retryDelay = wait
-      setTimeout(() => { syncQuizResults() }, wait)
+      const response = await fetch('/api/quiz/results/batch', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ results: payload }),
+      })
+
+      if (response.ok) {
+        retryDelay = 0
+        await markResultsSynced(chunk.map((r) => r.id))
+      } else if (response.status === 429 || response.status === 503) {
+        const wait = retryDelay === 0 ? 5_000 : Math.min(retryDelay * 2, 60_000)
+        retryDelay = wait
+        setTimeout(() => { syncQuizResults() }, wait)
+        return
+      } else {
+        return
+      }
     }
   } catch {
     const wait = retryDelay === 0 ? 5_000 : Math.min(retryDelay * 2, 60_000)

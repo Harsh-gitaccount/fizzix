@@ -18,7 +18,7 @@ export function useKeyboardShortcuts(topic: SimulationModule) {
 
       const { playbackState, currentTime, speedMultiplier, setPlaybackState, setCurrentTime, setSpeedMultiplier } = usePlaybackStore.getState()
       const { setActiveTab } = useUIStore.getState()
-      const params = useSimulationStore.getState().params
+      const { params, compareMode, paramsB } = useSimulationStore.getState()
 
       switch (e.code) {
         case 'Space': {
@@ -113,7 +113,8 @@ export function useKeyboardShortcuts(topic: SimulationModule) {
         }
         case 'ArrowRight': {
           e.preventDefault()
-          const tof = topic.timeOfFlight(params)
+          const tofA = topic.timeOfFlight(params)
+          const tof = compareMode ? Math.max(tofA, topic.timeOfFlight(paramsB)) : tofA
           const step = e.shiftKey ? 0.5 : 1 / 60
           const newT = Math.min(tof, currentTime + step)
           setCurrentTime(newT)

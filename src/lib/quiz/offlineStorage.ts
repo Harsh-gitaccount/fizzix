@@ -157,7 +157,23 @@ export async function syncQuizResults(): Promise<void> {
 
       if (response.ok) {
         retryDelay = 0
-        await markResultsSynced(chunk.map((r) => r.id))
+        let responseBody: { synced?: number; stored?: boolean; acceptedIds?: string[] } = {}
+        try {
+          responseBody = await response.json()
+        } catch {
+          // If we can't parse the response, don't mark as synced
+          return
+        }
+        if (responseBody.stored === false || responseBody.synced === 0) {
+          // Server accepted but did not durably store; keep records unsynced
+          return
+        }
+        const acceptedIds = responseBody.acceptedIds
+        if (Array.isArray(acceptedIds) && acceptedIds.length > 0) {
+          await markResultsSynced(acceptedIds)
+        } else if (responseBody.synced && responseBody.synced > 0) {
+          await markResultsSynced(chunk.map((r) => r.id))
+        }
       } else if (response.status === 429 || response.status === 503) {
         const wait = retryDelay === 0 ? 5_000 : Math.min(retryDelay * 2, 60_000)
         retryDelay = wait

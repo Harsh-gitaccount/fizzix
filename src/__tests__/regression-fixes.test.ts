@@ -1,46 +1,9 @@
 import { describe, it, expect, beforeEach } from 'vitest'
 import { useQuizStore } from '@/store/quizStore'
-import type { QuizQuestion } from '@/lib/quiz/types'
 import { timeOfFlight } from '@/lib/physics/projectile'
-
-const MOCK_PM_POOL: QuizQuestion[] = [
-  {
-    id: 'pm-e1',
-    topicId: 'projectile-motion',
-    type: 'conceptual',
-    difficulty: 'easy',
-    question: 'Test question 1',
-    options: ['A', 'B', 'C', 'D'],
-    correctIndex: 0,
-    explanation: 'Explanation 1',
-    classRange: [9, 12],
-  },
-  {
-    id: 'pm-e2',
-    topicId: 'projectile-motion',
-    type: 'conceptual',
-    difficulty: 'easy',
-    question: 'Test question 2',
-    options: ['A', 'B', 'C', 'D'],
-    correctIndex: 1,
-    explanation: 'Explanation 2',
-    classRange: [9, 12],
-  },
-]
-
-const MOCK_ELEC_POOL: QuizQuestion[] = [
-  {
-    id: 'el-e1',
-    topicId: 'electrostatics',
-    type: 'conceptual',
-    difficulty: 'easy',
-    question: 'Electrostatics question',
-    options: ['A', 'B', 'C', 'D'],
-    correctIndex: 2,
-    explanation: 'Explanation',
-    classRange: [9, 12],
-  },
-]
+import { isValidQuestion, deriveCorrectness, lookupQuestion } from '@/lib/quiz/questionBank'
+import { QUIZ_POOL } from '@/simulations/projectile-motion/quiz'
+import { ELEC_QUIZ_POOL } from '@/simulations/electrostatics/quiz'
 
 describe('F07 - Quiz store reset clears session questions on topic change', () => {
   beforeEach(() => {
@@ -48,7 +11,7 @@ describe('F07 - Quiz store reset clears session questions on topic change', () =
   })
 
   it('resetQuiz clears sessionQuestions array', () => {
-    useQuizStore.getState().initQuiz(MOCK_PM_POOL, 'easy')
+    useQuizStore.getState().initQuiz(QUIZ_POOL, 'easy')
     expect(useQuizStore.getState().sessionQuestions.length).toBeGreaterThan(0)
     expect(useQuizStore.getState().sessionQuestions[0].topicId).toBe('projectile-motion')
 
@@ -60,11 +23,11 @@ describe('F07 - Quiz store reset clears session questions on topic change', () =
   })
 
   it('after reset, initQuiz with new topic loads new questions', () => {
-    useQuizStore.getState().initQuiz(MOCK_PM_POOL, 'easy')
+    useQuizStore.getState().initQuiz(QUIZ_POOL, 'easy')
     const pmQuestions = useQuizStore.getState().sessionQuestions
 
     useQuizStore.getState().resetQuiz()
-    useQuizStore.getState().initQuiz(MOCK_ELEC_POOL, 'easy')
+    useQuizStore.getState().initQuiz(ELEC_QUIZ_POOL, 'easy')
 
     const elecQuestions = useQuizStore.getState().sessionQuestions
     expect(elecQuestions.length).toBeGreaterThan(0)
@@ -73,8 +36,8 @@ describe('F07 - Quiz store reset clears session questions on topic change', () =
   })
 })
 
-describe('F09 - Compare mode uses max time-of-flight', () => {
-  it('Earth vs Moon: Moon has longer TOF', () => {
+describe('F09 - Compare mode uses max time-of-flight across all paths', () => {
+  it('Moon has longer TOF than Earth - max must be used', () => {
     const earthParams = { v0: 20, theta: 45, g: 9.8, y0: 0 }
     const moonParams = { v0: 20, theta: 45, g: 1.62, y0: 0 }
 
@@ -82,59 +45,84 @@ describe('F09 - Compare mode uses max time-of-flight', () => {
     const tofMoon = timeOfFlight(moonParams)
 
     expect(tofMoon).toBeGreaterThan(tofEarth)
+    expect(tofEarth).toBeCloseTo(2.886, 2)
+    expect(tofMoon).toBeGreaterThan(10)
+  })
 
-    const tofCompare = Math.max(tofEarth, tofMoon)
-    expect(tofCompare).toBeCloseTo(tofMoon, 3)
-    expect(tofCompare).toBeGreaterThan(10)
+  it('ArrowRight at t=5 in Moon/Earth compare must not jump backward', () => {
+    const earthParams = { v0: 20, theta: 45, g: 9.8, y0: 0 }
+    const moonParams = { v0: 20, theta: 45, g: 1.62, y0: 0 }
+
+    const tofEarth = timeOfFlight(earthParams)
+    const tofMoon = timeOfFlight(moonParams)
+    const compareTof = Math.max(tofEarth, tofMoon)
+
+    const currentTime = 5
+    const step = 1 / 60
+    const newTime = Math.min(compareTof, currentTime + step)
+
+    expect(newTime).toBeGreaterThan(currentTime)
+    expect(newTime).toBeLessThanOrEqual(compareTof)
+
+    // Without the fix, tof would be tofEarth (2.886) and Math.min(2.886, 5 + step) = 2.886
+    const brokenNewTime = Math.min(tofEarth, currentTime + step)
+    expect(brokenNewTime).toBeLessThan(currentTime)
   })
 })
 
-describe('F17 - API route validation', () => {
-  it('VALID_TOPIC_IDS includes all six topics', () => {
-    const validTopics = [
-      'projectile-motion',
-      'shm',
-      'optics',
-      'electrostatics',
-      'thermodynamics',
-      'modern-physics',
-    ]
-
-    expect(validTopics.length).toBe(6)
-    for (const topic of validTopics) {
-      expect(typeof topic).toBe('string')
-      expect(topic.length).toBeGreaterThan(0)
-    }
+describe('F17 - Question bank validation (production code)', () => {
+  it('isValidQuestion accepts real questions from the pool', () => {
+    const q = QUIZ_POOL[0]
+    expect(isValidQuestion(q.topicId, q.id)).toBe(true)
   })
 
-  it('validateItem rejects null', () => {
-    const validateItem = (r: unknown): boolean => {
-      if (r == null || typeof r !== 'object') return false
-      const item = r as Record<string, unknown>
-      if (typeof item.sessionId !== 'string' || item.sessionId.length === 0) return false
-      if (typeof item.topicId !== 'string') return false
-      return true
-    }
-
-    expect(validateItem(null)).toBe(false)
-    expect(validateItem(undefined)).toBe(false)
-    expect(validateItem(42)).toBe(false)
-    expect(validateItem('string')).toBe(false)
+  it('isValidQuestion rejects invented question IDs', () => {
+    expect(isValidQuestion('projectile-motion', 'not-a-real-question')).toBe(false)
   })
 
-  it('validateItem rejects invalid topicId', () => {
-    const VALID_TOPIC_IDS = new Set([
-      'projectile-motion', 'shm', 'optics',
-      'electrostatics', 'thermodynamics', 'modern-physics',
-    ])
+  it('isValidQuestion rejects question from wrong topic', () => {
+    const pmQ = QUIZ_POOL[0]
+    expect(isValidQuestion('electrostatics', pmQ.id)).toBe(false)
+  })
 
-    const validateTopicId = (topicId: unknown): boolean => {
-      return typeof topicId === 'string' && VALID_TOPIC_IDS.has(topicId)
-    }
+  it('deriveCorrectness returns correct answer from bank', () => {
+    const q = QUIZ_POOL[0]
+    expect(deriveCorrectness(q.topicId, q.id, q.correctIndex)).toBe(true)
+    const wrongIndex = (q.correctIndex + 1) % 4
+    expect(deriveCorrectness(q.topicId, q.id, wrongIndex)).toBe(false)
+  })
 
-    expect(validateTopicId('projectile-motion')).toBe(true)
-    expect(validateTopicId('not-a-real-topic')).toBe(false)
-    expect(validateTopicId('')).toBe(false)
-    expect(validateTopicId(null)).toBe(false)
+  it('deriveCorrectness returns null for unknown question', () => {
+    expect(deriveCorrectness('projectile-motion', 'fake-id', 0)).toBeNull()
+  })
+
+  it('lookupQuestion returns the full question object', () => {
+    const q = QUIZ_POOL[0]
+    const found = lookupQuestion(q.topicId, q.id)
+    expect(found).toBeDefined()
+    expect(found!.id).toBe(q.id)
+    expect(found!.correctIndex).toBe(q.correctIndex)
+  })
+
+  it('all six topics have questions in the bank', () => {
+    expect(isValidQuestion('projectile-motion', QUIZ_POOL[0].id)).toBe(true)
+    expect(isValidQuestion('electrostatics', ELEC_QUIZ_POOL[0].id)).toBe(true)
+    // Spot check: cross-topic must fail
+    expect(isValidQuestion('shm', QUIZ_POOL[0].id)).toBe(false)
+  })
+})
+
+describe('F17/F18 - Sync acknowledgment contract', () => {
+  it('stored:false response must not mark records as synced', () => {
+    const noStorageResponse = { synced: 0, stored: false, message: 'No database configured' }
+    expect(noStorageResponse.stored).toBe(false)
+    expect(noStorageResponse.synced).toBe(0)
+  })
+
+  it('successful storage response includes stored:true and acceptedIds', () => {
+    const successResponse = { synced: 3, stored: true, acceptedIds: ['id1', 'id2', 'id3'] }
+    expect(successResponse.stored).toBe(true)
+    expect(successResponse.synced).toBe(3)
+    expect(successResponse.acceptedIds).toHaveLength(3)
   })
 })

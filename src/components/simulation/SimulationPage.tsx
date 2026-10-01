@@ -116,8 +116,8 @@ export default function SimulationPage() {
       <OfflineBanner />
       <TopBar />
 
-      <div className="flex flex-col md:flex-row flex-1 min-h-0">
-        <div className="flex-1 md:flex-[2] min-w-0 min-h-[200px] md:min-h-0 flex flex-col">
+      <div className="flex flex-col md:flex-row flex-1 min-h-0 overflow-y-auto md:overflow-hidden">
+        <div className="shrink-0 md:shrink md:flex-[2] min-w-0 min-h-[200px] md:min-h-0 flex flex-col">
           {simQuizMode === 'sim' && !showMeHint && <TabBar />}
           {simQuizMode === 'sim' && !showMeHint && <PresetStrip />}
           {showMeHint && (
@@ -132,7 +132,7 @@ export default function SimulationPage() {
               </button>
             </div>
           )}
-          <div className="flex-1 min-h-[180px] md:min-h-0 relative">
+          <div className="h-[50vw] min-h-[180px] max-h-[300px] md:flex-1 md:h-auto md:max-h-none md:min-h-0 relative">
             {activeTab === 'long-wave' ? (
               <Scene3DLongWave />
             ) : activeTab === 'field-3d' ? (
@@ -145,7 +145,7 @@ export default function SimulationPage() {
           </div>
         </div>
 
-        <div id="control-panel" className="flex-1 md:flex-none w-full md:w-[320px] md:shrink-0 min-h-0 flex flex-col border-t md:border-t-0 border-gray-200 dark:border-slate-700">
+        <div id="control-panel" className="shrink-0 md:flex-none w-full md:w-[320px] md:shrink-0 min-h-0 md:min-h-0 flex flex-col border-t md:border-t-0 border-gray-200 dark:border-slate-700 md:overflow-y-auto">
           {simQuizMode === 'sim' ? (
             <>
               <div className="flex bg-gray-100 dark:bg-slate-800 border-b border-gray-200 dark:border-slate-700" role="tablist">

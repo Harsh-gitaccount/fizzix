@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { rateLimit } from '@/lib/rateLimit'
+import { isValidQuestion, deriveCorrectness } from '@/lib/quiz/questionBank'
 
 const VALID_TOPIC_IDS = new Set([
   'projectile-motion',
@@ -72,7 +73,18 @@ export async function POST(req: NextRequest) {
     if (!validateItem(envelope.results[i])) {
       return NextResponse.json({ error: `Invalid result entry at index ${i}` }, { status: 400 })
     }
-    validated.push(envelope.results[i] as QuizResultPayload)
+    const item = envelope.results[i] as QuizResultPayload
+    if (!isValidQuestion(item.topicId, item.questionId)) {
+      return NextResponse.json(
+        { error: `Unknown question '${item.questionId}' for topic '${item.topicId}' at index ${i}` },
+        { status: 400 }
+      )
+    }
+    const serverCorrect = deriveCorrectness(item.topicId, item.questionId, item.selected)
+    if (serverCorrect !== null) {
+      item.correct = serverCorrect
+    }
+    validated.push(item)
   }
 
   if (process.env.DATABASE_URL) {
@@ -95,7 +107,7 @@ export async function POST(req: NextRequest) {
           skipDuplicates: true,
         })
         return NextResponse.json(
-          { synced: validated.length },
+          { synced: validated.length, stored: true, acceptedIds: validated.map((r) => r.id).filter(Boolean) },
           { headers: { 'X-RateLimit-Remaining': String(remaining) } }
         )
       }

@@ -276,7 +276,7 @@ const dict: Record<string, Record<Lang, string>> = {
   'val.avgKE': { en: 'Avg translational KE', hi: 'औसत स्थानान्तरीय KE' },
   'val.rmsSpeed': { en: 'RMS Speed', hi: 'RMS चाल' },
   'val.avgSpeed': { en: 'Avg Speed', hi: 'औसत चाल' },
-  'val.totalKE': { en: 'Total KE', hi: 'कुल KE' },
+  'val.totalKE': { en: 'Total translational KE', hi: 'कुल स्थानान्तरीय KE' },
 
   'topic.modern-physics': { en: 'Modern Physics', hi: 'आधुनिक भौतिकी' },
 

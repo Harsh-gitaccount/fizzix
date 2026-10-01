@@ -180,8 +180,8 @@ export function thermoDerivedValues(
     totalKE: {
       value: keTotal,
       unit: 'J',
-      symbol: 'KEₜ',
-      label: 'Total KE',
+      symbol: 'KEₜᵣ',
+      label: 'Total translational KE',
     },
   }
 }

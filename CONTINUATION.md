@@ -3,12 +3,11 @@
 ## Session State
 - **Branch**: `claude/brave-ramanujan-s4hhf9`
 - **Base commit**: `7523ff0c2e3164d205036a85d81d12ae0312f997`
-- **Last batch**: batch-17 (F03 error metric, F06 quiz subcriteria, F11 KE qualifier + histogram)
+- **Last batch**: batch-18 (verification reproduced failures, quiz corrections, histogram/KE/volume disclosure)
 - **TypeScript**: 0 errors
 - **ESLint**: 0 errors, 0 warnings (src/)
 - **Dash lint**: 0 violations
 - **Unit tests**: 351/351 passing
-- **Production build**: succeeds
 - **npm audit**: 15 vulnerabilities (down from 23)
 
 ## Commits
@@ -30,7 +29,8 @@
 16. `9933f38` -- Batch 14c: F15 3D keyboard camera controls
 17. `a44769f` -- Batch 15: Keyboard widget isolation, ARIA panel targets, @types/node alignment
 18. `8672430` -- Batch 16: F12 rays toggle, F23 resource disposal, F24 mass preset, F26 static caching
-19. *(pending)* -- Batch 17: F03 error metric, F06 quiz subcriteria, F11 KE qualifier + histogram
+19. `806880b` -- Batch 17: F03 error metric, F06 quiz subcriteria, F11 KE qualifier + histogram
+20. *(pending)* -- Batch 18: Verification reproduced failures, quiz corrections, histogram/KE/volume disclosure
 
 ## Batch 11 Changes
 
@@ -130,12 +130,31 @@
 - `src/lib/canvas/thermoRenderer.ts`: Histogram axis labels (N, Speed →).
 - `src/lib/i18n.ts`: Updated avgKE label.
 
+## Batch 18 Changes
+
+### Nonportable test rewrites
+- `src/__tests__/batch16-fixes.test.ts`: F26 uses `path.resolve(__dirname)` + VM; F23 uses actual `createFieldView3D`. TS errors fixed (container, update signature, WebGLRenderer type).
+
+### Quiz question corrections
+- `src/simulations/projectile-motion/quiz.ts`: pm-m7 (explicit assumptions + T=2Vy/g), pm-h7 (fixture anchored, explanation corrected), dash-lint fixes.
+- `src/simulations/thermodynamics/quiz.ts`: thermo-h8 (positive-evidence Brownian motion question).
+
+### Scene3DGas histogram, KE, volume disclosure
+- `src/components/simulation/Scene3DGas.tsx`: Histogram: title "(sim. units)", Y-axis "N" + ticks, X-axis "Speed ->". Volume panel: "Box is schematic; not to volume scale."
+- `src/lib/physics/thermodynamics.ts`: totalKE symbol `KEₜᵣ`, label "Total translational KE."
+- `src/lib/i18n.ts`: totalKE labels updated (en + hi).
+
+### F03 reconciliation
+- Status changed to ACCEPTED. Energy exact within small-angle model per independent verification.
+
 ## Remaining Work
 
-### PARTIAL (10 findings)
-- **F03**: Period error metric defined (Borda); full nonlinear solver not implemented.
+### ACCEPTED (1 finding)
+- **F03**: Small-angle model by design. Energy conservation exact (deviation <1e-15). Borda period-error warning disclosed.
+
+### PARTIAL (9 findings)
 - **F06**: 5 subcriteria addressed. Remaining: `opt-e8` curriculum-aligned, not changing.
-- **F11**: KE qualified as translational; histogram labeled. Visual box volume not proportional (1D clamping); visualization simplification.
+- **F11**: KE qualified as translational; active histogram labeled with sim-units note; volume disclosure added. Worker speed initialization is uniform (not Maxwell); no equilibrium claim made.
 - **F12**: Rays toggle wired for refraction/TIR; not browser-verified.
 - **F14**: True touch/zoom/assistive-technology verification; actual device testing.
 - **F15**: Full assistive technology testing not performed.

@@ -293,7 +293,7 @@ export default function Scene3DGas() {
       ctx.font = 'bold 10px system-ui'
       ctx.fillStyle = isDark ? '#D1D5DB' : '#374151'
       ctx.textAlign = 'left'
-      ctx.fillText(lang === 'hi' ? 'चाल वितरण' : 'Speed Distribution', 8, 16)
+      ctx.fillText(lang === 'hi' ? 'चाल वितरण (सिम्. इकाई)' : 'Speed Distribution (sim. units)', 8, 16)
 
       const speeds = builder.getParticleSpeeds()
       if (speeds.length < 5) {
@@ -310,11 +310,28 @@ export default function Scene3DGas() {
       }
       const maxCount = Math.max(...counts, 1)
 
-      const chartX = 8
+      const chartX = 22
       const chartY = 24
-      const chartW = w - 16
-      const chartH = h - 34
+      const chartW = w - 30
+      const chartH = h - 42
       const barW = chartW / bins - 1
+
+      // Y-axis label
+      ctx.save()
+      ctx.font = '9px system-ui'
+      ctx.fillStyle = isDark ? '#9CA3AF' : '#6B7280'
+      ctx.textAlign = 'center'
+      ctx.translate(8, chartY + chartH / 2)
+      ctx.rotate(-Math.PI / 2)
+      ctx.fillText('N', 0, 0)
+      ctx.restore()
+
+      // Y-axis tick marks
+      ctx.font = '7px system-ui'
+      ctx.fillStyle = isDark ? '#9CA3AF' : '#6B7280'
+      ctx.textAlign = 'right'
+      ctx.fillText(String(maxCount), chartX - 2, chartY + 6)
+      ctx.fillText('0', chartX - 2, chartY + chartH + 3)
 
       for (let i = 0; i < bins; i++) {
         const barH = (counts[i] / maxCount) * chartH
@@ -326,6 +343,12 @@ export default function Scene3DGas() {
         else ctx.fillStyle = '#EF4444'
         ctx.fillRect(bx, by, barW, barH)
       }
+
+      // X-axis label
+      ctx.font = '9px system-ui'
+      ctx.fillStyle = isDark ? '#9CA3AF' : '#6B7280'
+      ctx.textAlign = 'center'
+      ctx.fillText(lang === 'hi' ? 'चाल →' : 'Speed →', chartX + chartW / 2, chartY + chartH + 14)
 
       requestAnimationFrame(draw)
     }
@@ -360,6 +383,7 @@ export default function Scene3DGas() {
         <p className="text-xs font-semibold text-gray-700 dark:text-gray-300">n = {n.toFixed(1)} mol</p>
         <p className="text-xs font-semibold text-gray-700 dark:text-gray-300">V = {V.toFixed(1)} L</p>
         <p className="text-xs font-semibold text-gray-700 dark:text-gray-300">{lang === 'hi' ? 'गैस' : 'Gas'}: {gasName}</p>
+        <p className="text-[9px] italic text-gray-500 dark:text-gray-400 mt-1">{lang === 'hi' ? 'बॉक्स योजनाबद्ध है; आयतन के अनुपात में नहीं' : 'Box is schematic; not to volume scale'}</p>
       </div>
 
       {/* Speed distribution histogram overlay */}

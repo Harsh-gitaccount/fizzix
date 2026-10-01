@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { renderOpticsFrame } from '@/lib/canvas/opticsRenderer'
+import { PRESETS } from '@/simulations/projectile-motion/presets'
 
 function createMockCanvas() {
   const calls: string[] = []
@@ -113,18 +114,58 @@ describe('F12 - Refraction Rays toggle', () => {
 
 describe('F26 - Service worker static asset caching', () => {
   it('sw.js only caches successful responses for static assets', async () => {
-    const swSource = await import('fs').then(fs =>
-      fs.readFileSync('/home/user/fizzix/public/sw.js', 'utf-8')
-    )
+    const fs = await import('fs')
+    const path = await import('path')
+    const vm = await import('vm')
 
-    const staticHandler = swSource.match(/pathname\.startsWith\(['"]\/\_next\/static\/['"]\)[\s\S]*?return\s*\n?\s*\}/)?.[0] ?? ''
-    expect(staticHandler).toContain('res.ok')
+    const swPath = path.resolve(__dirname, '../../public/sw.js')
+    const swSource = fs.readFileSync(swPath, 'utf-8')
+
+    const handlers: Record<string, (e: unknown) => void> = {}
+    const store = new Map<string, { status: number }>()
+    const cache = {
+      async match(r: { url?: string } | string) {
+        const k = typeof r === 'string' ? r : r.url ?? ''
+        return store.get(k) ?? undefined
+      },
+      async put(r: { url?: string } | string, res: { status: number; clone: () => { status: number } }) {
+        const k = typeof r === 'string' ? r : r.url ?? ''
+        store.set(k, { status: res.status })
+      },
+      async addAll() {},
+    }
+    const caches = {
+      async open() { return cache },
+      async keys() { return [] },
+      async delete() { return true },
+    }
+
+    vm.runInNewContext(swSource, {
+      self: {
+        addEventListener: (name: string, fn: (e: unknown) => void) => { handlers[name] = fn },
+        skipWaiting() {},
+        clients: { claim() {} },
+      },
+      caches,
+      fetch: async () => new Response('not found', { status: 404 }),
+      URL,
+      Response,
+    })
+
+    let response: Promise<Response> | undefined
+    handlers.fetch({
+      request: { method: 'GET', url: 'https://localhost/_next/static/missing.js', mode: 'cors' },
+      respondWith(p: Promise<Response>) { response = p },
+    })
+
+    const res = await response!
+    expect(res.status).toBe(404)
+    expect(store.has('https://localhost/_next/static/missing.js')).toBe(false)
   })
 })
 
 describe('F24 - Mass preset uses distinct masses', () => {
-  it('does-mass-matter preset has different mass values for A and B', async () => {
-    const { PRESETS } = await import('@/simulations/projectile-motion/presets')
+  it('does-mass-matter preset has different mass values for A and B', () => {
     const preset = PRESETS.find(p => p.id === 'does-mass-matter')
     expect(preset).toBeDefined()
     expect(preset!.params.mass).toBeDefined()
@@ -137,16 +178,55 @@ describe('F24 - Mass preset uses distinct masses', () => {
 })
 
 describe('F23 - fieldView3D resource disposal', () => {
-  it('clearScene disposes label and arrow resources via source inspection', async () => {
-    const source = await import('fs').then(fs =>
-      fs.readFileSync('/home/user/fizzix/src/lib/three/fieldView3D.ts', 'utf-8')
-    )
+  it('clearScene disposes label and arrow resources', async () => {
+    const THREE = await import('three')
+    const { createFieldView3D } = await import('@/lib/three/fieldView3D')
 
-    expect(source).toContain('disposeSprite(label1)')
-    expect(source).toContain('disposeSprite(label2)')
-    expect(source).toContain('disposeGroup(forceArrow1)')
-    expect(source).toContain('disposeGroup(forceArrow2)')
-    expect(source).toContain('material.map')
-    expect(source).toContain('material.dispose()')
+    const scene = new THREE.Scene()
+    const disposed: string[] = []
+
+    const origMeshDispose = THREE.BufferGeometry.prototype.dispose
+    THREE.BufferGeometry.prototype.dispose = function () {
+      disposed.push('geometry')
+      return origMeshDispose.call(this)
+    }
+    const origMatDispose = THREE.Material.prototype.dispose
+    THREE.Material.prototype.dispose = function () {
+      disposed.push('material')
+      return origMatDispose.call(this)
+    }
+
+    const mockCanvas = document.createElement('canvas')
+    vi.spyOn(mockCanvas, 'getContext').mockReturnValue({
+      drawImage: vi.fn(),
+      fillText: vi.fn(),
+      measureText: vi.fn(() => ({ width: 40 })),
+      fillRect: vi.fn(),
+      clearRect: vi.fn(),
+      canvas: mockCanvas,
+    } as unknown as CanvasRenderingContext2D)
+    vi.spyOn(document, 'createElement').mockReturnValue(mockCanvas as unknown as HTMLElement)
+
+    const container = document.createElement('div') as HTMLDivElement
+    const builder = createFieldView3D({
+      scene,
+      camera: new THREE.PerspectiveCamera(),
+      renderer: { domElement: document.createElement('div') } as unknown as import('three').WebGLRenderer,
+      container,
+    })
+
+    builder.update({ q1: 1, q2: -1, distance: 2 }, 0, false)
+    const childrenAfterBuild = scene.children.length
+    expect(childrenAfterBuild).toBeGreaterThan(0)
+
+    disposed.length = 0
+    builder.update({ q1: 2, q2: -2, distance: 3 }, 0, false)
+
+    expect(disposed.filter(d => d === 'material').length).toBeGreaterThan(3)
+    expect(disposed.filter(d => d === 'geometry').length).toBeGreaterThan(0)
+
+    THREE.BufferGeometry.prototype.dispose = origMeshDispose
+    THREE.Material.prototype.dispose = origMatDispose
+    vi.restoreAllMocks()
   })
 })

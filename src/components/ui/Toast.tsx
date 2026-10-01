@@ -34,7 +34,7 @@ export default function ToastContainer() {
   if (toasts.length === 0) return null
 
   return (
-    <div className="fixed bottom-16 left-1/2 -translate-x-1/2 z-50 flex flex-col gap-2 items-center">
+    <div role="status" aria-live="polite" className="fixed bottom-16 left-1/2 -translate-x-1/2 z-50 flex flex-col gap-2 items-center">
       {toasts.map((t) => (
         <div
           key={t.id}

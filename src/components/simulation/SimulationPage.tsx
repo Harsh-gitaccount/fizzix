@@ -151,7 +151,10 @@ export default function SimulationPage() {
               <div className="flex bg-gray-100 dark:bg-slate-800 border-b border-gray-200 dark:border-slate-700" role="tablist">
                 <button
                   role="tab"
+                  id="panel-tab-params"
                   aria-selected={panelTab === 'params'}
+                  aria-controls="panel-tabpanel"
+                  tabIndex={panelTab === 'params' ? 0 : -1}
                   onClick={() => setPanelTab('params')}
                   className={`flex-1 px-3 py-2 text-[11px] font-bold transition-colors ${
                     panelTab === 'params'
@@ -163,7 +166,10 @@ export default function SimulationPage() {
                 </button>
                 <button
                   role="tab"
+                  id="panel-tab-data"
                   aria-selected={panelTab === 'data'}
+                  aria-controls="panel-tabpanel"
+                  tabIndex={panelTab === 'data' ? 0 : -1}
                   onClick={() => setPanelTab('data')}
                   className={`flex-1 px-3 py-2 text-[11px] font-bold transition-colors ${
                     panelTab === 'data'
@@ -174,7 +180,7 @@ export default function SimulationPage() {
                   {t('panel.dataTable', lang)}
                 </button>
               </div>
-              <div className="flex-1 min-h-0 flex flex-col">
+              <div id="panel-tabpanel" role="tabpanel" aria-labelledby={`panel-tab-${panelTab}`} className="flex-1 min-h-0 flex flex-col">
                 {panelTab === 'params' ? (
                   <>
                     <ControlPanel />

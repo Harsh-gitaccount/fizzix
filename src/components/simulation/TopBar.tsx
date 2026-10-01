@@ -137,6 +137,7 @@ export default function TopBar() {
             onClick={handleLangToggle}
             className="px-2 py-1 text-[11px] font-bold rounded border border-gray-200 dark:border-slate-600 hover:bg-gray-100 dark:hover:bg-slate-800 text-gray-600 dark:text-gray-400"
             title={lang === 'en' ? 'हिंदी में बदलें' : 'Switch to English'}
+            aria-label={lang === 'en' ? 'Switch to Hindi' : 'Switch to English'}
           >
             {lang === 'en' ? 'हिं' : 'En'}
           </button>

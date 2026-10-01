@@ -57,12 +57,15 @@ export default function TabBar() {
   }
 
   return (
-    <div className="flex border-b border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-900 shrink-0">
+    <div role="tablist" className="flex border-b border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-900 shrink-0">
       {topic.tabs.map((tab) => (
         <button
           key={tab.id}
           role="tab"
+          id={`tab-${tab.id}`}
           aria-selected={activeTab === tab.id}
+          aria-controls={`tabpanel-${tab.id}`}
+          tabIndex={activeTab === tab.id ? 0 : -1}
           onClick={() => handleTabChange(tab.id)}
           className={`px-4 py-2 text-xs font-bold border-b-2 transition-colors ${
             activeTab === tab.id

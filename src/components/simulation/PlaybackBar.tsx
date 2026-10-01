@@ -115,7 +115,7 @@ export default function PlaybackBar() {
       <button
         onClick={handlePlayPause}
         className="w-9 h-9 md:w-10 md:h-10 flex items-center justify-center rounded-full bg-blue-600 hover:bg-blue-700 text-white text-base md:text-lg shrink-0"
-        aria-label={playbackState === 'playing' ? 'Pause' : 'Play'}
+        aria-label={playbackState === 'playing' ? 'Pause' : playbackState === 'landed' ? 'Replay' : 'Play'}
       >
         {playIcon}
       </button>
@@ -203,6 +203,7 @@ export default function PlaybackBar() {
             </div>
             <button
               onClick={toggleSound}
+              aria-pressed={soundEnabled}
               className="w-full flex items-center gap-3 px-4 py-2.5 text-left text-sm hover:bg-gray-50 dark:hover:bg-slate-700 text-gray-700 dark:text-gray-300"
             >
               <span className="w-5 text-center">{soundEnabled ? '🔊' : '🔇'}</span>
@@ -211,6 +212,7 @@ export default function PlaybackBar() {
             {(topic.slug === 'projectile-motion' || topic.slug === 'shm') && (
               <button
                 onClick={() => setPauseAtKeyPoints(!pauseAtKeyPoints)}
+                aria-pressed={pauseAtKeyPoints}
                 className="w-full flex items-center gap-3 px-4 py-2.5 text-left text-sm hover:bg-gray-50 dark:hover:bg-slate-700 text-gray-700 dark:text-gray-300"
               >
                 <span className="w-5 text-center">{pauseAtKeyPoints ? '✓' : ' '}</span>

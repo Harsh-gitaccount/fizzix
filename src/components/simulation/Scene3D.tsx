@@ -209,6 +209,8 @@ export default function Scene3D({ builder }: Scene3DProps) {
   return (
     <div
       ref={containerRef}
+      role="img"
+      aria-label="3D simulation view — drag to rotate, scroll to zoom"
       className="absolute inset-0 cursor-grab active:cursor-grabbing"
       onMouseDown={handleMouseDown}
       onMouseMove={handleMouseMove}

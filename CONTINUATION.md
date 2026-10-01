@@ -3,7 +3,7 @@
 ## Session State
 - **Branch**: `claude/brave-ramanujan-s4hhf9`
 - **Base commit**: `7523ff0c2e3164d205036a85d81d12ae0312f997`
-- **Last batch**: batch-12 (gas PV/labels, animation performance profiling)
+- **Last batch**: batch-13 (accessibility improvements)
 - **TypeScript**: 0 errors
 - **ESLint**: 0 errors, 0 warnings (src/)
 - **Dash lint**: 0 violations
@@ -22,7 +22,8 @@
 9. `e97d111` -- Batch 9: Third verification response
 10. `40854b6` -- Batch 10: Test gaps closed, poolVersion policy
 11. `d54583a` -- Batch 11: F03/F05/F06/F12/F21/F24 physics/content corrections
-12. (pending) -- Batch 12: F11 gas PV/labels, F23 animation performance profiling
+12. `1119f50` -- Batch 12: F11 gas PV/labels, F23 animation performance profiling
+13. (pending) -- Batch 13: F15 accessibility improvements
 
 ## Batch 11 Changes
 

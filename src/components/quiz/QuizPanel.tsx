@@ -218,7 +218,7 @@ export default function QuizPanel() {
         </p>
 
         {/* Options */}
-        <div className="space-y-2">
+        <div role="radiogroup" aria-label="Answer options" className="space-y-2">
           {currentQuestion.options.map((opt, idx) => {
             let optClass = 'border-gray-200 dark:border-slate-600 bg-gray-50 dark:bg-slate-800'
             if (showResult) {
@@ -234,6 +234,8 @@ export default function QuizPanel() {
             return (
               <button
                 key={idx}
+                role="radio"
+                aria-checked={selected === idx}
                 onClick={() => handleSelect(idx)}
                 disabled={showResult}
                 className={`w-full flex items-start gap-3 p-3 rounded-lg border-2 transition-colors text-left ${optClass} ${

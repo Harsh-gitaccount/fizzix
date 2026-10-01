@@ -38,6 +38,7 @@ export default function LayerToggles() {
             <button
               key={layer.key}
               onClick={() => toggleLayer(layer.key)}
+              aria-pressed={!!activeLayers[layer.key]}
               className={`px-2 py-1 text-[10px] font-semibold rounded border transition-colors ${
                 activeLayers[layer.key]
                   ? 'bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 border-blue-200 dark:border-blue-700'
@@ -59,6 +60,7 @@ export default function LayerToggles() {
             <button
               key={tool.key}
               onClick={() => { toggleTool(tool.key); trackEvent('Tool Used', { tool: tool.key }) }}
+              aria-pressed={!!activeTools[tool.key]}
               className={`px-2 py-1 text-[10px] font-semibold rounded border transition-colors ${
                 activeTools[tool.key]
                   ? 'bg-amber-50 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400 border-amber-200 dark:border-amber-700'

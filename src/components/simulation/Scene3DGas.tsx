@@ -224,6 +224,39 @@ export default function Scene3DGas() {
     cameraDirtyRef.current = true
   }, [positionCamera])
 
+  const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
+    const ROTATE_STEP = 0.1
+    const ZOOM_STEP = 1
+    let handled = false
+
+    if (e.key === 'ArrowLeft') {
+      cameraAngleRef.current.theta += ROTATE_STEP
+      handled = true
+    } else if (e.key === 'ArrowRight') {
+      cameraAngleRef.current.theta -= ROTATE_STEP
+      handled = true
+    } else if (e.key === 'ArrowUp') {
+      cameraAngleRef.current.phi = Math.max(0.1, cameraAngleRef.current.phi - ROTATE_STEP)
+      handled = true
+    } else if (e.key === 'ArrowDown') {
+      cameraAngleRef.current.phi = Math.min(Math.PI - 0.1, cameraAngleRef.current.phi + ROTATE_STEP)
+      handled = true
+    } else if (e.key === '+' || e.key === '=') {
+      cameraAngleRef.current.distance = Math.max(4, cameraAngleRef.current.distance - ZOOM_STEP)
+      handled = true
+    } else if (e.key === '-') {
+      cameraAngleRef.current.distance = Math.min(30, cameraAngleRef.current.distance + ZOOM_STEP)
+      handled = true
+    }
+
+    if (handled) {
+      e.preventDefault()
+      e.stopPropagation()
+      positionCamera()
+      cameraDirtyRef.current = true
+    }
+  }, [positionCamera])
+
   const histCanvasRef = useRef<HTMLCanvasElement>(null)
   const showHistogram = activeLayers.histogram === true
 
@@ -310,13 +343,15 @@ export default function Scene3DGas() {
     <div
       ref={containerRef}
       role="img"
-      aria-label="3D gas simulation — drag to rotate, scroll to zoom"
-      className="absolute inset-0 cursor-grab active:cursor-grabbing"
+      aria-label="3D gas simulation — use arrow keys to rotate, plus/minus to zoom"
+      tabIndex={0}
+      className="absolute inset-0 cursor-grab active:cursor-grabbing focus:outline-2 focus:outline-blue-500 focus:outline-offset-[-2px]"
       onMouseDown={handleMouseDown}
       onMouseMove={handleMouseMove}
       onMouseUp={handleMouseUp}
       onMouseLeave={handleMouseUp}
       onWheel={handleWheel}
+      onKeyDown={handleKeyDown}
     >
       {/* Live values */}
       <div className="absolute bottom-10 left-2 px-3 py-2 bg-white/85 dark:bg-slate-900/85 backdrop-blur-sm rounded-lg pointer-events-none select-none shadow-sm border border-gray-200 dark:border-slate-700">
@@ -362,7 +397,7 @@ export default function Scene3DGas() {
 
       {/* Controls hint */}
       <div className="absolute bottom-2 left-2 px-2 py-1 bg-black/40 text-white text-[10px] rounded pointer-events-none select-none">
-        {lang === 'hi' ? 'घुमाने के लिए खींचें | ज़ूम के लिए स्क्रॉल करें' : 'Drag to rotate | Scroll to zoom'}
+        {lang === 'hi' ? 'घुमाने के लिए खींचें/तीर कुंजियाँ | ज़ूम: स्क्रॉल/+−' : 'Drag/Arrow keys to rotate | Scroll/+- to zoom'}
       </div>
     </div>
   )

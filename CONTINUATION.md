@@ -99,7 +99,7 @@
 - **F06**: `opt-e8` mirage TIR explanation simplified but curriculum-aligned; not changing
 - **F11**: Visual box volume not proportional to physics volume (1D scaling with clamping); visualization simplification
 - **F14**: True touch/zoom/assistive-technology verification; actual device testing
-- **F15**: 3D keyboard camera controls, full assistive technology testing
+- **F15**: Full assistive technology testing not performed
 - **F22**: vitest/eslint-config-next upgraded; next 14→16 and prisma 7 remain (major, breaking)
 - **F26**: Multi-build updates, truly uncached navigation, production offline verification
 

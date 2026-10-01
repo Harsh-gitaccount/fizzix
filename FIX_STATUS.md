@@ -8,7 +8,7 @@ Tracking fixes for audit findings F01-F26 from the comprehensive audit at commit
 | F02 | Damping model wrong frequency | DONE | 1 | Rewrote pendulum & spring to three-regime damped oscillator (underdamped/critical/overdamped). Damping limit 0-5, unit kg/s. |
 | F03 | Pendulum energy inconsistency | DONE | 1 | Switched PE to small-angle quadratic form (0.5·m·g·L·θ²) consistent with trajectory model. |
 | F04 | Bohr model ignores Z | DONE | 1 | modernStateAtTime now passes Z to bohrRadiusPm, electronSpeed, bohrRadius. |
-| F05 | Optics f=0 / virtual ray issues | PARTIAL | 1 | lensPower returns null for f=0; lens nature labels corrected. Virtual ray rendering TBD — requires opticsRenderer.ts work. |
+| F05 | Optics f=0 / virtual ray issues | DONE | 1,6 | lensPower returns null for f=0; lens nature labels corrected. Virtual ray rendering fixed: solid actual rays, dashed extensions for virtual images. Added diverging lens Ray 3. |
 | F06 | Quiz answer errors | DONE | 2 | thermo-h1: 93nm→61nm (correct MFP calculation). opt-h1: 39.3°→38.8° (correct Snell's law). Both verified with independent calculations. |
 | F07 | Topic lifecycle leaks | DONE | 2 | Topic change effect resets playback (time=0, state=ready), undo history, quiz state, compare mode, ghost trails. |
 | F08 | Keyboard shortcuts topic-locked | DONE | 1 | Rewrote to accept SimulationModule, uses topic.tabs and topic.timeOfFlight. |
@@ -33,6 +33,6 @@ Tracking fixes for audit findings F01-F26 from the comprehensive audit at commit
 
 ## Summary
 
-- **DONE**: 20 findings
-- **PARTIAL**: 2 findings (F05 virtual ray rendering, F22 breaking-change deps)
+- **DONE**: 21 findings
+- **PARTIAL**: 1 finding (F22 breaking-change deps)
 - **DEFERRED**: 3 findings (F23, F24, F26 — recommendations/architectural, not bugs)

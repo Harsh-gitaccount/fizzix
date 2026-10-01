@@ -778,41 +778,64 @@ function drawPrincipalRays(
   const imgTop = lensY - imgH
 
   ctx.lineWidth = 1.2
-
-  if (isVirtual) {
-    ctx.setLineDash([4, 3])
-  }
-
-  // Ray 1: Parallel to axis, then through F (or appears to come from F)
-  ctx.strokeStyle = '#EF4444'
   ctx.globalAlpha = 0.7
+
+  // Ray 1: Parallel to axis → through/from focal point
+  ctx.strokeStyle = '#EF4444'
   ctx.beginPath()
   ctx.moveTo(objX, objTop)
   ctx.lineTo(lensX, objTop)
   ctx.stroke()
-  ctx.beginPath()
-  ctx.moveTo(lensX, objTop)
+
   if (isVirtual) {
-    ctx.lineTo(objX, imgTop)
-  } else {
+    const dx = lensX - imgX
+    const dy = objTop - imgTop
+    const edgeX = cw - 20
+    const edgeY = objTop + (dy / dx) * (edgeX - lensX)
+    ctx.beginPath()
+    ctx.moveTo(lensX, objTop)
+    ctx.lineTo(edgeX, edgeY)
+    ctx.stroke()
+    ctx.setLineDash([4, 3])
+    ctx.beginPath()
+    ctx.moveTo(lensX, objTop)
     ctx.lineTo(imgX, imgTop)
+    ctx.stroke()
+    ctx.setLineDash([])
+  } else {
+    ctx.beginPath()
+    ctx.moveTo(lensX, objTop)
+    ctx.lineTo(imgX, imgTop)
+    ctx.stroke()
   }
-  ctx.stroke()
 
   // Ray 2: Through center of lens (undeviated)
   ctx.strokeStyle = '#059669'
-  ctx.beginPath()
-  ctx.moveTo(objX, objTop)
   if (isVirtual) {
-    ctx.lineTo(imgX < 0 ? 20 : cw - 20, lensY + (lensY - objTop) * ((imgX < 0 ? 20 : cw - 20) - objX) / (lensX - objX))
-  } else {
+    const dx = lensX - objX
+    const dy = lensY - objTop
+    const edgeX = cw - 20
+    const edgeY = objTop + (dy / dx) * (edgeX - objX)
+    ctx.beginPath()
+    ctx.moveTo(objX, objTop)
+    ctx.lineTo(edgeX, edgeY)
+    ctx.stroke()
+    ctx.setLineDash([4, 3])
+    ctx.beginPath()
+    ctx.moveTo(lensX, lensY)
     ctx.lineTo(imgX, imgTop)
+    ctx.stroke()
+    ctx.setLineDash([])
+  } else {
+    ctx.beginPath()
+    ctx.moveTo(objX, objTop)
+    ctx.lineTo(imgX, imgTop)
+    ctx.stroke()
   }
-  ctx.stroke()
 
-  // Ray 3: Through F on object side, then parallel after lens
+  // Ray 3: Through/toward focal point
+  ctx.strokeStyle = '#8B5CF6'
   if (isConvex && !isVirtual) {
-    ctx.strokeStyle = '#8B5CF6'
     ctx.beginPath()
     ctx.moveTo(objX, objTop)
     ctx.lineTo(lensX, imgTop)
@@ -821,6 +844,23 @@ function drawPrincipalRays(
     ctx.moveTo(lensX, imgTop)
     ctx.lineTo(imgX, imgTop)
     ctx.stroke()
+  } else if (!isConvex) {
+    const slopeToF = (lensY - objTop) / (fpRight - objX)
+    const yAtLens = objTop + slopeToF * (lensX - objX)
+    ctx.beginPath()
+    ctx.moveTo(objX, objTop)
+    ctx.lineTo(lensX, yAtLens)
+    ctx.stroke()
+    ctx.beginPath()
+    ctx.moveTo(lensX, yAtLens)
+    ctx.lineTo(cw - 20, yAtLens)
+    ctx.stroke()
+    ctx.setLineDash([4, 3])
+    ctx.beginPath()
+    ctx.moveTo(lensX, yAtLens)
+    ctx.lineTo(imgX, yAtLens)
+    ctx.stroke()
+    ctx.setLineDash([])
   }
 
   ctx.globalAlpha = 1

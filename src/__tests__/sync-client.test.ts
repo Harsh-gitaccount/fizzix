@@ -89,7 +89,8 @@ function installMockIDB() {
 }
 
 describe('syncQuizResults - actual function with controlled fetch and IDB', () => {
-  let mockFetch: ReturnType<typeof vi.fn>
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  let mockFetch: any
   let originalFetch: typeof globalThis.fetch
 
   beforeEach(() => {
@@ -97,7 +98,7 @@ describe('syncQuizResults - actual function with controlled fetch and IDB', () =
     records.clear()
     originalFetch = globalThis.fetch
     mockFetch = vi.fn()
-    globalThis.fetch = mockFetch
+    globalThis.fetch = mockFetch as typeof globalThis.fetch
     Object.defineProperty(navigator, 'onLine', { value: true, writable: true, configurable: true })
     installMockIDB()
   })

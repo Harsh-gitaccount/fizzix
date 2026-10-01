@@ -11,13 +11,15 @@ Generated from `npm audit --json` on the installed lockfile. Counts below distin
 
 | Level | Packages | Unique Advisories (by own severity) |
 |-------|----------|-------------------------------------|
-| Critical | 2 (`next`, `vitest`) | 3 |
-| High | 13 | 16 |
-| Moderate | 8 | 55 |
+| Critical | 1 (`next`) | 2 |
+| High | 9 | 13 |
+| Moderate | 5 | 52 |
 | Low | 0 | 5 |
-| **Total** | **23 packages** | **79 unique advisories** |
+| **Total** | **15 packages** | **72 unique advisories** |
 
-Note: GHSA-82fw-gwwq-j7x9 appears under both `vitest` and `@vitest/mocker` but is one advisory (moderate severity). Package-level severity is propagated by `npm audit` and does not reflect individual advisory severity. Most high/moderate packages are transitive dependencies of `next`, `prisma`, or `vitest`.
+**Upgrades applied (batch 14):** vitest 2.1.9 → 5.0.3 (with vite 6.x), eslint-config-next 14.2.35 → 15.5.27. Resolved 8 packages and 7 unique advisories (vitest critical, @vitest/mocker moderate, esbuild moderate, vite high+moderate, vite-node, glob high, eslint-config-next, @next/eslint-plugin-next).
+
+Note: Package-level severity is propagated by `npm audit` and does not reflect individual advisory severity. Remaining packages are transitive dependencies of `next` and `prisma`.
 
 ## Critical Advisories (3)
 
@@ -61,16 +63,9 @@ Note: GHSA-82fw-gwwq-j7x9 appears under both `vitest` and `@vitest/mocker` but i
 
 **Remediation**: Upgrade `next` to >=16.3.8. **Breaking**: requires React 19, App Router API changes, middleware changes. Largest blast radius.
 
-### vitest 2.1.9 (direct dev dependency)
+### ~~vitest 2.1.9~~ → RESOLVED (upgraded to 5.0.3)
 
-1 direct critical advisory + 1 moderate advisory (path traversal via @vitest/mocker) + 3 upstream (esbuild, vite).
-
-| Advisory | Title | Own Severity | Exposure |
-|----------|-------|--------------|----------|
-| GHSA-5xrq-8626-4rwp | Arbitrary file read/execute via UI server | Critical | **Not reachable**: dev dependency, UI server not exposed |
-| GHSA-82fw-gwwq-j7x9 | Path traversal via @vitest/mocker | Moderate | **Not reachable**: dev dependency |
-
-**Remediation**: Upgrade `vitest` to >=5.0.3. **Breaking**: requires API changes in test config. Dev-only, no production impact.
+Upgraded in batch 14. All vitest/vite/esbuild advisories resolved. Required adding `vite@^6.4.0` and `@testing-library/dom` as explicit dev deps. `sync-client.test.ts` mock typing adapted for vitest 5's stricter `vi.fn()` types. All 339 tests pass.
 
 ## High Packages (13)
 
@@ -79,51 +74,47 @@ Note: GHSA-82fw-gwwq-j7x9 appears under both `vitest` and `@vitest/mocker` but i
 | postcss <=8.5.22 | 2 high, 2 moderate | next -> postcss | **Build-time only**: runs at build, not in browser | Upgrades with next |
 | @hono/node-server | 1 high, 2 moderate | prisma -> @prisma/dev -> @hono/node-server | **Not reachable**: serveStatic not used | Upgrade prisma >=7.10.0 |
 | hono <=4.13.6 | 2 high, 29 moderate, 3 low | prisma -> @prisma/dev -> hono | **Not reachable**: transitive dev dep, hono not used | Same prisma upgrade |
-| glob 10.x | 1 high | eslint-config-next -> glob | **Dev-only**: glob CLI not invoked at runtime | Upgrade eslint-config-next >=16.x |
 | lodash <=4.17.21 | 1 high, 2 moderate | prisma -> ... -> chevrotain -> lodash | **Transitive dev dep**: not used at runtime | Upgrade prisma |
-| vite | 1 high, 2 moderate | vitest -> vite | **Dev-only**: dev server not exposed | Upgrades with vitest |
 | prisma | 0 direct, upstream | direct | **Dev tooling**: prisma CLI and dev tools | Upgrade prisma >=7.10.0 |
-| eslint-config-next | 0 direct, upstream (glob) | direct | **Dev-only**: lint-time | Upgrade eslint-config-next |
-| @prisma/dev, @prisma/composer, @prisma/composer-cli, alchemy, @next/eslint-plugin-next | 0 direct each | transitive | **Not reachable**: inherit from parents above | Upgrade parent packages |
+| @prisma/dev, @prisma/composer, @prisma/composer-cli, alchemy | 0 direct each | transitive | **Not reachable**: inherit from parents above | Upgrade parent packages |
+| ~~glob 10.x~~ | ~~1 high~~ | ~~eslint-config-next -> glob~~ | **RESOLVED**: eslint-config-next upgraded to 15.5.27 | |
+| ~~vite~~ | ~~1 high, 2 moderate~~ | ~~vitest -> vite~~ | **RESOLVED**: vitest upgraded to 5.0.3, vite to 6.x | |
+| ~~eslint-config-next~~ | ~~0 direct~~ | ~~direct~~ | **RESOLVED**: upgraded to 15.5.27 | |
+| ~~@next/eslint-plugin-next~~ | ~~0 direct~~ | ~~transitive~~ | **RESOLVED**: upgraded with eslint-config-next | |
 
 ## Moderate Packages (8)
 
 | Package | Advisory | Own Severity | Exposure | Remediation |
 |---------|----------|--------------|----------|-------------|
-| @vitest/mocker <=4.1.10 | GHSA-82fw-gwwq-j7x9 | Moderate | **Dev-only**: test runner | Upgrade vitest >=5.0.3 |
-| esbuild <=0.24.2 | GHSA-67mh-4wv8-2f99 | Moderate | **Dev-only**: dev server not exposed | Bundled with vite |
 | valibot <=1.4.1 | GHSA-5qjj-4xww-7phc | Moderate | **Dev-only**: prisma dev tooling | Upgrade prisma |
-| chevrotain, @chevrotain/gast, @chevrotain/cst-dts-gen, @mrleebo/prisma-ast, vite-node | 0 direct each | N/A | **Dev-only**: transitive | Upgrade parent packages |
+| chevrotain, @chevrotain/gast, @chevrotain/cst-dts-gen, @mrleebo/prisma-ast | 0 direct each | N/A | **Dev-only**: transitive | Upgrade parent packages |
+| ~~@vitest/mocker~~ | ~~GHSA-82fw-gwwq-j7x9~~ | ~~Moderate~~ | **RESOLVED**: vitest upgraded to 5.0.3 | |
+| ~~esbuild~~ | ~~GHSA-67mh-4wv8-2f99~~ | ~~Moderate~~ | **RESOLVED**: bundled with vite 6.x | |
+| ~~vite-node~~ | ~~0 direct~~ | ~~N/A~~ | **RESOLVED**: upgraded with vitest | |
 
 ## Reachability Summary
 
 | Category | Packages | Advisories (by own severity) | In Production? |
 |----------|----------|------------------------------|----------------|
 | next framework | 1 critical + 1 high + transitive | 2 critical, 7 high, 11 moderate, 3 low (next) + 2 high, 2 moderate (postcss) | **Partial**: DoS and cache advisories reachable. SSRF/XSS/Windows-RCE not reachable with current configuration. |
-| vitest/esbuild/vite chain | 1 critical + 2 high + 3 moderate | 1 critical, 1 high, 4 moderate | **No**: dev dependency only |
+| ~~vitest/esbuild/vite chain~~ | ~~1 critical + 2 high + 3 moderate~~ | ~~1 critical, 1 high, 4 moderate~~ | **RESOLVED** (batch 14) |
 | prisma/hono chain | 3 high + 4 moderate | 2 high, 31 moderate, 3 low (hono) + 1 high, 2 moderate (@hono/node-server) + others | **No**: dev tooling, not imported at runtime |
-| glob (eslint plugin) | 1 high | 1 high | **No**: lint-time, CLI not invoked |
+| ~~glob (eslint plugin)~~ | ~~1 high~~ | ~~1 high~~ | **RESOLVED** (batch 14) |
 | lodash (dev transitive) | 1 high | 1 high, 2 moderate | **No**: transitive dev dep |
 
 ## Recommended Upgrade Path
 
-### Phase 1: Non-breaking (none available)
-All vulnerabilities require breaking changes. `npm audit fix` finds no non-breaking solutions. This does not establish that every possible remediation requires a major upgrade; individual advisory/release notes should be verified before upgrading.
+### Phase 1: Dev-dep upgrades — DONE (batch 14)
+1. ~~**vitest 2.x -> 5.x**~~: **DONE**. Upgraded to 5.0.3 with vite 6.x. Resolved 5 packages (vitest, @vitest/mocker, esbuild, vite, vite-node) and 7 unique advisories.
+2. ~~**eslint-config-next 14 -> 15**~~: **DONE**. Upgraded to 15.5.27. Resolved 3 packages (glob, eslint-config-next, @next/eslint-plugin-next) and 1 unique advisory.
 
-### Phase 2: Dev-dep upgrades (lower risk, no production impact)
-1. **vitest 2.x -> 5.x**: Fixes vitest (1 critical), @vitest/mocker (1 moderate), esbuild, vite. Requires updating test config and runner API. Dev-only change.
-2. **eslint-config-next**: Fixes glob. Requires eslint config changes. Dev-only.
-
-### Phase 3: Major framework upgrade (high risk, integration testing required)
+### Phase 2: Major framework upgrade (high risk, integration testing required)
 3. **next 14 -> 16**: Fixes 23 next advisories + 4 postcss. Requires React 19, App Router API changes, middleware changes, component migration. Must verify all 6 simulation topics render correctly. **Largest blast radius.**
 4. **prisma -> 7.10.0 (stable)**: Fixes hono (34 advisories), @hono/node-server (3), valibot, lodash, chevrotain chain. Requires schema/migration compatibility check.
 
 ### Acceptable short-term deferrals
 The following have no production reachability:
 - hono/valibot/lodash/chevrotain chain (prisma dev tooling internals)
-- esbuild/vite (dev server only, not exposed)
-- glob CLI (never invoked at runtime)
-- vitest UI server (dev dependency, critical severity but zero production exposure)
 
 ### Production priority
 The `next` upgrade (DoS and cache poisoning advisories) is the only production-reachable remediation and requires coordinated framework migration.
@@ -132,5 +123,5 @@ The `next` upgrade (DoS and cache poisoning advisories) is the only production-r
 
 - Advisory counts and severities are from `npm audit --json` on Node 24.19/Linux, deduplicated by GHSA URL. A different Node version or OS may show different results.
 - "Not reachable" claims are based on Fizzix's current feature set and assumed deployment configuration. Deployment to Linux containers has not been verified against production evidence. Changes to deployment (Windows, custom server, remote image patterns) could change exposure.
-- Package files (`package.json`, `package-lock.json`) are unchanged by this audit; no upgrades have been applied.
+- Batch 14 applied dev-dep upgrades (vitest 2→5, eslint-config-next 14→15). Major framework upgrades (next 14→16, prisma 7) not applied.
 - "npm audit fix found no automatic fix" does not establish that every remediation requires a major upgrade. Verify proposed fixed versions against authoritative advisory/release information before upgrading.

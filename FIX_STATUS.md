@@ -2,7 +2,7 @@
 
 Tracking fixes for audit findings F01-F26 from the comprehensive audit at commit `7523ff0`.
 Reconciled against independent verification at commits `fcb3b41`, `6be4bac`, `b9bf820`, and `e97d111`.
-Current head includes batch 13 fixes (accessibility, trajectory cap, F21 done).
+Current head includes batch 14 fixes (F15 arrow key nav, F22 dependency upgrades).
 
 | Finding | Title | Status | Batch | Notes |
 |---------|-------|--------|-------|-------|
@@ -20,14 +20,14 @@ Current head includes batch 13 fixes (accessibility, trajectory cap, F21 done).
 | F12 | Disconnected controls | DONE | 4,7,11 | Removed dead 'graph' layer toggle. Added Speed Distribution histogram overlay to 3D gas scene. Canvas2D vector layer gating removed: velocity/acceleration/components layers are now controlled solely by their toggle switches, not restricted to specific tab names. All topics' vector layers are available on any tab. |
 | F13 | Generic data table | DONE | 2 | DataTable rewritten to use topic.derivedValues/derivedValueKeys. |
 | F14 | Small-screen layout | PARTIAL | 2,7,8,9 | Canvas container given responsive height. Main content area scrollable on mobile. Control panel no longer competes for flex space. TopBar secondary actions (Screenshot, Share, Fullscreen, Language) moved into overflow menu on mobile. PlaybackBar condensed with responsive sizing, speed selector and time readout hidden on very narrow viewports. Full touch/zoom/assistive-technology verification not performed; header and playback no longer clip at 320/390px widths in layout, but actual device testing has not been done. |
-| F15 | Accessibility | PARTIAL | 2,13 | Slider ARIA attributes added. Viewport scaling fixed. Layer/tool toggles: `aria-pressed`. TabBar: `role="tablist"`, `aria-controls`, `tabIndex` roving. SimulationPage panel tabs: `role="tabpanel"`, `aria-labelledby`. PlaybackBar: `aria-pressed` on sound/pause-at-key-points toggles, "Replay" label for landed state. PresetStrip: `aria-pressed` on active preset. QuizPanel: `role="radiogroup"` + `role="radio"` + `aria-checked`. Toast: `role="status"` + `aria-live="polite"`. 3D scenes: `role="img"` + `aria-label`. Language toggle: `aria-label`. Remaining: Arrow key tab navigation, 3D keyboard camera controls, full assistive technology testing not performed. |
+| F15 | Accessibility | PARTIAL | 2,13,14 | Slider ARIA attributes added. Viewport scaling fixed. Layer/tool toggles: `aria-pressed`. TabBar: `role="tablist"`, `aria-controls`, `tabIndex` roving, ArrowLeft/ArrowRight/Home/End keyboard navigation. SimulationPage panel tabs: `role="tabpanel"`, `aria-labelledby`. PlaybackBar: `aria-pressed` on sound/pause-at-key-points toggles, "Replay" label for landed state. PresetStrip: `aria-pressed` on active preset. QuizPanel: `role="radiogroup"` + `role="radio"` + `aria-checked`. Toast: `role="status"` + `aria-live="polite"`. 3D scenes: `role="img"` + `aria-label`. Language toggle: `aria-label`. Remaining: 3D keyboard camera controls, full assistive technology testing not performed. |
 | F16 | 3D screenshot export blank | DONE | 5 | preserveDrawingBuffer:true on WebGLRenderer. |
 | F17 | Quiz API validation | DONE | 4,7,8,9,10 | Full envelope validation: null body/items return 400. `topicId` validated against 6 known topics. Question ID validated against actual quiz bank. Server derives correctness from bank's `correctIndex`. Persistence-field validation: `id` must be string or undefined; `poolVersion` must be positive integer in range [1, QUIZ_POOL_VERSION] or undefined; `timestamp` must produce a valid Date in reasonable range (2021-2100). Unsupported poolVersion (e.g. 999) now rejected with 400. Handler correctness tests assert both directions of server override via captured `createMany` data. |
 | F18 | Offline sync chunking | DONE | 5,8,9,10 | Chunking with per-chunk markSynced and idempotency via skipDuplicates. Client requires `stored === true` (not just absence of `stored:false`). Count-only fallback removed. AcceptedIds intersected with submitted chunk IDs; only explicitly acknowledged records are marked synced. New sync-client test calls actual `syncQuizResults` with mocked IDB and fetch, verifying records are correctly marked or kept pending for all edge cases. |
 | F19 | Adaptive quiz label mismatch | DONE | 2,7 | Badge shows item difficulty. `saveQuizResult` and `trackEvent` now use `q.difficulty` (question's own difficulty) instead of `s.difficulty` (adaptive store difficulty). |
 | F20 | Longitudinal wave speed | DONE | 4 | Correct spring-mass chain dispersion formula. |
 | F21 | Drag coefficient units | DONE | 2,11,13 | Symbol/unit renamed. Compare-mode legend symbol corrected from 'Cd' to 'b' matching module definition. Acceleration vector now shows actual net acceleration (gravity + drag) when drag > 0, with correct direction and magnitude. Legend label switches from "Gravity" to "Net Acceleration" when drag is enabled. Trajectory cap raised from 100s (100001 steps) to 250s (250001 steps), covering worst-case slider combination (v0=50, theta=90, g=0.5, y0=50 → ~214s TOF). |
-| F22 | Dependency advisories | PARTIAL | 5,7,9 | 23 packages, 79 unique advisories (3 critical, 16 high, 55 moderate, 5 low by own severity). Advisory counts now use deduplicated GHSA URLs with each advisory's own severity. All require breaking changes. Per-advisory reachability analysis in `DEPENDENCY_AUDIT.md`. Production-reachable: next framework DoS/cache advisories. Not reachable (assumed Linux deployment, not verified): hono/prisma chain, vitest/esbuild, glob CLI. Upgrade path: vitest first (dev-only), then next 14->16 (major). Deployment assumptions documented. |
+| F22 | Dependency advisories | PARTIAL | 5,7,9,14 | Upgraded vitest 2→5 (dev-only, resolves @vitest/mocker path traversal + vite/esbuild advisories). Upgraded eslint-config-next 14→15 (resolves glob CLI injection). Reduced from 23 to 15 vulnerable packages, 79 to 72 unique advisories. Remaining 15 packages (1 critical, 9 high, 5 moderate) all in next 14.x (23 advisories + postcss) and prisma chain (hono/valibot/lodash). Both require major framework upgrades (next 14→16, prisma 7). Per-advisory reachability analysis in `DEPENDENCY_AUDIT.md`. |
 | F23 | Animation performance | DONE | 12 | Playwright-based performance profiling test added (e2e/perf-profile.spec.ts). Measures rAF frame times (idle and active animation) across all 6 topics and topic-switching latency. Results: all topics p95 < 33ms (30fps budget); avg ~16.5ms (~60fps). Topic switching 0.9-1.4s. Thermodynamics occasional 3D init spikes (82ms max) but p95=21ms. No performance regression detected. |
 | F24 | Teaching preset gaps | DONE | 11 | `low-drive` hookQuestion fixed from false premise ("Why does a low throw cover more ground?") to neutral "How does a low angle change the trajectory shape?". `moon-vs-earth` hookQuestion fixed from statement to question "How far would this same throw go on the Moon?". `does-mass-matter` hookQuestion reworded to "Does changing the mass change the trajectory?" with compareParams showing identical trajectories, defaultTab set to compare. |
 | F25 | Threshold preset wording | DONE | 1 | "At Threshold" renamed to "Near Threshold". |
@@ -84,3 +84,20 @@ Current head includes batch 13 fixes (accessibility, trajectory cap, F21 done).
 - ESLint: 0 errors, 0 warnings (src/)
 - Production build: succeeds
 - Unit tests: 339/339 pass (275 golden + 26 regression + 17 handler + 10 sync-client + 11 keyboard-shortcuts)
+
+## Batch 14 changes (F15 arrow key nav, F22 dependency upgrades)
+
+### F15: TabBar arrow key navigation
+- **TabBar.tsx**: Added WAI-ARIA compliant keyboard navigation. ArrowRight/ArrowLeft cycle through tabs, Home/End jump to first/last. Focus follows selection (roving tabIndex). `handleTabChange` wrapped in `useCallback`.
+
+### F22: Dependency remediation
+- **vitest 2→5**: Dev-only upgrade. Resolves `@vitest/mocker` path traversal (GHSA-82fw-gwwq-j7x9), vite dev server exposure (GHSA-67mh-4wv8-2f99). Required adding `vite@6` and `@testing-library/dom` as explicit dev deps. `sync-client.test.ts` mock typing adapted for vitest 5's stricter `vi.fn()` types.
+- **eslint-config-next 14→15**: Resolves glob CLI command injection (GHSA-5j98-mcp5-4vw2). No breaking changes — same ESLint config API.
+- **Result**: 23→15 vulnerable packages, 79→72 unique advisories. 7 advisories resolved. Remaining all require next 14→16 or prisma 7 (major framework upgrades).
+
+### Verification results (batch 14)
+- TypeScript: `tsc --noEmit` exits zero
+- ESLint: 0 errors, 0 warnings (src/)
+- Production build: succeeds
+- Unit tests: 339/339 pass
+- npm audit: 15 vulnerabilities (was 23), 72 unique advisories (was 79)

@@ -39,7 +39,7 @@ export default function TabBar() {
     if (topic.slug === 'optics') {
       const typeMap: Record<string, number> = { 'refraction': 0, 'lenses': 1, 'tir': 2, 'free-play': 3 }
       const opticsType = typeMap[tabId] ?? 0
-      const tirDefaults = opticsType === 2 ? { n1: 1.5, n2: 1.0, theta1: 30 } : {}
+      const tirDefaults: Record<string, number> = opticsType === 2 ? { n1: 1.5, n2: 1.0, theta1: 30 } : {}
       setParams({ ...topic.defaultParams, ...params, ...tirDefaults, opticsType })
     }
 

@@ -32,7 +32,7 @@ const Scene3DGas = dynamic(() => import('./Scene3DGas'), { ssr: false })
 export default function SimulationPage() {
   const topic = useTopic()
 
-  useKeyboardShortcuts()
+  useKeyboardShortcuts(topic)
   useSoundEffects()
   useServiceWorker()
   useURLParams()

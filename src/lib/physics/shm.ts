@@ -61,7 +61,7 @@ export function pendulumStateAtTime(
   }
 
   const theta0 = theta0Deg * Math.PI / 180
-  const omega = Math.sqrt(g / length)
+  const omega0 = Math.sqrt(g / length)
   const p: PendulumParams = { length, theta0: theta0Deg, g, damping }
   const tof = pendulumTimeOfFlight(p)
 
@@ -71,16 +71,42 @@ export function pendulumStateAtTime(
     return { t: 0, x, y, vx: 0, vy: 0, phase: 'ready' }
   }
 
-  let amplitude = theta0
+  let theta: number
+  let dTheta: number
+
   if (damping > 0) {
-    amplitude = theta0 * Math.exp(-damping * t)
-    if (amplitude < 0.001) {
+    const gamma = damping / 2
+    const disc = omega0 * omega0 - gamma * gamma
+
+    if (disc < -1e-12) {
+      // Overdamped
+      const beta = Math.sqrt(-disc)
+      const expGt = Math.exp(-gamma * t)
+      const chB = Math.cosh(beta * t)
+      const shB = Math.sinh(beta * t)
+      theta = theta0 * expGt * (chB + (gamma / beta) * shB)
+      dTheta = theta0 * expGt * ((-gamma * chB + beta * shB) + (gamma / beta) * (-gamma * shB + beta * chB))
+    } else if (disc < 1e-12) {
+      // Critically damped
+      const expGt = Math.exp(-gamma * t)
+      theta = theta0 * expGt * (1 + gamma * t)
+      dTheta = theta0 * expGt * (gamma - gamma * (1 + gamma * t))
+    } else {
+      // Underdamped
+      const omegaD = Math.sqrt(disc)
+      const expGt = Math.exp(-gamma * t)
+      theta = theta0 * expGt * (Math.cos(omegaD * t) + (gamma / omegaD) * Math.sin(omegaD * t))
+      dTheta = theta0 * expGt * ((-gamma * Math.cos(omegaD * t) - omegaD * Math.sin(omegaD * t))
+        + (gamma / omegaD) * (-gamma * Math.sin(omegaD * t) + omegaD * Math.cos(omegaD * t)))
+    }
+
+    if (Math.abs(theta) < 0.001 && Math.abs(dTheta) < 0.001) {
       return { t, x: 0, y: 0, vx: 0, vy: 0, phase: 'landed' }
     }
+  } else {
+    theta = theta0 * Math.cos(omega0 * t)
+    dTheta = -theta0 * omega0 * Math.sin(omega0 * t)
   }
-
-  const theta = amplitude * Math.cos(omega * t)
-  const dTheta = -amplitude * omega * Math.sin(omega * t)
 
   const x = length * Math.sin(theta)
   const y = length * (1 - Math.cos(theta))
@@ -97,10 +123,14 @@ export function pendulumEnergy(
   state: SimulationState
 ): { ke: number; pe: number; total: number } {
   const mass = params.mass ?? 1
+  const length = params.length ?? 1
   const g = params.g ?? 9.8
   const speed = Math.sqrt(state.vx * state.vx + state.vy * state.vy)
   const ke = 0.5 * mass * speed * speed
-  const pe = mass * g * state.y
+  // Use small-angle consistent PE: 0.5*m*g*L*theta^2
+  // theta is recovered from x = L*sin(theta) ≈ L*theta for small angles
+  const theta = length > 0 ? Math.asin(Math.max(-1, Math.min(1, state.x / length))) : 0
+  const pe = 0.5 * mass * g * length * theta * theta
   return { ke, pe, total: ke + pe }
 }
 
@@ -215,7 +245,7 @@ export function springStateAtTime(
     return ZERO_STATE
   }
 
-  const omega = Math.sqrt(k / mass)
+  const omega0 = Math.sqrt(k / mass)
   const p: SpringParams = { k, mass, amplitude, damping }
   const tof = springTimeOfFlight(p)
 
@@ -223,17 +253,45 @@ export function springStateAtTime(
     return { t: 0, x: amplitude, y: 0, vx: 0, vy: 0, phase: 'ready' }
   }
 
-  let amp = amplitude
+  let x: number
+  let vx: number
+
   if (damping > 0) {
+    // damping is b in kg/s: m*x'' + b*x' + k*x = 0
+    // IC: x(0) = A, v(0) = 0
     const gamma = damping / (2 * mass)
-    amp = amplitude * Math.exp(-gamma * t)
-    if (amp < 0.0001) {
+    const disc = omega0 * omega0 - gamma * gamma
+
+    if (disc < -1e-12) {
+      // Overdamped: no equilibrium crossing from rest
+      const beta = Math.sqrt(-disc)
+      const expGt = Math.exp(-gamma * t)
+      const chB = Math.cosh(beta * t)
+      const shB = Math.sinh(beta * t)
+      x = amplitude * expGt * (chB + (gamma / beta) * shB)
+      vx = amplitude * expGt * ((-gamma * chB + beta * shB)
+        + (gamma / beta) * (-gamma * shB + beta * chB))
+    } else if (disc < 1e-12) {
+      // Critically damped
+      const expGt = Math.exp(-gamma * t)
+      x = amplitude * expGt * (1 + gamma * t)
+      vx = amplitude * expGt * (gamma - gamma * (1 + gamma * t))
+    } else {
+      // Underdamped
+      const omegaD = Math.sqrt(disc)
+      const expGt = Math.exp(-gamma * t)
+      x = amplitude * expGt * (Math.cos(omegaD * t) + (gamma / omegaD) * Math.sin(omegaD * t))
+      vx = amplitude * expGt * ((-gamma * Math.cos(omegaD * t) - omegaD * Math.sin(omegaD * t))
+        + (gamma / omegaD) * (-gamma * Math.sin(omegaD * t) + omegaD * Math.cos(omegaD * t)))
+    }
+
+    if (Math.abs(x) < 0.0001 && Math.abs(vx) < 0.0001) {
       return { t, x: 0, y: 0, vx: 0, vy: 0, phase: 'landed' }
     }
+  } else {
+    x = amplitude * Math.cos(omega0 * t)
+    vx = -amplitude * omega0 * Math.sin(omega0 * t)
   }
-
-  const x = amp * Math.cos(omega * t)
-  const vx = -amp * omega * Math.sin(omega * t)
 
   const phase = t >= tof ? 'landed' : 'flying'
 

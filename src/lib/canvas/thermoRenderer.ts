@@ -1,4 +1,4 @@
-import type { CanvasBounds, CanvasBackground } from '@/lib/physics/types'
+import type { CanvasBounds, CanvasBackground, GhostTrail } from '@/lib/physics/types'
 import { t, type Lang } from '@/lib/i18n'
 import {
   type GasParticle,
@@ -18,7 +18,7 @@ interface ThermoRenderOptions {
   activeLayers: Record<string, boolean>
   isDark: boolean
   background: CanvasBackground
-  ghostTrails: never[]
+  ghostTrails: GhostTrail[]
   compareMode: boolean
   paramsB?: Record<string, number>
   dragHandles?: { angleArc: boolean; speedArrow: boolean }
@@ -497,8 +497,10 @@ export function renderThermoFrame(
   drawLegend(ctx, cw, isDark, showSpeedColors, thermoType, lang)
 
   // Measurement tools
-  if (options.tools?.ruler) drawRuler(ctx, options.tools.ruler, { xMin: 0, xMax: cw, yMin: 0, yMax: ch, scale: 1 })
-  if (options.tools?.protractor) drawProtractor(ctx, options.tools.protractor, { xMin: 0, xMax: cw, yMin: 0, yMax: ch, scale: 1 })
+  const identityX = (x: number) => x
+  const identityY = (y: number) => y
+  if (options.tools?.ruler) drawRuler(ctx, options.tools.ruler, identityX, identityY, 1, isDark)
+  if (options.tools?.protractor) drawProtractor(ctx, options.tools.protractor, identityX, identityY, isDark)
 
   ctx.restore()
 }

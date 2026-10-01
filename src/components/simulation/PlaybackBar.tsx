@@ -29,11 +29,14 @@ export default function PlaybackBar() {
   const ghostTrails = useSimulationStore((s) => s.ghostTrails)
   const clearGhostTrails = useSimulationStore((s) => s.clearGhostTrails)
   const params = useSimulationStore((s) => s.params)
+  const compareMode = useSimulationStore((s) => s.compareMode)
+  const paramsB = useSimulationStore((s) => s.paramsB)
   const reset = useSimReset()
   const [menuOpen, setMenuOpen] = useState(false)
   const menuRef = useRef<HTMLDivElement>(null)
 
-  const tof = topic.timeOfFlight(params)
+  const tofA = topic.timeOfFlight(params)
+  const tof = compareMode ? Math.max(tofA, topic.timeOfFlight(paramsB)) : tofA
 
   useEffect(() => {
     if (!menuOpen) return

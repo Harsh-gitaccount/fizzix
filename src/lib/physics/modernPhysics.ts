@@ -205,9 +205,10 @@ export function modernStateAtTime(params: Record<string, number>, t: number): Si
   if (modernType === 1) {
     // Bohr: x represents electron orbit angle
     const n = params.orbitN ?? 1
-    const r = bohrRadiusPm(n) // picometers
-    const v = electronSpeed(n)
-    const angularSpeed = v / bohrRadius(n)
+    const Z = params.atomicZ ?? 1
+    const r = bohrRadiusPm(n, Z) // picometers
+    const v = electronSpeed(n, Z)
+    const angularSpeed = v / bohrRadius(n, Z)
     const angle = (angularSpeed * t) % (2 * Math.PI)
     return { t, x: angle, y: r, vx: v, vy: 0, phase: 'flying' }
   }

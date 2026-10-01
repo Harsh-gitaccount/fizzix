@@ -56,7 +56,6 @@ const projectileModule: SimulationModule = {
     velocity: false,
     components: false,
     acceleration: false,
-    graph: false,
   },
 
   layerDefs: [
@@ -65,7 +64,6 @@ const projectileModule: SimulationModule = {
     { key: 'velocity', label: 'Velocity', labelHi: 'वेग', icon: '→', defaultOn: false, color: '#059669' },
     { key: 'components', label: 'Components', labelHi: 'घटक', icon: '↕', defaultOn: false, color: '#8B5CF6' },
     { key: 'acceleration', label: 'Acceleration', labelHi: 'त्वरण', icon: '↓', defaultOn: false, color: '#B45309' },
-    { key: 'graph', label: 'Graph', labelHi: 'ग्राफ़', icon: '\u{1F4C8}', defaultOn: false, color: '#EF4444' },
   ],
 
   presets: PRESETS,

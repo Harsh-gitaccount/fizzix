@@ -212,3 +212,56 @@ button {
   background-image: radial-gradient(circle, rgba(255,255,255,0.025) 1px, transparent 1px);
   background-size: 32px 32px;
 }
+
+/* Smooth scroll (only when not reduced-motion) */
+@media (prefers-reduced-motion: no-preference) {
+  html {
+    scroll-behavior: smooth;
+  }
+}
+
+/* Scrollbar hide for mobile pill selector */
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+/* Hero experiment slider */
+.experiment-slider {
+  -webkit-appearance: none;
+  appearance: none;
+  height: 4px;
+  background: #1E2D4A;
+  border-radius: 2px;
+  outline: none;
+  cursor: pointer;
+}
+.experiment-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #E8740C;
+  border: 2px solid #0C1222;
+  cursor: pointer;
+  transition: transform 150ms ease-out, box-shadow 150ms ease-out;
+}
+.experiment-slider::-moz-range-thumb {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #E8740C;
+  border: 2px solid #0C1222;
+  cursor: pointer;
+}
+.experiment-slider:hover::-webkit-slider-thumb {
+  transform: scale(1.2);
+  box-shadow: 0 0 0 4px rgba(232, 116, 12, 0.15);
+}
+.experiment-slider:focus-visible::-webkit-slider-thumb {
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.5);
+}

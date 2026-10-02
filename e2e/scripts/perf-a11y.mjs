@@ -177,65 +177,65 @@ async function run() {
     if (await playBtn.count() > 0) await playBtn.click()
     await page.waitForTimeout(1000)
 
-    const changed = await page.evaluate(() => {
+    const result = await page.evaluate(() => {
       return new Promise(resolve => {
         const canvas = document.querySelector('canvas')
-        if (!canvas) { resolve(false); return }
-        try {
-          const snap1 = canvas.toDataURL('image/png').substring(22, 200)
-          setTimeout(() => {
-            try {
-              const snap2 = canvas.toDataURL('image/png').substring(22, 200)
-              resolve(snap1 !== snap2)
-            } catch { resolve(true) }
-          }, 500)
-        } catch { resolve(true) }
+        if (!canvas) { resolve({ error: 'no-canvas' }); return }
+        let snap1
+        try { snap1 = canvas.toDataURL('image/png') }
+        catch (e) { resolve({ error: `canvas-read-failed: ${e.message}` }); return }
+        setTimeout(() => {
+          let snap2
+          try { snap2 = canvas.toDataURL('image/png') }
+          catch (e) { resolve({ error: `canvas-read-failed-2: ${e.message}` }); return }
+          resolve({ changed: snap1 !== snap2, len1: snap1.length, len2: snap2.length })
+        }, 500)
       })
     })
-    if (!changed) throw new Error('Canvas pixels unchanged during 500ms of active playback')
+    if (result.error) throw new Error(`Cannot measure canvas: ${result.error}`)
+    if (!result.changed) throw new Error(`Canvas pixels unchanged during 500ms of active playback (data URI lengths: ${result.len1}, ${result.len2})`)
+    console.log(`    (snapshot lengths: ${result.len1} → ${result.len2})`)
     await page.close()
   })
 
   // === Resource behavior during transitions ===
   console.log('\n=== Resource Behavior During Transitions ===')
 
-  await assert('5 rapid topic transitions: memory heap check', async () => {
+  {
     const page = await context.newPage()
-    const transitions = [
-      'projectile-motion', 'thermodynamics', 'electrostatics',
-      'optics', 'shm',
-    ]
     const heapBefore = await page.evaluate(() => {
       if (performance.memory) return performance.memory.usedJSHeapSize
       return null
     })
 
     if (heapBefore === null) {
-      markBlocked('Heap growth measurement', 'performance.memory not available in this Chromium build')
+      markBlocked('5 rapid topic transitions: memory heap check', 'performance.memory not available in this Chromium build')
       await page.close()
-      return
+    } else {
+      await assert('5 rapid topic transitions: memory heap check', async () => {
+        const transitions = [
+          'projectile-motion', 'thermodynamics', 'electrostatics',
+          'optics', 'shm',
+        ]
+        for (const topic of transitions) {
+          await page.goto(`${BASE}/${topic}`)
+          await page.waitForSelector('canvas', { timeout: 15000 })
+          await page.waitForTimeout(1000)
+        }
+        const heapAfter = await page.evaluate(() => {
+          if (performance.memory) return performance.memory.usedJSHeapSize
+          return null
+        })
+        if (heapAfter === null) throw new Error('performance.memory disappeared mid-test')
+        const growthMB = (heapAfter - heapBefore) / (1024 * 1024)
+        console.log(`    (heap growth: ${growthMB.toFixed(1)}MB over 5 transitions)`)
+        if (growthMB > 50) {
+          throw new Error(`Heap grew ${growthMB.toFixed(1)}MB — possible memory leak`)
+        }
+        await page.close()
+      })
     }
-
-    for (const topic of transitions) {
-      await page.goto(`${BASE}/${topic}`)
-      await page.waitForSelector('canvas', { timeout: 15000 })
-      await page.waitForTimeout(1000)
-    }
-
-    const heapAfter = await page.evaluate(() => {
-      if (performance.memory) return performance.memory.usedJSHeapSize
-      return null
-    })
-
-    if (heapAfter !== null) {
-      const growthMB = (heapAfter - heapBefore) / (1024 * 1024)
-      console.log(`    (heap growth: ${growthMB.toFixed(1)}MB over 5 transitions)`)
-      if (growthMB > 50) {
-        throw new Error(`Heap grew ${growthMB.toFixed(1)}MB — possible memory leak`)
-      }
-    }
-    await page.close()
-  })
+  }
 
   await assert('No uncaught errors during rapid transitions (warmed baseline)', async () => {
     const page = await context.newPage()

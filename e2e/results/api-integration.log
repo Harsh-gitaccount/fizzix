@@ -1,0 +1,31 @@
+Database target: localhost:5432/fizzix_test
+
+Target: http://localhost:3099/api/quiz/results/batch
+Database: configured (fizzix_test)
+Starting server...
+  Server running (PID 4105, binary: /home/user/fizzix/node_modules/.bin/next)
+
+=== HTTP API Integration Tests ===
+  PASS: POST single result returns stored:true with DB
+  PASS: Durable row verified via direct DB query
+  PASS: Replay with same ID does not duplicate (skipDuplicates)
+  PASS: POST batch of 3 results stored and all IDs acknowledged
+  PASS: Batch rows verified in database
+  PASS: Server derives correctness: pm-e1 selected:0 → correct:false
+  PASS: Server derives correctness: pm-e1 selected:1 → correct:true
+    Stopping server (PID 4105)...
+  Server exited unexpectedly: code=143 signal=null
+  Server stopped (PID 4105)
+    Confirmed PID 4105 terminated
+    Starting new server...
+  Server running (PID 4123, binary: /home/user/fizzix/node_modules/.bin/next)
+    New server PID: 4123
+  PASS: Data persists after genuine server process restart
+  PASS: Client records pending when storage unavailable
+  PASS: Invalid request returns 400
+  PASS: Empty results array returns 400
+  PASS: Invalid JSON returns 400
+  Server exited unexpectedly: code=143 signal=null
+  Server stopped (PID 4123)
+
+=== Results: 12 passed, 0 failed ===

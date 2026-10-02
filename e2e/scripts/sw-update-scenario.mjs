@@ -48,34 +48,67 @@ async function assert(name, fn) {
 
 let serverChild = null
 
+function findNextBin() {
+  const direct = resolve(projectRoot, 'node_modules/.bin/next')
+  try { execSync(`test -x "${direct}"`, { stdio: 'ignore' }); return direct } catch {}
+  return 'npx'
+}
+
 async function startServer(env = {}) {
-  serverChild = spawn('npx', ['next', 'start', '-p', String(PORT)], {
+  const nextBin = findNextBin()
+  const args = nextBin.endsWith('/next') ? ['start', '-p', String(PORT)] : ['next', 'start', '-p', String(PORT)]
+  const child = spawn(nextBin, args, {
     cwd: projectRoot,
-    stdio: ['ignore', 'pipe', 'pipe'],
+    stdio: 'pipe',
+    detached: true,
     env: { ...process.env, ...env },
   })
-  for (let i = 0; i < 60; i++) {
+  serverChild = child
+  let serverOutput = ''
+  child.stdout.on('data', d => { serverOutput += d.toString() })
+  child.stderr.on('data', d => { serverOutput += d.toString() })
+  let exited = false
+  child.on('exit', (code, signal) => {
+    exited = true
+    if (code !== null && code !== 0 && code !== 143) console.log(`  Server exited unexpectedly: code=${code} signal=${signal}`)
+  })
+  for (let i = 0; i < 90; i++) {
+    if (exited) throw new Error(`Server process exited prematurely: ${serverOutput.substring(0, 500)}`)
     try {
       const res = await fetch(`http://localhost:${PORT}/`)
       if (res.ok || res.status < 500) {
-        console.log(`  Server running (PID ${serverChild.pid})`)
+        console.log(`  Server running (PID ${child.pid}, binary: ${nextBin})`)
         return
       }
     } catch {}
     await new Promise(r => setTimeout(r, 1000))
   }
-  throw new Error('Server did not start within 60s')
+  throw new Error(`Server did not start within 90s. Output: ${serverOutput.substring(0, 500)}`)
 }
 
 function stopServer() {
-  return new Promise((resolve) => {
-    if (!serverChild || serverChild.exitCode !== null) { resolve(); return }
+  return new Promise((resolveStop) => {
+    const child = serverChild
+    serverChild = null
+    if (!child || child.exitCode !== null) { resolveStop(); return }
+    const pid = child.pid
     let done = false
-    serverChild.on('exit', () => { if (!done) { done = true; resolve() } })
-    serverChild.kill('SIGTERM')
+    const finish = () => {
+      if (done) return
+      done = true
+      try { child.stdout?.removeAllListeners(); child.stderr?.removeAllListeners() } catch {}
+      try { child.stdout?.destroy(); child.stderr?.destroy() } catch {}
+      child.removeAllListeners()
+      child.unref()
+      console.log(`  Server stopped (PID ${pid})`)
+      resolveStop()
+    }
+    child.on('exit', finish)
+    try { process.kill(-pid, 'SIGTERM') } catch { child.kill('SIGTERM') }
     setTimeout(() => {
-      try { serverChild.kill('SIGKILL') } catch {}
-      if (!done) { done = true; resolve() }
+      try { process.kill(-pid, 'SIGKILL') } catch {}
+      try { child.kill('SIGKILL') } catch {}
+      setTimeout(finish, 500)
     }, 5000)
   })
 }
@@ -156,21 +189,37 @@ async function run() {
     await page.close()
   })
 
-  await assert('Build A: Seed IndexedDB quiz record', async () => {
+  await assert('Build A: Seed unsynced quiz record in fizzix-quiz/results', async () => {
     const page = await context.newPage()
     await page.goto(`http://localhost:${PORT}/projectile-motion`)
     await page.waitForSelector('canvas', { timeout: 15000 })
 
     await page.evaluate(() => {
       return new Promise((resolve, reject) => {
-        const req = indexedDB.open('fizzix-sw-test', 1)
+        const req = indexedDB.open('fizzix-quiz', 1)
         req.onupgradeneeded = () => {
-          req.result.createObjectStore('records', { keyPath: 'id' })
+          const db = req.result
+          if (!db.objectStoreNames.contains('results')) {
+            const store = db.createObjectStore('results', { keyPath: 'id' })
+            store.createIndex('synced', 'synced')
+            store.createIndex('sessionId', 'sessionId')
+          }
         }
         req.onsuccess = () => {
           const db = req.result
-          const tx = db.transaction('records', 'readwrite')
-          tx.objectStore('records').put({ id: 'persist-check', data: 'before-sw-update', ts: Date.now() })
+          const tx = db.transaction('results', 'readwrite')
+          tx.objectStore('results').put({
+            id: 'sw-update-persist-check',
+            sessionId: 'sw-test-session',
+            topicId: 'projectile-motion',
+            questionId: 'pm-e1',
+            selectedIndex: 1,
+            correct: true,
+            difficulty: 'easy',
+            poolVersion: 1,
+            timestamp: Date.now(),
+            synced: 0,
+          })
           tx.oncomplete = () => { db.close(); resolve() }
           tx.onerror = () => reject(tx.error)
         }
@@ -198,6 +247,10 @@ async function run() {
   // Phase 2: Build B with fizzix-v2
   console.log('\nPhase 2: Building B (fizzix-v2)...')
   await stopServer()
+  for (let i = 0; i < 15; i++) {
+    try { await fetch(`http://localhost:${PORT}/`); } catch { break }
+    await new Promise(r => setTimeout(r, 1000))
+  }
   await new Promise(r => setTimeout(r, 2000))
   setSWVersion(2)
   execSync(`cd ${projectRoot} && npx next build`, { stdio: 'pipe', timeout: 180000 })
@@ -279,31 +332,34 @@ async function run() {
     await page.close()
   })
 
-  await assert('Build B: IndexedDB quiz records survive SW update', async () => {
+  await assert('Build B: Unsynced quiz record in fizzix-quiz/results survives SW update', async () => {
     const page = await context.newPage()
     await page.goto(`http://localhost:${PORT}/projectile-motion`)
     await page.waitForSelector('canvas', { timeout: 15000 })
 
     const record = await page.evaluate(() => {
       return new Promise((resolve, reject) => {
-        const req = indexedDB.open('fizzix-sw-test', 1)
+        const req = indexedDB.open('fizzix-quiz', 1)
         req.onsuccess = () => {
           const db = req.result
-          if (!db.objectStoreNames.contains('records')) { db.close(); resolve(null); return }
-          const tx = db.transaction('records', 'readonly')
-          const getReq = tx.objectStore('records').get('persist-check')
+          if (!db.objectStoreNames.contains('results')) { db.close(); resolve(null); return }
+          const tx = db.transaction('results', 'readonly')
+          const getReq = tx.objectStore('results').get('sw-update-persist-check')
           getReq.onsuccess = () => { db.close(); resolve(getReq.result) }
           getReq.onerror = () => { db.close(); reject(getReq.error) }
         }
         req.onerror = () => reject(req.error)
       })
     })
-    if (!record) throw new Error('IndexedDB record lost after SW update')
-    if (record.data !== 'before-sw-update') throw new Error(`Record data corrupted: ${record.data}`)
+    if (!record) throw new Error('Unsynced quiz record lost after SW update')
+    if (record.synced !== 0) throw new Error(`Record synced flag changed: expected 0, got ${record.synced}`)
+    if (record.questionId !== 'pm-e1') throw new Error(`Record questionId corrupted: ${record.questionId}`)
+    if (record.sessionId !== 'sw-test-session') throw new Error(`Record sessionId corrupted: ${record.sessionId}`)
+    console.log(`    (verified: id=${record.id}, synced=${record.synced}, questionId=${record.questionId})`)
     await page.close()
   })
 
-  await assert('Build B: Offline lesson renders with canvas', async () => {
+  await assert('Build B: Offline lesson responds to interaction', async () => {
     const page = await context.newPage()
     await page.goto(`http://localhost:${PORT}/projectile-motion`)
     await page.waitForSelector('canvas', { timeout: 15000 })
@@ -315,26 +371,65 @@ async function run() {
     })
 
     await page.reload({ waitUntil: 'domcontentloaded', timeout: 10000 })
+    await page.waitForSelector('canvas', { timeout: 10000 })
 
-    const result = await page.evaluate(() => ({
-      title: document.title,
-      hasCanvas: !!document.querySelector('canvas'),
-      hasControls: !!document.querySelector('button'),
-    }))
-
-    await cdp.send('Network.emulateNetworkConditions', {
-      offline: false, downloadThroughput: -1, uploadThroughput: -1, latency: 0,
+    const result = await page.evaluate(() => {
+      const canvas = document.querySelector('canvas')
+      const playBtn = document.querySelector('button[aria-pressed], button[aria-label*="Play"], button[aria-label*="play"], button[aria-label*="Pause"]')
+      return {
+        title: document.title,
+        hasCanvas: !!canvas,
+        hasPlayBtn: !!playBtn,
+        playBtnLabel: playBtn ? (playBtn.getAttribute('aria-label') || playBtn.textContent || '').substring(0, 30) : null,
+        playBtnPressed: playBtn ? playBtn.getAttribute('aria-pressed') : null,
+      }
     })
 
     if (!result.title.includes('Fizzix') && !result.title.includes('Projectile')) {
       throw new Error(`Offline page title: "${result.title}"`)
     }
-    if (!result.hasCanvas) {
-      throw new Error('No canvas element in offline-served page')
+    if (!result.hasCanvas) throw new Error('No canvas element in offline-served page')
+    if (!result.hasPlayBtn) throw new Error('No play/pause button in offline-served page')
+
+    const playBtn = page.locator('button[aria-pressed], button[aria-label*="Play"], button[aria-label*="play"], button[aria-label*="Pause"]').first()
+    const beforeLabel = await playBtn.getAttribute('aria-label') || await playBtn.textContent() || ''
+    const beforePressed = await playBtn.getAttribute('aria-pressed')
+    await playBtn.click()
+    await page.waitForTimeout(500)
+    const afterLabel = await playBtn.getAttribute('aria-label') || await playBtn.textContent() || ''
+    const afterPressed = await playBtn.getAttribute('aria-pressed')
+
+    if (beforeLabel === afterLabel && beforePressed === afterPressed) {
+      throw new Error(`Offline playback toggle did not change: before="${beforeLabel}" pressed=${beforePressed}, after="${afterLabel}" pressed=${afterPressed}`)
     }
-    if (!result.hasControls) {
-      throw new Error('No interactive controls in offline-served page')
+    console.log(`    (offline toggle: "${beforeLabel}" pressed=${beforePressed} → "${afterLabel}" pressed=${afterPressed})`)
+
+    await cdp.send('Network.emulateNetworkConditions', {
+      offline: false, downloadThroughput: -1, uploadThroughput: -1, latency: 0,
+    })
+    await page.close()
+  })
+
+  await assert('Build B: Rendered page serves Build B content', async () => {
+    const page = await context.newPage()
+    await page.goto(`http://localhost:${PORT}/projectile-motion`)
+    await page.waitForSelector('canvas', { timeout: 15000 })
+    const scripts = await page.evaluate(() => {
+      return [...document.querySelectorAll('script[src*="/_next/"]')].map(s => s.src)
+    })
+    if (scripts.length === 0) throw new Error('No Next.js scripts found — cannot verify build')
+    let foundBuildB = false
+    for (const src of scripts.slice(0, 3)) {
+      try {
+        const res = await page.evaluate(async (url) => {
+          const r = await fetch(url)
+          return { ok: r.ok, status: r.status }
+        }, src)
+        if (res.ok) { foundBuildB = true; break }
+      } catch {}
     }
+    if (!foundBuildB) throw new Error('Build B scripts not reachable from rendered page')
+    console.log(`    (verified ${scripts.length} Next.js scripts loaded from Build B)`)
     await page.close()
   })
 

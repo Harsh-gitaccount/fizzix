@@ -1,0 +1,39 @@
+
+=== Two-Build SW Update Scenario ===
+
+Phase 1: Building A (fizzix-v1)...
+  Build A identity: 6GC04CqGhtiBerCzDzzNl
+  Server running (PID 3472, binary: /home/user/fizzix/node_modules/.bin/next)
+
+Phase 1 tests:
+  PASS: Build A: SW registers as fizzix-v1
+  PASS: Build A: Seed unrelated cache entry
+  PASS: Build A: Seed unsynced quiz record in fizzix-quiz/results
+  PASS: Build A: Page hydrates correctly
+
+Phase 2: Building B (fizzix-v2)...
+  Server stopped (PID 3472)
+  Build B identity: Zu6oFuAv7LkAr4ua_2WL9
+  Server running (PID 3703, binary: /home/user/fizzix/node_modules/.bin/next)
+
+Phase 2 tests:
+  PASS: Build B: SW updates to fizzix-v2
+  PASS: Build B: Old fizzix-v1 cache purged
+  PASS: Build B: Non-fizzix caches preserved
+  PASS: Build B: Page hydrates without JS errors
+    (verified: id=sw-update-persist-check, synced=0, questionId=pm-e1)
+  PASS: Build B: Unsynced quiz record in fizzix-quiz/results survives SW update
+    (offline toggle: "Free Fall" pressed=false → "Free Fall" pressed=true)
+  PASS: Build B: Offline lesson responds to interaction
+    (verified 15 Next.js scripts loaded from Build B)
+  PASS: Build B: Rendered page serves Build B content
+  Server stopped (PID 3703)
+
+Restored sw.js to original (fizzix-v1)
+Rebuilding with original version...
+
+=== Evidence ===
+  Build A: 6GC04CqGhtiBerCzDzzNl
+  Build B: Zu6oFuAv7LkAr4ua_2WL9
+
+=== Results: 11 passed, 0 failed ===

@@ -1,0 +1,38 @@
+
+Target: http://localhost:3099
+Chromium: /opt/pw-browsers/chromium-1194/chrome-linux/chrome
+
+=== Frame Timing ===
+    (measured: 16.3ms avg idle frame)
+  PASS: Idle frame time (no animation) < 100ms average
+    (measured: 16.5ms avg active frame)
+  PASS: Active animation frame time < 50ms average (2D)
+
+=== Simulation State ===
+    (before: pressed=false "Free Fall", after: pressed=true "Free Fall")
+  PASS: Play/pause toggle changes simulation state
+    (snapshot lengths: 120342 → 123194)
+  PASS: Canvas updates during active playback
+
+=== Resource Behavior During Transitions ===
+    (heap growth: 10.0MB over 5 transitions)
+  PASS: 5 rapid topic transitions: memory heap check
+  PASS: No uncaught errors during rapid transitions (warmed baseline)
+    (measured: 16.2ms avg 3D frame)
+  PASS: 3D scene (thermo) frame time < 100ms
+
+=== Accessibility ===
+  PASS: All images/canvas have alt text or aria-label
+  PASS: Skip-to-content link exists
+    (contrast: 20.10:1, bg: rgb(249, 250, 251), fg: rgb(0, 0, 0))
+  PASS: Color contrast: WCAG AA ratio >= 4.5:1
+  PASS: Focus visible: painted indicator on interactive elements
+
+=== Blocked / Partial Checks ===
+  BLOCKED: JS heap size monitoring (performance.memory) — Non-standard API not available in this Chromium build
+  BLOCKED: Real-device touch interaction testing — Requires physical device; not available in headless Chromium CI
+  BLOCKED: Screen reader announcement verification — Requires NVDA/VoiceOver; not available in headless environment
+  BLOCKED: GPU profiling and WebGL frame budget — Requires hardware GPU; headless Chromium uses SwiftShader (software renderer)
+  BLOCKED: Real network throttling (3G/LTE) — CDP network throttling does not accurately simulate real device conditions
+
+=== Results: 11 passed, 0 failed, 5 blocked ===

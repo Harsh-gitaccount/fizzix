@@ -20,7 +20,7 @@
 import { createRequire } from 'module'
 import { resolve, dirname } from 'path'
 import { fileURLToPath } from 'url'
-import { spawn } from 'child_process'
+import { spawn, execSync } from 'child_process'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
 const projectRoot = resolve(__dirname, '../..')
@@ -31,9 +31,24 @@ const BASE = process.env.BASE_URL || `http://localhost:${PORT}`
 const DB_URL = process.env.DATABASE_URL
 const API = `${BASE}/api/quiz/results/batch`
 
-if (DB_URL && !DB_URL.includes('fizzix_test')) {
-  console.error('SAFETY: DATABASE_URL must target a fizzix_test database. Aborting.')
-  process.exit(1)
+function parseDatabaseTarget(url) {
+  if (!url) return null
+  try {
+    const parsed = new URL(url)
+    return { host: parsed.hostname, port: parsed.port || '5432', database: parsed.pathname.replace(/^\//, '') }
+  } catch {
+    const m = url.match(/\/\/([^/:]+):?(\d*)\/([^?]+)/)
+    return m ? { host: m[1], port: m[2] || '5432', database: m[3] } : null
+  }
+}
+
+const dbTarget = parseDatabaseTarget(DB_URL)
+if (DB_URL) {
+  if (!dbTarget || dbTarget.database !== 'fizzix_test') {
+    console.error(`SAFETY: DATABASE_URL must target database named exactly "fizzix_test". Parsed: ${JSON.stringify(dbTarget)}. Aborting.`)
+    process.exit(1)
+  }
+  console.log(`Database target: ${dbTarget.host}:${dbTarget.port}/${dbTarget.database}`)
 }
 
 let passed = 0
@@ -77,30 +92,49 @@ async function getDbClient() {
 
 let serverChild = null
 
+function findNextBin() {
+  const direct = resolve(projectRoot, 'node_modules/.bin/next')
+  try { execSync(`test -x "${direct}"`, { stdio: 'ignore' }); return direct } catch {}
+  return 'npx'
+}
+
 async function startServer() {
-  serverChild = spawn('npx', ['next', 'start', '-p', String(PORT)], {
+  const nextBin = findNextBin()
+  const args = nextBin.endsWith('/next') ? ['start', '-p', String(PORT)] : ['next', 'start', '-p', String(PORT)]
+  serverChild = spawn(nextBin, args, {
     cwd: projectRoot,
     stdio: ['ignore', 'pipe', 'pipe'],
     env: { ...process.env },
   })
+  serverChild.on('exit', (code, signal) => {
+    if (code !== null && code !== 0) console.log(`  Server exited unexpectedly: code=${code} signal=${signal}`)
+  })
+  let serverOutput = ''
+  serverChild.stderr.on('data', d => { serverOutput += d.toString() })
+  serverChild.stdout.on('data', d => { serverOutput += d.toString() })
+
   for (let i = 0; i < 60; i++) {
+    if (serverChild.exitCode !== null) {
+      throw new Error(`Server process exited prematurely (code ${serverChild.exitCode}): ${serverOutput.substring(0, 500)}`)
+    }
     try {
       const res = await fetch(`http://localhost:${PORT}/`)
       if (res.ok || res.status < 500) {
-        console.log(`  Server running (PID ${serverChild.pid})`)
+        console.log(`  Server running (PID ${serverChild.pid}, binary: ${nextBin})`)
         return
       }
     } catch {}
     await new Promise(r => setTimeout(r, 1000))
   }
-  throw new Error('Server did not start within 60s')
+  throw new Error(`Server did not start within 60s. Output: ${serverOutput.substring(0, 500)}`)
 }
 
 function stopServer() {
   return new Promise((resolve) => {
     if (!serverChild || serverChild.exitCode !== null) { resolve(); return }
+    const pid = serverChild.pid
     let done = false
-    serverChild.on('exit', () => { if (!done) { done = true; resolve() } })
+    serverChild.on('exit', () => { if (!done) { done = true; console.log(`  Server stopped (PID ${pid})`); resolve() } })
     serverChild.kill('SIGTERM')
     setTimeout(() => {
       try { serverChild.kill('SIGKILL') } catch {}
@@ -245,10 +279,22 @@ async function run() {
     const oldPid = serverChild.pid
     console.log(`    Stopping server (PID ${oldPid})...`)
     await stopServer()
-    await new Promise(r => setTimeout(r, 2000))
 
+    let oldStillRunning = false
+    try { process.kill(oldPid, 0); oldStillRunning = true } catch {}
+    if (oldStillRunning) throw new Error(`Old server PID ${oldPid} still running after stop`)
+    console.log(`    Confirmed PID ${oldPid} terminated`)
+
+    let portFree = true
+    try { const r = await fetch(`http://localhost:${PORT}/`); portFree = false } catch {}
+    if (!portFree) throw new Error(`Port ${PORT} still responding after server stop — another process is listening`)
+
+    await new Promise(r => setTimeout(r, 2000))
     console.log('    Starting new server...')
     await startServer()
+    const newPid = serverChild.pid
+    if (newPid === oldPid) console.log(`    Warning: new PID ${newPid} same as old (OS reused PID)`)
+    console.log(`    New server PID: ${newPid}`)
 
     await db.$disconnect()
     const db2 = await getDbClient()
@@ -269,6 +315,29 @@ async function run() {
     }])
     eq(status, 200, 'HTTP API responds after restart')
     await db2.$disconnect()
+  })
+
+  await assert('Client records pending when storage unavailable', async () => {
+    const pendingId = `${SESSION_PREFIX}pending-${Date.now()}`
+    const { status, body } = await postResults([{
+      id: pendingId,
+      sessionId: `${SESSION_PREFIX}s-pending`,
+      topicId: 'projectile-motion',
+      questionId: 'pm-e1',
+      selected: 0,
+      correct: false,
+      difficulty: 'easy',
+      timestamp: Date.now(),
+    }])
+    eq(status, 200, 'HTTP status')
+    eq(body.stored, true, 'stored')
+    if (!body.acceptedIds.includes(pendingId)) throw new Error(`acceptedIds missing ${pendingId}`)
+
+    if (db) {
+      const row = await db.quizResult.findUnique({ where: { id: pendingId } })
+      if (!row) throw new Error('Pending record not written to DB')
+      eq(row.correct, false, 'correct derived server-side')
+    }
   })
 
   await assert('Invalid request returns 400', async () => {

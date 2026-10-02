@@ -3,15 +3,15 @@
 ## Session State
 - **Branch**: `claude/brave-ramanujan-s4hhf9`
 - **Base commit**: `7523ff0c2e3164d205036a85d81d12ae0312f997`
-- **Last batch**: batch-22 verification (independent verification session: SW cache, browser tests, API integration, SW update scenario, perf/a11y, doc reconciliation)
+- **Last batch**: batch-24 (closure review response)
 - **TypeScript**: 0 errors
 - **ESLint**: 0 errors, 0 warnings (src/)
 - **Dash lint**: 0 violations
-- **Unit tests**: 356/356 passing
-- **npm audit**: 0 vulnerabilities (down from 23→15→4→0)
-- **Browser acceptance**: 22/22 pass
-- **SW lifecycle**: 6/6 pass
-- **DB integration**: 7/7 pass (disposable PostgreSQL)
+- **Unit tests**: 358/358 passing
+- **npm audit**: 0 vulnerabilities
+- **Perf/a11y**: 11 passed, 0 failed, 5 blocked
+- **API integration**: 12 passed, 0 failed (disposable PostgreSQL)
+- **SW update scenario**: 11 passed, 0 failed (two-build, real IDB)
 
 ## Commits
 1. `6d3fa31` -- Batch 1: F01, F02, F03, F04, F05-partial, F08, F09, F25
@@ -41,6 +41,31 @@
 25. `006cf09` -- Batch 22a: fix(F22): complete Prisma 7 driver-adapter migration
 26. `0f29e67` -- Batch 22b: fix(F22): resolve all npm audit vulnerabilities via overrides
 27. `a000437` -- Batch 22c: test: add portable e2e scripts and raw results
+28. `dec32d7` -- docs: batch 22 reconciliation
+29. `7b36c6c` -- fix(B22): harden SW cache policy, error attribution, browser assertions
+30. `37003fa` -- test(B22): HTTP-level API integration tests against disposable PostgreSQL
+31. `c2ca4c6` -- test(B22): two-production-build SW update scenario
+32. `9de4346` -- Task 6: performance and accessibility acceptance tests
+33. `ad4e30f` -- Task 7: documentation reconciliation
+34. `12eb685` -- fix(B23): address R1-R6 verification report findings
+35. `(batch-24)` -- fix: closure review — false-pass, process management, handoff corrections
+
+## Batch 24 Changes (Closure Review Response)
+
+### Requirement 1: Remove false-pass paths
+- `e2e/scripts/perf-a11y.mjs`: Canvas test catches exceptions and fails instead of resolving `true`. Heap test checks `performance.memory` before `assert()` — BLOCKED and PASSED mutually exclusive.
+
+### Requirement 2: Real-app persistence and offline scenarios
+- `e2e/scripts/api-integration.mjs`: Parses database URL via `new URL()`, validates name is exactly `fizzix_test`. Direct Next.js binary spawn. Restart test verifies old PID terminated. Storage-unavailable pending-records test.
+- `e2e/scripts/sw-update-scenario.mjs`: Uses app's real `fizzix-quiz`/`results` IDB store. Seeds `QuizResultRecord` with `synced:0`, verifies it survives SW update. Offline interaction: clicks play/pause while offline, asserts state change. Build identity verified via Next.js script reachability. Process group cleanup with `detached:true`.
+
+### Requirement 3: Correct handoff
+- `FINAL_STABILIZATION_HANDOFF.md`: Restored original F01-F26 descriptions from FIX_STATUS.md. Separated implementation from verification status. F03 remains ACCEPTED.
+
+### Evidence (all executed on same code revision)
+- `e2e/results/perf-a11y.log`: 11 passed, 0 failed, 5 blocked
+- `e2e/results/api-integration.log`: 12 passed, 0 failed
+- `e2e/results/sw-update-scenario.log`: 11 passed, 0 failed
 
 ## Batch 11 Changes
 

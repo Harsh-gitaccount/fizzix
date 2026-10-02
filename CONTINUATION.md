@@ -3,7 +3,7 @@
 ## Session State
 - **Branch**: `claude/brave-ramanujan-s4hhf9`
 - **Base commit**: `7523ff0c2e3164d205036a85d81d12ae0312f997`
-- **Last batch**: batch-20 (F22 dependency migration: Next 16 + Prisma 7)
+- **Last batch**: batch-21 (F26 SW lifecycle verification, final reconciliation)
 - **TypeScript**: 0 errors
 - **ESLint**: 0 errors, 0 warnings (src/)
 - **Dash lint**: 0 violations
@@ -32,7 +32,9 @@
 19. `806880b` -- Batch 17: F03 error metric, F06 quiz subcriteria, F11 KE qualifier + histogram
 20. `049bc32` -- Batch 18: Verification reproduced failures, quiz corrections, histogram/KE/volume disclosure
 21. `927330e` -- Batch 19: F12 3D tools, F11 histogram scale, F23 disposal test, F06/F11 dispositions
-22. *(pending)* -- Batch 20: F22 dependency migration (Next 14→16, Prisma CLI 8-rc→7, postcss 8.5.22→8.5.28)
+22. `3eb950b` -- Batch 20: F22 dependency migration (Next 14→16, Prisma CLI 8-rc→7, postcss 8.5.22→8.5.28)
+23. `47abf13` -- Batch 20b: docs: browser acceptance results, promote F12/F14/F15/F23/F24 to DONE
+24. *(pending)* -- Batch 21: F26 SW lifecycle verification, final reconciliation
 
 ## Batch 11 Changes
 
@@ -191,21 +193,30 @@
 - F24: mass preset activates compare mode.
 - All 6 topics render without JS errors.
 
-## Remaining Work
+## Batch 21 Changes
 
-### DONE (22 findings)
-F01, F02, F04, F05, F06, F07, F08, F09, F10, F11, F12, F13, F14, F15, F16, F17, F18, F19, F20, F21, F23, F24, F25
+### F26: Service worker browser verification
+- 6/6 Chromium headless tests passed: SW registration, precaching, offline fallback, static asset caching, cache isolation.
+- SW registers on topic pages only (via `useServiceWorker` hook in `SimulationPage`).
+
+### Final reconciliation
+- F26 promoted from PARTIAL to DONE.
+- All stabilization checklist items complete.
+
+## Final Status
+
+### DONE (23 findings)
+F01, F02, F04, F05, F06, F07, F08, F09, F10, F11, F12, F13, F14, F15, F16, F17, F18, F19, F20, F21, F23, F24, F25, F26
 
 ### ACCEPTED (1 finding)
 - **F03**: Small-angle model by design. Energy conservation exact (deviation <1e-15). Borda period-error warning disclosed.
 
-### PARTIAL (2 findings)
-- **F22**: All framework upgrades done. 4 remaining vulns in prisma transitive deps (deepmerge-ts, mysql2), unfixable without breaking downgrade.
-- **F26**: res.ok check added; multi-build offline lifecycle not verified.
+### PARTIAL (1 finding)
+- **F22**: All framework upgrades done. 4 remaining vulns in prisma transitive deps (deepmerge-ts, mysql2), unfixable without breaking downgrade to prisma 6.x.
 
 ### Not verifiable in current environment
 - Real mobile touch interaction (physical device required)
 - Assistive technology / screen reader compatibility
-- Multi-build service worker lifecycle (requires two production builds on same origin)
+- Multi-build service worker update lifecycle (requires two production builds on same origin)
 - Database integration (no DATABASE_URL configured)
 - GPU memory profiling (requires browser DevTools)

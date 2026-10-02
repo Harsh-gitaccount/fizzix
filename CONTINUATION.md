@@ -338,3 +338,48 @@ Addresses all findings from the independent verification report on commit `ad4e3
 - Unit tests: 7/7 pass
 - TypeScript: 0 errors
 - Production build: success
+
+## Homepage: The Living Physics Atlas
+
+**Branch:** `homepage/living-physics-atlas` (from `47a5ea9`)
+
+### Changes
+
+#### `src/app/page.tsx` (complete rewrite)
+- Server component with 6 inline SVG illustration components (Projectile, SHM, Electrostatics, Optics, Thermodynamics, Modern Physics)
+- AtomMark brand component (orange orbital atom SVG)
+- Hero section: brand + tagline + 3×2 topic card grid
+- Each card: illustration area → info (title, description, class badge) → hover CTA → border glow
+- Value props section: No account, Works offline, Hindi & English
+- Footer with brand mark
+
+#### `src/app/globals.css` (appended)
+- 13 `@keyframes` animations for orbit, float, trace, electron, particle, pulse, wave, ray, card entrance
+- Animation utility classes with timing (atlas-orbit-slow/med, atlas-float, atlas-electron-1/2/3, etc.)
+- Card entrance animation with staggered nth-child delays (50ms–400ms)
+- Card hover/focus interactions (translateY, illustration scale, border glow)
+- Dot grid background pattern
+
+#### `tailwind.config.ts`
+- Extended `colors.atlas` palette: bg, surface, border, accent, accent-light, muted, dim
+
+#### `e2e/scripts/homepage-screenshot.mjs` (new)
+- Playwright screenshot script for desktop/tablet/mobile viewports
+
+#### `e2e/scripts/homepage-debug.mjs` (new)
+- CSS debug script checking computed grid/layout styles
+
+### Verification
+- Grid: 3 columns at lg, 2 at sm, 1 below — confirmed via computed styles
+- All 6 topic links return HTTP 200
+- Keyboard focus-visible: 2px solid blue outline
+- 320px: no horizontal scroll
+- `prefers-reduced-motion`: animation/transition duration → 0.01ms
+- ESLint: 0 errors on page.tsx
+- Production build: compiles successfully, route `/` is static
+- Console: no app errors (only proxy tunnel failures from analytics)
+- Screenshots in `e2e/results/homepage/` (6 files)
+
+### Documentation
+- `HOMEPAGE_DESIGN.md`: Creative direction, visual language, page structure, motion design, responsive breakpoints, accessibility, implementation notes
+- `HOMEPAGE_VERIFICATION.md`: Full test results with tables

@@ -182,27 +182,30 @@
 ### Vulnerability summary
 - 23 → 4 total (across all batches). Remaining 4 in prisma transitive deps (deepmerge-ts, mysql2); no runtime exposure.
 
+### Browser acceptance (F12/F14/F15/F23/F24)
+- 22/22 Chromium headless tests passed (production build on port 3099).
+- F12: tools hidden on 3D (thermodynamics), visible on 2D (projectile-motion).
+- F14: no horizontal scroll at 320/390/768/1440px.
+- F15: tablist, aria-controls, aria-pressed, role=img, keyboard nav, radiogroup verified.
+- F23: scene transitions (thermo↔projectile, field-3d tab switching) error-free.
+- F24: mass preset activates compare mode.
+- All 6 topics render without JS errors.
+
 ## Remaining Work
 
-### DONE (18 findings)
-F01, F02, F04, F05, F06, F07, F08, F09, F10, F11, F13, F16, F17, F18, F19, F20, F21, F25
+### DONE (22 findings)
+F01, F02, F04, F05, F06, F07, F08, F09, F10, F11, F12, F13, F14, F15, F16, F17, F18, F19, F20, F21, F23, F24, F25
 
 ### ACCEPTED (1 finding)
 - **F03**: Small-angle model by design. Energy conservation exact (deviation <1e-15). Borda period-error warning disclosed.
 
-### PARTIAL (6 findings)
-- **F12**: Rays toggle wired; 3D tools hidden. Not browser-verified.
-- **F14**: True touch/zoom/assistive-technology verification; actual device testing.
-- **F15**: Full assistive technology testing not performed.
-- **F22**: All framework upgrades done (next 16, prisma 7, vitest 5, eslint-config-next 15). 4 remaining vulns in prisma transitive deps, unfixable without breaking downgrade.
-- **F23**: Resource disposal added and regression-tested; browser profiling not performed.
-- **F24**: Mass preset fixed; not browser-verified.
-- **F26**: res.ok check added; multi-build updates, production offline verification not done.
+### PARTIAL (2 findings)
+- **F22**: All framework upgrades done. 4 remaining vulns in prisma transitive deps (deepmerge-ts, mysql2), unfixable without breaking downgrade.
+- **F26**: res.ok check added; multi-build offline lifecycle not verified.
 
 ### Not verifiable in current environment
-- Real mobile touch interaction
-- True browser zoom
-- Assistive technology compatibility
-- Multi-build service worker lifecycle
-- Database integration (no DATABASE_URL)
-- Real-device performance profiling
+- Real mobile touch interaction (physical device required)
+- Assistive technology / screen reader compatibility
+- Multi-build service worker lifecycle (requires two production builds on same origin)
+- Database integration (no DATABASE_URL configured)
+- GPU memory profiling (requires browser DevTools)

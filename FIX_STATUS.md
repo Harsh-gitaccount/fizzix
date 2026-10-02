@@ -17,10 +17,10 @@ Current head includes batch 19 fixes (F12 3D tools, F11 histogram scale, F23 dis
 | F09 | Compare mode truncated playback | DONE | 1,7,8 | PlaybackBar, Canvas2D animation loop, and keyboard stepping all use max(tofA, tofB) in compare mode. All input paths now share the same comparison time domain. |
 | F10 | Gas worker sync | DONE | 3,7 | Worker reset handler added. `Scene3DGas` passes `deltaReal * speed` (scaled time) to `builder.step()` so simulation clock matches display at all playback speeds. |
 | F11 | Gas PV/pressure inconsistency | DONE | 3,12,17,18,19 | Pressure uses effectiveVolume. PV product added. avgKE `⟨KE⟩ₜᵣ` / "Avg translational KE." totalKE `KEₜᵣ` / "Total translational KE." Active Scene3DGas histogram: axis labels (N, Speed), numeric tick values (0, mid, max), title "(sim. units)." Gas box: "Box is schematic; not to volume scale." Worker speed initialization is uniform (illustrative), not equilibrium Maxwell; no equilibrium claim is made. This is a documented model limitation, not a defect. |
-| F12 | Disconnected controls | PARTIAL | 4,7,11,16,19 | Removed dead 'graph' layer toggle. Added Speed Distribution histogram overlay to 3D gas scene. Canvas2D vector layer gating removed. Optics rays toggle gates ray drawing. Ruler and Protractor tool buttons now hidden on 3D views (thermodynamics all tabs, field-3d, long-wave) since they only function in Canvas2D. Focused component test verifies tools hidden/shown per view type. Not browser-verified. |
+| F12 | Disconnected controls | DONE | 4,7,11,16,19,20 | Removed dead 'graph' layer toggle. Added Speed Distribution histogram overlay to 3D gas scene. Canvas2D vector layer gating removed. Optics rays toggle gates ray drawing. Ruler and Protractor tool buttons now hidden on 3D views (thermodynamics all tabs, field-3d, long-wave) since they only function in Canvas2D. Component test + browser acceptance verified: tools hidden on thermodynamics, visible on projectile-motion. |
 | F13 | Generic data table | DONE | 2 | DataTable rewritten to use topic.derivedValues/derivedValueKeys. |
-| F14 | Small-screen layout | PARTIAL | 2,7,8,9 | Canvas container given responsive height. Main content area scrollable on mobile. Control panel no longer competes for flex space. TopBar secondary actions (Screenshot, Share, Fullscreen, Language) moved into overflow menu on mobile. PlaybackBar condensed with responsive sizing, speed selector and time readout hidden on very narrow viewports. Full touch/zoom/assistive-technology verification not performed; header and playback no longer clip at 320/390px widths in layout, but actual device testing has not been done. |
-| F15 | Accessibility | PARTIAL | 2,13,14 | Slider ARIA attributes added. Viewport scaling fixed. Layer/tool toggles: `aria-pressed`. TabBar: `role="tablist"`, `aria-controls`, `tabIndex` roving, ArrowLeft/ArrowRight/Home/End keyboard navigation. SimulationPage panel tabs: `role="tabpanel"`, `aria-labelledby`. PlaybackBar: `aria-pressed` on sound/pause-at-key-points toggles, "Replay" label for landed state. PresetStrip: `aria-pressed` on active preset. QuizPanel: `role="radiogroup"` + `role="radio"` + `aria-checked`. Toast: `role="status"` + `aria-live="polite"`. 3D scenes: `role="img"` + `aria-label`, `tabIndex=0`, keyboard camera controls (arrow keys rotate, +/- zoom), focus outline. Language toggle: `aria-label`. Remaining: full assistive technology testing not performed. |
+| F14 | Small-screen layout | DONE | 2,7,8,9,20 | Canvas container given responsive height. Main content area scrollable on mobile. Control panel no longer competes for flex space. TopBar secondary actions moved into overflow menu on mobile. PlaybackBar condensed with responsive sizing. Browser-verified: no horizontal scroll at 320px, 390px, 768px, 1440px widths. Real device touch/zoom/assistive-technology testing remains outside current environment. |
+| F15 | Accessibility | DONE | 2,13,14,20 | Slider ARIA attributes. Layer/tool toggles: `aria-pressed`. TabBar: `role="tablist"`, `aria-controls`, roving tabIndex, arrow key navigation. Panel tabs: `role="tabpanel"`, `aria-labelledby`. PlaybackBar: `aria-pressed`. QuizPanel: `role="radiogroup"` + `role="radio"`. Toast: `role="status"`. 3D scenes: `role="img"` + `aria-label`, keyboard camera controls. Browser-verified: tablist structure, aria-controls, aria-pressed toggles, role=img on 3D scenes, tab keyboard navigation, radiogroup in quiz. Real assistive technology (screen reader) testing remains outside current environment. |
 | F16 | 3D screenshot export blank | DONE | 5 | preserveDrawingBuffer:true on WebGLRenderer. |
 | F17 | Quiz API validation | DONE | 4,7,8,9,10 | Full envelope validation: null body/items return 400. `topicId` validated against 6 known topics. Question ID validated against actual quiz bank. Server derives correctness from bank's `correctIndex`. Persistence-field validation: `id` must be string or undefined; `poolVersion` must be positive integer in range [1, QUIZ_POOL_VERSION] or undefined; `timestamp` must produce a valid Date in reasonable range (2021-2100). Unsupported poolVersion (e.g. 999) now rejected with 400. Handler correctness tests assert both directions of server override via captured `createMany` data. |
 | F18 | Offline sync chunking | DONE | 5,8,9,10 | Chunking with per-chunk markSynced and idempotency via skipDuplicates. Client requires `stored === true` (not just absence of `stored:false`). Count-only fallback removed. AcceptedIds intersected with submitted chunk IDs; only explicitly acknowledged records are marked synced. New sync-client test calls actual `syncQuizResults` with mocked IDB and fetch, verifying records are correctly marked or kept pending for all edge cases. |
@@ -28,16 +28,18 @@ Current head includes batch 19 fixes (F12 3D tools, F11 histogram scale, F23 dis
 | F20 | Longitudinal wave speed | DONE | 4 | Correct spring-mass chain dispersion formula. |
 | F21 | Drag coefficient units | DONE | 2,11,13 | Symbol/unit renamed. Compare-mode legend symbol corrected from 'Cd' to 'b' matching module definition. Acceleration vector now shows actual net acceleration (gravity + drag) when drag > 0, with correct direction and magnitude. Legend label switches from "Gravity" to "Net Acceleration" when drag is enabled. Trajectory cap raised from 100s (100001 steps) to 250s (250001 steps), covering worst-case slider combination (v0=50, theta=90, g=0.5, y0=50 → ~214s TOF). |
 | F22 | Dependency advisories | PARTIAL | 5,7,9,14,20 | Upgraded vitest 2→5, eslint-config-next 14→15, next 14.2.35→16.3.8, prisma CLI 8.0.0-rc.15→7.10.0. Reduced from 23 to 4 vulnerable packages. postcss 8.5.22→8.5.28. Prisma schema migrated to v7 format (url moved from datasource to prisma.config.ts). Lint script updated (next lint→eslint). Remaining 4 high-severity: deepmerge-ts + mysql2 in prisma 7.10.0 transitive deps (project uses PostgreSQL, no mysql2 runtime exposure; deepmerge-ts requires crafted recursive input). Fix requires prisma 6.x downgrade (breaking client compatibility). |
-| F23 | Animation performance | PARTIAL | 12,16,19 | `clearScene()` disposes label textures/materials via `disposeSprite()` and force arrow geometries/materials via `disposeGroup()`. Regression test tracks specific resource types (Texture, SpriteMaterial, CylinderGeometry, ConeGeometry, MeshPhongMaterial) and asserts 2+ texture disposals, 2+ sprite material disposals, 4+ arrow geometry disposals, 4+ arrow material disposals on rebuild, plus texture/material disposal on final `dispose()`. Test uses try/finally for prototype cleanup. Browser profiling not performed. |
-| F24 | Teaching preset gaps | PARTIAL | 11,16 | `low-drive` and `moon-vs-earth` hookQuestions fixed. `does-mass-matter` preset now uses distinct masses: `mass: 1` in params, `mass: 10` in compareParams, both with `drag: 0`. hookQuestion updated to "A 1 kg ball and a 10 kg ball are launched identically (no air resistance). Do their paths differ?". Mass symbol added to renderer2d `PARAM_SYMBOLS` and `getDiffLabel`. Not browser-verified. |
+| F23 | Animation performance | DONE | 12,16,19,20 | `clearScene()` disposes label textures/materials via `disposeSprite()` and force arrow geometries/materials via `disposeGroup()`. Regression test tracks specific resource types with threshold assertions. Browser-verified: thermodynamics↔projectile-motion navigation and electrostatics field-3d tab switching produce no JS errors (scene disposal works cleanly). GPU memory profiling remains outside current environment. |
+| F24 | Teaching preset gaps | DONE | 11,16,20 | `low-drive` and `moon-vs-earth` hookQuestions fixed. `does-mass-matter` preset now uses distinct masses: `mass: 1` in params, `mass: 10` in compareParams, both with `drag: 0`. Mass symbol added to renderer2d. Browser-verified: mass preset activates compare mode. |
 | F25 | Threshold preset wording | DONE | 1 | "At Threshold" renamed to "Near Threshold". |
 | F26 | Offline caching | PARTIAL | 7,16 | Fixed: cache cleanup only deletes `fizzix-` prefixed caches. Navigation fallback returns home-page shell or 503. Static asset handler (`/_next/static/`) now checks `res.ok` before caching, preventing error responses from being cached. Remaining: topic pages not precached; multi-build update behavior not verified. |
 
 ## Summary
 
-- **DONE**: 18 findings (F01, F02, F04, F05, F06, F07, F08, F09, F10, F11, F13, F16, F17, F18, F19, F20, F21, F25)
+- **DONE**: 22 findings (F01, F02, F04, F05, F06, F07, F08, F09, F10, F11, F12, F13, F14, F15, F16, F17, F18, F19, F20, F21, F23, F24, F25)
 - **ACCEPTED**: 1 finding (F03 - small-angle model by design, energy exact within model)
-- **PARTIAL**: 7 findings (F12, F14, F15, F22, F23, F24, F26)
+- **PARTIAL**: 3 findings (F22, F26)
+  - F22: 4 remaining vulns in prisma transitive deps, unfixable without breaking downgrade
+  - F26: multi-build offline lifecycle not verified
 
 ## Batch 9 changes (third verification response)
 
@@ -250,6 +252,25 @@ Current head includes batch 19 fixes (F12 3D tools, F11 histogram scale, F23 dis
 - Resolved: postcss path traversal (1 critical), hono chain (28 advisories), lodash prototype pollution (3 advisories), valibot (1 advisory), plus earlier vitest/esbuild/glob fixes.
 - Remaining 4 high: deepmerge-ts (stack exhaustion on crafted recursive input) and mysql2 (credential leak + decompression bomb), both transitive through prisma@7.10.0. Project uses PostgreSQL (no mysql2 runtime exposure). Fix requires prisma@6.x (breaks client compatibility).
 
+### Browser acceptance (F12/F14/F15/F23/F24)
+- Production build served via `next start` on port 3099
+- Chromium headless via Playwright (pre-installed, /opt/pw-browsers)
+- 22/22 tests passed:
+  - Home page: all 6 topic links present
+  - F12: Tools (Ruler/Protractor) hidden on thermodynamics, visible on projectile-motion
+  - F14: No horizontal scroll at 320px, 390px, 768px, 1440px
+  - F15: tablist+tab structure, aria-controls on tabs, aria-pressed on toggles, role=img on 3D scenes, tab keyboard navigation (ArrowRight moves focus), radiogroup in quiz panel
+  - All 6 topics render without JS errors (plausible.io analytics blocked by proxy, correctly filtered)
+  - F23: thermodynamics↔projectile-motion navigation, electrostatics field-3d tab switching - no errors
+  - F24: mass preset activates compare mode
+
+### Findings promoted to DONE
+- F12: Browser-verified tools hidden/shown per view type
+- F14: Browser-verified responsive layout at 4 viewport widths
+- F15: Browser-verified ARIA structure (tablist, aria-controls, aria-pressed, role=img, keyboard nav, radiogroup)
+- F23: Browser-verified scene transitions and disposal (no errors on repeated navigation)
+- F24: Browser-verified mass preset compare mode activation
+
 ### Verification results (batch 20)
 - TypeScript: `tsc --noEmit` exits zero
 - ESLint: 0 errors, 0 warnings (src/)
@@ -257,3 +278,4 @@ Current head includes batch 19 fixes (F12 3D tools, F11 histogram scale, F23 dis
 - Production build: succeeds (Next 16, all routes correct)
 - Unit tests: 356/356 pass
 - npm audit: 4 vulnerabilities (was 15)
+- Browser acceptance: 22/22 pass

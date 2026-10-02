@@ -201,6 +201,7 @@ async function run() {
   // === Resource behavior during transitions ===
   console.log('\n=== Resource Behavior During Transitions ===')
 
+  let heapApiAvailable = false
   {
     const page = await context.newPage()
     const heapBefore = await page.evaluate(() => {
@@ -212,6 +213,7 @@ async function run() {
       markBlocked('5 rapid topic transitions: memory heap check', 'performance.memory not available in this Chromium build')
       await page.close()
     } else {
+      heapApiAvailable = true
       await assert('5 rapid topic transitions: memory heap check', async () => {
         const transitions = [
           'projectile-motion', 'thermodynamics', 'electrostatics',
@@ -428,7 +430,11 @@ async function run() {
 
   // === Blocked Checks ===
   console.log('\n=== Blocked / Partial Checks ===')
-  markBlocked('JS heap size monitoring (performance.memory)', 'Non-standard API not available in this Chromium build')
+  if (heapApiAvailable) {
+    console.log('  (performance.memory was available — heap test ran above)')
+  } else {
+    console.log('  (performance.memory was unavailable — heap test blocked above)')
+  }
   markBlocked('Real-device touch interaction testing', 'Requires physical device; not available in headless Chromium CI')
   markBlocked('Screen reader announcement verification', 'Requires NVDA/VoiceOver; not available in headless environment')
   markBlocked('GPU profiling and WebGL frame budget', 'Requires hardware GPU; headless Chromium uses SwiftShader (software renderer)')

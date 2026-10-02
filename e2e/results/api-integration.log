@@ -3,7 +3,7 @@ Database target: localhost:5432/fizzix_test
 Target: http://localhost:3099/api/quiz/results/batch
 Database: configured (fizzix_test)
 Starting server...
-  Server running (PID 4105, binary: /home/user/fizzix/node_modules/.bin/next)
+  Server running (PID 820, binary: /home/user/fizzix/node_modules/.bin/next)
 
 === HTTP API Integration Tests ===
   PASS: POST single result returns stored:true with DB
@@ -13,19 +13,27 @@ Starting server...
   PASS: Batch rows verified in database
   PASS: Server derives correctness: pm-e1 selected:0 → correct:false
   PASS: Server derives correctness: pm-e1 selected:1 → correct:true
-    Stopping server (PID 4105)...
+    Stopping server (PID 820)...
   Server exited unexpectedly: code=143 signal=null
-  Server stopped (PID 4105)
-    Confirmed PID 4105 terminated
+  Server stopped (PID 820)
+    Confirmed PID 820 terminated
     Starting new server...
-  Server running (PID 4123, binary: /home/user/fizzix/node_modules/.bin/next)
-    New server PID: 4123
+  Server running (PID 838, binary: /home/user/fizzix/node_modules/.bin/next)
+    New server PID: 838
   PASS: Data persists after genuine server process restart
-  PASS: Client records pending when storage unavailable
+    Stopping server (PID 838) to simulate unavailable storage...
+  Server exited unexpectedly: code=143 signal=null
+  Server stopped (PID 838)
+    POST rejected while server down: fetch failed
+    Confirmed: record absent from DB (pending on client)
+    Restarting server for retry...
+  Server running (PID 853, binary: /home/user/fizzix/node_modules/.bin/next)
+    Confirmed: record stored in DB after retry
+  PASS: Records remain pending when server is unreachable, then sync on retry
   PASS: Invalid request returns 400
   PASS: Empty results array returns 400
   PASS: Invalid JSON returns 400
   Server exited unexpectedly: code=143 signal=null
-  Server stopped (PID 4123)
+  Server stopped (PID 853)
 
 === Results: 12 passed, 0 failed ===

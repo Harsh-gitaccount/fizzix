@@ -37,15 +37,16 @@
 ### R4: Permissive acceptance assertions
 **Status**: FIXED
 
-- `e2e/scripts/perf-a11y.mjs`: Canvas exception → FAIL (not success). BLOCKED and PASSED mutually exclusive.
+- `e2e/scripts/perf-a11y.mjs`: Canvas exception → FAIL (not success). BLOCKED and PASSED mutually exclusive. Heap BLOCKED reported only when `performance.memory` is actually unavailable.
 - `e2e/scripts/browser-acceptance.mjs`: Mass preset checks `aria-pressed` + A/B labels (not body digit scan).
 
 ### R5: Performance evidence
 **Status**: FIXED (some checks BLOCKED)
 
 - Canvas animation: compares full `toDataURL()` snapshots; canvas-read exception → FAIL
-- Heap measurement: checked before `assert()` call; BLOCKED increments only `blocked`, never also `passed`
-- BLOCKED with justification: `performance.memory`, real-device touch, screen reader, GPU, network throttling
+- Heap measurement: checked before `assert()` call; BLOCKED increments only `blocked`, never also `passed`. Heap BLOCKED is conditional: only reported when `performance.memory` is actually unavailable at runtime, not unconditionally.
+- BLOCKED with justification: real-device touch, screen reader, GPU, network throttling
+- `performance.memory` status is observed at runtime: available → heap test runs and reports PASS/FAIL; unavailable → reports BLOCKED
 
 ### R6: Documentation and evidence
 **Status**: FIXED
@@ -53,9 +54,9 @@
 - This handoff corrected to use original F01-F26 descriptions from FIX_STATUS.md
 - Implementation status separated from verification status
 - Fresh execution logs committed at `e2e/results/`:
-  - `e2e/results/perf-a11y.log`: 11 passed, 0 failed, 5 blocked
-  - `e2e/results/api-integration.log`: 12 passed, 0 failed
-  - `e2e/results/sw-update-scenario.log`: 11 passed, 0 failed
+  - `e2e/results/perf-a11y.log`: 11 passed, 0 failed, 4 blocked (heap API available → ran as PASS)
+  - `e2e/results/api-integration.log`: 12 passed, 0 failed (includes server-down/retry scenario)
+  - `e2e/results/sw-update-scenario.log`: 11 passed, 0 failed (Play/Pause by aria-label, canvas advance/stop, build ID match)
 
 ## Finding Reconciliation (26 original findings)
 
@@ -99,9 +100,9 @@ These require hardware or software not available in headless CI:
 - Real mobile touch/zoom interaction (physical device required)
 - Assistive technology / screen reader compatibility (NVDA/VoiceOver required)
 - GPU memory profiling (hardware GPU required; headless uses SwiftShader)
-- `performance.memory` JS heap tracking (non-standard API, not in this Chromium build)
 - Real network throttling (CDP throttling does not simulate real conditions)
-- Resource cleanup measurement during transitions (client-side heap evidence unavailable)
+
+Note: `performance.memory` availability is checked at runtime. When available (as in this run), the heap test executes and reports PASS/FAIL. When unavailable, it reports BLOCKED. The outcome is mutually exclusive and accurately recorded.
 
 ## Safety Constraints Followed
 

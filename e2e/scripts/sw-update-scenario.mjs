@@ -359,7 +359,7 @@ async function run() {
     await page.close()
   })
 
-  await assert('Build B: Offline lesson responds to interaction', async () => {
+  await assert('Build B: Offline simulation playback advances and pauses', async () => {
     const page = await context.newPage()
     await page.goto(`http://localhost:${PORT}/projectile-motion`)
     await page.waitForSelector('canvas', { timeout: 15000 })
@@ -373,36 +373,57 @@ async function run() {
     await page.reload({ waitUntil: 'domcontentloaded', timeout: 10000 })
     await page.waitForSelector('canvas', { timeout: 10000 })
 
-    const result = await page.evaluate(() => {
-      const canvas = document.querySelector('canvas')
-      const playBtn = document.querySelector('button[aria-pressed], button[aria-label*="Play"], button[aria-label*="play"], button[aria-label*="Pause"]')
-      return {
-        title: document.title,
-        hasCanvas: !!canvas,
-        hasPlayBtn: !!playBtn,
-        playBtnLabel: playBtn ? (playBtn.getAttribute('aria-label') || playBtn.textContent || '').substring(0, 30) : null,
-        playBtnPressed: playBtn ? playBtn.getAttribute('aria-pressed') : null,
-      }
-    })
-
-    if (!result.title.includes('Fizzix') && !result.title.includes('Projectile')) {
-      throw new Error(`Offline page title: "${result.title}"`)
+    const title = await page.title()
+    if (!title.includes('Fizzix') && !title.includes('Projectile')) {
+      throw new Error(`Offline page title: "${title}"`)
     }
-    if (!result.hasCanvas) throw new Error('No canvas element in offline-served page')
-    if (!result.hasPlayBtn) throw new Error('No play/pause button in offline-served page')
+    if (await page.locator('canvas').count() === 0) throw new Error('No canvas in offline page')
 
-    const playBtn = page.locator('button[aria-pressed], button[aria-label*="Play"], button[aria-label*="play"], button[aria-label*="Pause"]').first()
-    const beforeLabel = await playBtn.getAttribute('aria-label') || await playBtn.textContent() || ''
-    const beforePressed = await playBtn.getAttribute('aria-pressed')
+    const playBtn = page.locator('button[aria-label="Play"], button[aria-label="Replay"]').first()
+    if (await playBtn.count() === 0) throw new Error('No Play/Replay button found by aria-label')
+
+    const beforeLabel = await playBtn.getAttribute('aria-label')
+    console.log(`    (play button before click: aria-label="${beforeLabel}")`)
+
     await playBtn.click()
-    await page.waitForTimeout(500)
-    const afterLabel = await playBtn.getAttribute('aria-label') || await playBtn.textContent() || ''
-    const afterPressed = await playBtn.getAttribute('aria-pressed')
+    await page.waitForTimeout(600)
 
-    if (beforeLabel === afterLabel && beforePressed === afterPressed) {
-      throw new Error(`Offline playback toggle did not change: before="${beforeLabel}" pressed=${beforePressed}, after="${afterLabel}" pressed=${afterPressed}`)
-    }
-    console.log(`    (offline toggle: "${beforeLabel}" pressed=${beforePressed} → "${afterLabel}" pressed=${afterPressed})`)
+    const snap1 = await page.evaluate(() => {
+      const c = document.querySelector('canvas')
+      return c ? c.toDataURL('image/png') : null
+    })
+    if (!snap1) throw new Error('Canvas read failed after Play')
+
+    await page.waitForTimeout(500)
+
+    const snap2 = await page.evaluate(() => {
+      const c = document.querySelector('canvas')
+      return c ? c.toDataURL('image/png') : null
+    })
+    if (!snap2) throw new Error('Canvas read failed during playback')
+    if (snap1 === snap2) throw new Error('Canvas did not change during playback — simulation not advancing')
+    console.log(`    (canvas advanced: ${snap1.length} → ${snap2.length} chars)`)
+
+    const pauseBtn = page.locator('button[aria-label="Pause"]').first()
+    if (await pauseBtn.count() === 0) throw new Error('No Pause button found — Play did not switch to Pause')
+
+    await pauseBtn.click()
+    await page.waitForTimeout(300)
+
+    const snap3 = await page.evaluate(() => {
+      const c = document.querySelector('canvas')
+      return c ? c.toDataURL('image/png') : null
+    })
+    await page.waitForTimeout(500)
+    const snap4 = await page.evaluate(() => {
+      const c = document.querySelector('canvas')
+      return c ? c.toDataURL('image/png') : null
+    })
+    if (snap3 !== snap4) throw new Error('Canvas still changing after Pause — simulation did not stop')
+    console.log(`    (canvas stable after Pause: ${snap3.length} chars, confirmed stopped)`)
+
+    const afterPauseLabel = await page.locator('button[aria-label="Play"], button[aria-label="Replay"]').first().getAttribute('aria-label')
+    console.log(`    (button after pause: aria-label="${afterPauseLabel}")`)
 
     await cdp.send('Network.emulateNetworkConditions', {
       offline: false, downloadThroughput: -1, uploadThroughput: -1, latency: 0,
@@ -410,26 +431,37 @@ async function run() {
     await page.close()
   })
 
-  await assert('Build B: Rendered page serves Build B content', async () => {
+  await assert('Build B: Rendered page identifies as Build B', async () => {
     const page = await context.newPage()
     await page.goto(`http://localhost:${PORT}/projectile-motion`)
     await page.waitForSelector('canvas', { timeout: 15000 })
-    const scripts = await page.evaluate(() => {
-      return [...document.querySelectorAll('script[src*="/_next/"]')].map(s => s.src)
-    })
-    if (scripts.length === 0) throw new Error('No Next.js scripts found — cannot verify build')
-    let foundBuildB = false
-    for (const src of scripts.slice(0, 3)) {
+
+    const buildBId = evidence.buildB.buildId
+    if (!buildBId || buildBId === 'unknown') throw new Error('Build B ID not recorded')
+
+    const pageId = await page.evaluate(async (expectedId) => {
+      const scripts = [...document.querySelectorAll('script[src*="/_next/"]')].map(s => s.src)
+      const containsBuildId = scripts.some(s => s.includes(expectedId))
+      let serverBuildId = null
       try {
-        const res = await page.evaluate(async (url) => {
-          const r = await fetch(url)
-          return { ok: r.ok, status: r.status }
-        }, src)
-        if (res.ok) { foundBuildB = true; break }
+        const r = await fetch('/_next/BUILD_ID')
+        if (r.ok) serverBuildId = (await r.text()).trim()
       } catch {}
+      const pageSource = document.documentElement.innerHTML
+      const sourceHasBuildId = pageSource.includes(expectedId)
+      return { scripts: scripts.length, containsBuildId, serverBuildId, sourceHasBuildId, expectedId }
+    }, buildBId)
+
+    const matched = pageId.containsBuildId || pageId.serverBuildId === buildBId || pageId.sourceHasBuildId
+    if (!matched) {
+      throw new Error(
+        `Page does not identify as Build B (${buildBId}). ` +
+        `Scripts contain ID: ${pageId.containsBuildId}, server BUILD_ID: ${pageId.serverBuildId}, ` +
+        `source contains ID: ${pageId.sourceHasBuildId}`
+      )
     }
-    if (!foundBuildB) throw new Error('Build B scripts not reachable from rendered page')
-    console.log(`    (verified ${scripts.length} Next.js scripts loaded from Build B)`)
+    const method = pageId.containsBuildId ? 'script URLs' : pageId.serverBuildId === buildBId ? '/_next/BUILD_ID' : 'page source'
+    console.log(`    (Build B identity ${buildBId} confirmed via ${method}, ${pageId.scripts} scripts loaded)`)
     await page.close()
   })
 

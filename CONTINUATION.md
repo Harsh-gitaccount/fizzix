@@ -9,9 +9,9 @@
 - **Dash lint**: 0 violations
 - **Unit tests**: 358/358 passing
 - **npm audit**: 0 vulnerabilities
-- **Perf/a11y**: 11 passed, 0 failed, 5 blocked
-- **API integration**: 12 passed, 0 failed (disposable PostgreSQL)
-- **SW update scenario**: 11 passed, 0 failed (two-build, real IDB)
+- **Perf/a11y**: 11 passed, 0 failed, 4 blocked (heap API available)
+- **API integration**: 12 passed, 0 failed (disposable PostgreSQL, server-down/retry)
+- **SW update scenario**: 11 passed, 0 failed (two-build, real IDB, canvas verify, build ID match)
 
 ## Commits
 1. `6d3fa31` -- Batch 1: F01, F02, F03, F04, F05-partial, F08, F09, F25
@@ -48,22 +48,35 @@
 32. `9de4346` -- Task 6: performance and accessibility acceptance tests
 33. `ad4e30f` -- Task 7: documentation reconciliation
 34. `12eb685` -- fix(B23): address R1-R6 verification report findings
-35. `(batch-24)` -- fix: closure review — false-pass, process management, handoff corrections
+35. `e246415` -- fix: closure review — false-pass, process management, handoff corrections
+36. `(batch-25)` -- fix: verification gaps — storage-unavailable, playback targeting, build identity, heap reporting
 
-## Batch 24 Changes (Closure Review Response)
+## Batch 25 Changes (Verification Gap Closure)
 
-### Requirement 1: Remove false-pass paths
-- `e2e/scripts/perf-a11y.mjs`: Canvas test catches exceptions and fails instead of resolving `true`. Heap test checks `performance.memory` before `assert()` — BLOCKED and PASSED mutually exclusive.
+### Fix 1: Storage-unavailable test (api-integration.mjs)
+- Replaced misleading "Client records pending when storage unavailable" test
+- Now stops server, attempts POST (fails with fetch error), confirms record absent from DB
+- Restarts server, retries POST, confirms record stored — demonstrates pending→retry→sync
 
-### Requirement 2: Real-app persistence and offline scenarios
-- `e2e/scripts/api-integration.mjs`: Parses database URL via `new URL()`, validates name is exactly `fizzix_test`. Direct Next.js binary spawn. Restart test verifies old PID terminated. Storage-unavailable pending-records test.
-- `e2e/scripts/sw-update-scenario.mjs`: Uses app's real `fizzix-quiz`/`results` IDB store. Seeds `QuizResultRecord` with `synced:0`, verifies it survives SW update. Offline interaction: clicks play/pause while offline, asserts state change. Build identity verified via Next.js script reachability. Process group cleanup with `detached:true`.
+### Fix 2: Offline playback targeting (sw-update-scenario.mjs)
+- Changed from generic `button[aria-pressed]` (which matched preset "Free Fall") to exact `button[aria-label="Play"]`
+- After clicking Play: takes two canvas snapshots 500ms apart, asserts they differ (simulation advancing)
+- After clicking Pause: takes two canvas snapshots 500ms apart, asserts they are identical (simulation stopped)
 
-### Requirement 3: Correct handoff
-- `FINAL_STABILIZATION_HANDOFF.md`: Restored original F01-F26 descriptions from FIX_STATUS.md. Separated implementation from verification status. F03 remains ACCEPTED.
+### Fix 3: Build identity assertion (sw-update-scenario.mjs)
+- Replaced HTTP 200 check with actual build ID comparison
+- Reads `evidence.buildB.buildId` from `.next/BUILD_ID`, checks against page source, script URLs, and `/_next/BUILD_ID` endpoint
+- Logs which verification method matched
+
+### Fix 4: Heap reporting contradiction (perf-a11y.mjs)
+- Removed unconditional `markBlocked('JS heap size monitoring...')` from blocked-checks section
+- Heap availability now tracked via `heapApiAvailable` flag set during the actual test
+- When available: test runs as PASS/FAIL, summary says "(performance.memory was available — heap test ran above)"
+- When unavailable: test blocked above, no duplicate blocked entry emitted
+- Result: 11 passed, 0 failed, 4 blocked (was 5 with the contradiction)
 
 ### Evidence (all executed on same code revision)
-- `e2e/results/perf-a11y.log`: 11 passed, 0 failed, 5 blocked
+- `e2e/results/perf-a11y.log`: 11 passed, 0 failed, 4 blocked
 - `e2e/results/api-integration.log`: 12 passed, 0 failed
 - `e2e/results/sw-update-scenario.log`: 11 passed, 0 failed
 

@@ -317,9 +317,9 @@ async function run() {
     await db2.$disconnect()
   })
 
-  await assert('Client records pending when storage unavailable', async () => {
+  await assert('Records remain pending when server is unreachable, then sync on retry', async () => {
     const pendingId = `${SESSION_PREFIX}pending-${Date.now()}`
-    const { status, body } = await postResults([{
+    const pendingPayload = [{
       id: pendingId,
       sessionId: `${SESSION_PREFIX}s-pending`,
       topicId: 'projectile-motion',
@@ -328,15 +328,44 @@ async function run() {
       correct: false,
       difficulty: 'easy',
       timestamp: Date.now(),
-    }])
-    eq(status, 200, 'HTTP status')
-    eq(body.stored, true, 'stored')
-    if (!body.acceptedIds.includes(pendingId)) throw new Error(`acceptedIds missing ${pendingId}`)
+    }]
+
+    const oldPid = serverChild.pid
+    console.log(`    Stopping server (PID ${oldPid}) to simulate unavailable storage...`)
+    await stopServer()
+
+    let postFailed = false
+    try {
+      await fetch(API, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ results: pendingPayload }),
+      })
+    } catch (err) {
+      postFailed = true
+      console.log(`    POST rejected while server down: ${err.code || err.message}`)
+    }
+    if (!postFailed) throw new Error('POST should have failed with server stopped')
 
     if (db) {
       const row = await db.quizResult.findUnique({ where: { id: pendingId } })
-      if (!row) throw new Error('Pending record not written to DB')
-      eq(row.correct, false, 'correct derived server-side')
+      if (row) throw new Error('Record should NOT exist in DB while server was down')
+      console.log('    Confirmed: record absent from DB (pending on client)')
+    }
+
+    console.log('    Restarting server for retry...')
+    await startServer()
+
+    const { status, body } = await postResults(pendingPayload)
+    eq(status, 200, 'HTTP status on retry')
+    eq(body.stored, true, 'stored on retry')
+    if (!body.acceptedIds.includes(pendingId)) throw new Error(`acceptedIds missing ${pendingId} on retry`)
+
+    if (db) {
+      const row = await db.quizResult.findUnique({ where: { id: pendingId } })
+      if (!row) throw new Error('Record not found in DB after retry')
+      eq(row.correct, false, 'correct derived server-side after retry')
+      console.log('    Confirmed: record stored in DB after retry')
     }
   })
 

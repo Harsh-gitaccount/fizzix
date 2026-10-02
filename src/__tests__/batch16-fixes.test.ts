@@ -145,6 +145,7 @@ describe('F26 - Service worker static asset caching', () => {
         addEventListener: (name: string, fn: (e: unknown) => void) => { handlers[name] = fn },
         skipWaiting() {},
         clients: { claim() {} },
+        location: { origin: 'https://localhost' },
       },
       caches,
       fetch: async () => new Response('not found', { status: 404 }),
@@ -154,7 +155,7 @@ describe('F26 - Service worker static asset caching', () => {
 
     let response: Promise<Response> | undefined
     handlers.fetch({
-      request: { method: 'GET', url: 'https://localhost/_next/static/missing.js', mode: 'cors' },
+      request: { method: 'GET', url: 'https://localhost/_next/static/missing.js', mode: 'cors', destination: 'script' },
       respondWith(p: Promise<Response>) { response = p },
     })
 

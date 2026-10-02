@@ -11,6 +11,13 @@
  * Environment:
  *   BASE_URL - server URL (default: http://localhost:3099)
  *   CHROMIUM_PATH - path to Chromium binary (default: auto-detect)
+ *
+ * Analytics stub: plausible.io/js/script.js is blocked by the CI proxy.
+ * The SW no longer intercepts cross-origin requests, so this script is
+ * never fetched. If a pageerror's stack traces to plausible.io AND the
+ * request failed or returned non-JS content, only that specific error
+ * is filtered. Application errors whose stack traces to /_next/ are
+ * always reported even if they share the same message text.
  */
 
 import { createRequire } from 'module'
@@ -29,11 +36,12 @@ const TOPICS = [
   'electrostatics', 'thermodynamics', 'modern-physics',
 ]
 
+const ANALYTICS_STUB_URL = 'https://plausible.io/js/script.js'
+
 let passed = 0
 let failed = 0
 const failures = []
 const rawErrors = []
-const blockedScriptHosts = new Set(['plausible.io', 'analytics.'])
 
 async function assert(name, fn) {
   try {
@@ -48,46 +56,24 @@ async function assert(name, fn) {
 }
 
 function collectErrors(page) {
-  const allPageErrors = []
-  let hasBlockedAnalyticsScript = false
-
-  page.on('requestfailed', (req) => {
-    if (req.resourceType() !== 'script') return
-    try {
-      const host = new URL(req.url()).hostname
-      if ([...blockedScriptHosts].some(h => host.includes(h))) {
-        hasBlockedAnalyticsScript = true
-      }
-    } catch { /* ignore malformed URLs */ }
-  })
+  const errors = []
+  let analyticsServedHTML = false
 
   page.on('response', (res) => {
-    try {
-      const host = new URL(res.url()).hostname
+    if (res.url() === ANALYTICS_STUB_URL) {
       const ct = res.headers()['content-type'] || ''
-      if ([...blockedScriptHosts].some(h => host.includes(h)) && ct.includes('text/html')) {
-        hasBlockedAnalyticsScript = true
-      }
-    } catch { /* ignore */ }
+      if (!ct.includes('javascript')) analyticsServedHTML = true
+    }
   })
 
   page.on('pageerror', (err) => {
-    rawErrors.push({ page: page.url(), error: err.message })
-    allPageErrors.push(err.message)
+    const stack = err.stack || ''
+    const msg = err.message || ''
+    rawErrors.push({ page: page.url(), error: msg, stack: stack.substring(0, 500) })
+    if (analyticsServedHTML && msg === "Unexpected token '<'" && stack.includes('plausible.io')) return
+    errors.push(msg)
   })
-
-  return {
-    get length() {
-      return this.filtered().length
-    },
-    join(sep) {
-      return this.filtered().join(sep)
-    },
-    filtered() {
-      if (!hasBlockedAnalyticsScript) return allPageErrors
-      return allPageErrors.filter(msg => !msg.includes("Unexpected token '<'"))
-    },
-  }
+  return errors
 }
 
 async function run() {
@@ -103,8 +89,9 @@ async function run() {
   console.log(`\nTarget: ${BASE}`)
   console.log(`Chromium: ${CHROMIUM || '(auto-detect)'}`)
 
+  // === Home page ===
   console.log('\n=== Home page ===')
-  await assert('Home loads all topics', async () => {
+  await assert('Home loads all 6 topic links', async () => {
     const page = await context.newPage()
     await page.goto(BASE)
     for (const t of TOPICS) {
@@ -114,6 +101,7 @@ async function run() {
     await page.close()
   })
 
+  // === F12: 3D tools hidden/shown ===
   console.log('\n=== F12: 3D tools hidden/shown ===')
   await assert('Tools hidden on thermodynamics (3D view)', async () => {
     const page = await context.newPage()
@@ -138,13 +126,21 @@ async function run() {
     await page.close()
   })
 
+  // === F14: responsive layout ===
   console.log('\n=== F14: responsive layout ===')
-  for (const width of [320, 390, 768, 1440]) {
-    await assert(`No horizontal scroll at ${width}px`, async () => {
+  const responsiveViews = [
+    { width: 320, topic: 'projectile-motion', label: '2D' },
+    { width: 390, topic: 'thermodynamics', label: '3D' },
+    { width: 768, topic: 'projectile-motion', label: '2D' },
+    { width: 1440, topic: 'projectile-motion', label: '2D' },
+  ]
+  for (const { width, topic, label } of responsiveViews) {
+    await assert(`No horizontal scroll at ${width}px (${label}: ${topic})`, async () => {
       const ctx = await browser.newContext({ viewport: { width, height: 800 } })
       const page = await ctx.newPage()
-      await page.goto(`${BASE}/projectile-motion`)
+      await page.goto(`${BASE}/${topic}`)
       await page.waitForSelector('canvas', { timeout: 15000 })
+      await page.waitForTimeout(500)
       const scrollWidth = await page.evaluate(() => document.documentElement.scrollWidth)
       if (scrollWidth > width + 5) throw new Error(`scrollWidth ${scrollWidth} > viewport ${width}`)
       await page.close()
@@ -152,26 +148,57 @@ async function run() {
     })
   }
 
+  await assert('Controls reachable at 320px (play button visible)', async () => {
+    const ctx = await browser.newContext({ viewport: { width: 320, height: 800 } })
+    const page = await ctx.newPage()
+    await page.goto(`${BASE}/projectile-motion`)
+    await page.waitForSelector('canvas', { timeout: 15000 })
+    const playBtn = page.locator('button[aria-label*="Play"], button[aria-label*="play"], button[aria-pressed]').first()
+    if (await playBtn.count() === 0) throw new Error('No play/toggle button visible at 320px')
+    const box = await playBtn.boundingBox()
+    if (!box) throw new Error('Play button has no bounding box')
+    if (box.x + box.width > 320) throw new Error(`Play button clipped: right edge at ${box.x + box.width}`)
+    await page.close()
+    await ctx.close()
+  })
+
+  // === F15: ARIA structure ===
   console.log('\n=== F15: ARIA structure ===')
-  await assert('Tablist with tabs', async () => {
+  await assert('Tablist with tabs (required)', async () => {
     const page = await context.newPage()
     await page.goto(`${BASE}/projectile-motion`)
     await page.waitForSelector('canvas', { timeout: 15000 })
-    if (await page.locator('[role="tablist"]').count() === 0) throw new Error('No tablist')
-    if (await page.locator('[role="tab"]').count() === 0) throw new Error('No tabs')
+    const tablistCount = await page.locator('[role="tablist"]').count()
+    if (tablistCount === 0) throw new Error('No tablist found')
+    const tabCount = await page.locator('[role="tablist"] [role="tab"]').count()
+    if (tabCount < 2) throw new Error(`Expected ≥2 tabs, got ${tabCount}`)
     await page.close()
   })
 
-  await assert('Tabs have aria-controls', async () => {
+  await assert('All simulation tabs have aria-controls pointing to existing elements', async () => {
     const page = await context.newPage()
     await page.goto(`${BASE}/projectile-motion`)
     await page.waitForSelector('canvas', { timeout: 15000 })
-    const tabs = page.locator('[role="tablist"] [role="tab"]')
-    let hasControls = 0
-    for (let i = 0; i < await tabs.count(); i++) {
-      if (await tabs.nth(i).getAttribute('aria-controls')) hasControls++
+    const tabs = page.locator('[role="tab"][id^="tab-"]')
+    const count = await tabs.count()
+    if (count < 2) throw new Error(`Expected ≥2 simulation tabs, got ${count}`)
+    for (let i = 0; i < count; i++) {
+      const controls = await tabs.nth(i).getAttribute('aria-controls')
+      if (!controls) throw new Error(`Tab ${i} missing aria-controls`)
+      const target = await page.locator(`#${controls}`).count()
+      if (target === 0) throw new Error(`Tab ${i} aria-controls="${controls}" targets nonexistent element`)
     }
-    if (hasControls === 0) throw new Error('No tabs have aria-controls')
+    const panelTabs = page.locator('[role="tab"][id^="panel-tab-"]')
+    const panelCount = await panelTabs.count()
+    if (panelCount < 2) throw new Error(`Expected ≥2 panel tabs, got ${panelCount}`)
+    for (let i = 0; i < panelCount; i++) {
+      const controls = await panelTabs.nth(i).getAttribute('aria-controls')
+      if (!controls) throw new Error(`Panel tab ${i} missing aria-controls`)
+      await panelTabs.nth(i).click()
+      await page.waitForTimeout(200)
+      const target = await page.locator(`#${controls}`).count()
+      if (target === 0) throw new Error(`Panel tab ${i} aria-controls="${controls}" targets nonexistent element after selection`)
+    }
     await page.close()
   })
 
@@ -196,37 +223,43 @@ async function run() {
     await page.close()
   })
 
-  await assert('Tab keyboard navigation (ArrowRight moves focus)', async () => {
+  await assert('ArrowRight moves focus to second simulation tab and selects it', async () => {
     const page = await context.newPage()
     await page.goto(`${BASE}/projectile-motion`)
     await page.waitForSelector('canvas', { timeout: 15000 })
-    const tabs = page.locator('[role="tab"]')
-    if (await tabs.count() < 2) { await page.close(); return }
+    const tabs = page.locator('[role="tab"][id^="tab-"]')
+    const count = await tabs.count()
+    if (count < 2) throw new Error(`Need ≥2 simulation tabs, got ${count}`)
+    const firstId = await tabs.nth(0).getAttribute('id')
+    const secondId = await tabs.nth(1).getAttribute('id')
     await tabs.first().focus()
     await page.keyboard.press('ArrowRight')
-    const focusedRole = await page.evaluate(() => document.activeElement?.getAttribute('role'))
-    if (focusedRole !== 'tab') throw new Error(`Focused role: ${focusedRole}`)
+    const focusedId = await page.evaluate(() => document.activeElement?.id)
+    if (focusedId !== secondId) throw new Error(`Expected focus on ${secondId}, got ${focusedId}`)
+    const isSelected = await tabs.nth(1).getAttribute('aria-selected')
+    if (isSelected !== 'true') throw new Error(`Second tab not selected after ArrowRight (aria-selected=${isSelected})`)
+    const firstSelected = await tabs.nth(0).getAttribute('aria-selected')
+    if (firstSelected === 'true') throw new Error('First tab still selected after ArrowRight')
     await page.close()
   })
 
-  await assert('Quiz panel has radiogroup', async () => {
+  await assert('Quiz tab opens quiz panel with radiogroup (required)', async () => {
     const page = await context.newPage()
     await page.goto(`${BASE}/projectile-motion`)
     await page.waitForSelector('canvas', { timeout: 15000 })
     const quizTab = page.locator('[role="tab"]').filter({ hasText: /quiz/i })
-    if (await quizTab.count() > 0) {
-      await quizTab.click()
-      await page.waitForTimeout(1000)
-      if (await page.locator('[role="radiogroup"]').count() === 0) {
-        throw new Error('No radiogroup in quiz panel')
-      }
-      if (await page.locator('[role="radio"]').count() === 0) {
-        throw new Error('No radio buttons')
-      }
-    }
+    const quizCount = await quizTab.count()
+    if (quizCount === 0) throw new Error('Required quiz tab not found')
+    await quizTab.click()
+    await page.waitForTimeout(1000)
+    const rgCount = await page.locator('[role="radiogroup"]').count()
+    if (rgCount === 0) throw new Error('No radiogroup after clicking quiz tab')
+    const radioCount = await page.locator('[role="radio"]').count()
+    if (radioCount < 2) throw new Error(`Expected ≥2 radio buttons, got ${radioCount}`)
     await page.close()
   })
 
+  // === All topics render ===
   console.log('\n=== All topics render ===')
   for (const topic of TOPICS) {
     await assert(`${topic} renders without JS errors`, async () => {
@@ -240,6 +273,22 @@ async function run() {
     })
   }
 
+  // === Negative control: application error is not suppressed ===
+  console.log('\n=== Negative control ===')
+  await assert('Application JS error still fails (negative control)', async () => {
+    const page = await context.newPage()
+    const errors = collectErrors(page)
+    await page.goto(`${BASE}/projectile-motion`)
+    await page.waitForSelector('canvas', { timeout: 15000 })
+    await page.evaluate(() => {
+      setTimeout(() => { eval("var x = <bad>") }, 10)
+    })
+    await page.waitForTimeout(500)
+    if (errors.length === 0) throw new Error('Injected app error was suppressed — filter is too broad')
+    await page.close()
+  })
+
+  // === F23: Scene transitions ===
   console.log('\n=== F23: Scene transitions ===')
   await assert('Navigate thermo→projectile→thermo without errors', async () => {
     const page = await context.newPage()
@@ -257,39 +306,48 @@ async function run() {
     await page.close()
   })
 
-  await assert('Field-3d tab switching without errors', async () => {
+  await assert('Field-3d tab switches (required tab)', async () => {
     const page = await context.newPage()
     const errors = collectErrors(page)
     await page.goto(`${BASE}/electrostatics`)
     await page.waitForSelector('canvas', { timeout: 15000 })
     await page.waitForTimeout(500)
     const fieldTab = page.locator('#tab-field-3d')
-    if (await fieldTab.count() > 0) {
-      await fieldTab.click()
-      await page.waitForTimeout(1500)
-      await page.locator('[role="tab"]').first().click()
-      await page.waitForTimeout(500)
-      await fieldTab.click()
-      await page.waitForTimeout(1000)
-    }
+    const fieldCount = await fieldTab.count()
+    if (fieldCount === 0) throw new Error('Required field-3d tab not found')
+    await fieldTab.click()
+    await page.waitForTimeout(1500)
+    const isSelected = await fieldTab.getAttribute('aria-selected')
+    if (isSelected !== 'true') throw new Error('field-3d tab not selected after click')
+    await page.locator('[role="tab"]').first().click()
+    await page.waitForTimeout(500)
+    await fieldTab.click()
+    await page.waitForTimeout(1000)
     if (errors.length > 0) throw new Error(`JS errors: ${errors.join('; ')}`)
     await page.close()
   })
 
+  // === F24: Mass preset ===
   console.log('\n=== F24: Mass preset ===')
-  await assert('Mass preset activates compare mode', async () => {
+  await assert('Mass preset activates compare with distinct masses', async () => {
     const page = await context.newPage()
     await page.goto(`${BASE}/projectile-motion`)
     await page.waitForSelector('canvas', { timeout: 15000 })
     await page.waitForTimeout(500)
+    const compareTab = page.locator('#tab-compare')
+    if (await compareTab.count() === 0) throw new Error('Compare tab not found')
+    await compareTab.click()
+    await page.waitForTimeout(500)
     const massBtn = page.locator('button').filter({ hasText: /mass/i })
-    if (await massBtn.count() > 0) {
-      await massBtn.first().click()
-      await page.waitForTimeout(500)
-      const text = await page.textContent('body')
-      if (!text.toLowerCase().includes('compare')) {
-        throw new Error('Compare mode not activated')
-      }
+    const btnCount = await massBtn.count()
+    if (btnCount === 0) throw new Error('Required mass preset button not found on compare tab')
+    await massBtn.first().click()
+    await page.waitForTimeout(500)
+    const isCompareSelected = await page.locator('#tab-compare').getAttribute('aria-selected')
+    if (isCompareSelected !== 'true') throw new Error('Compare tab not selected after mass preset')
+    const bodyText = await page.textContent('body')
+    if (!bodyText.includes('1') || !bodyText.includes('10')) {
+      throw new Error('Distinct masses (1 / 10) not visible in compare mode')
     }
     await page.close()
   })
@@ -304,7 +362,10 @@ async function run() {
 
   if (rawErrors.length > 0) {
     console.log(`\n=== Raw JS errors (${rawErrors.length}, including filtered) ===`)
-    for (const e of rawErrors) console.log(`  [${e.page}] ${e.error.substring(0, 120)}`)
+    for (const e of rawErrors) {
+      console.log(`  [${e.page}] ${e.error}`)
+      if (e.stack) console.log(`    stack: ${e.stack.substring(0, 200)}`)
+    }
   }
 
   process.exit(failed > 0 ? 1 : 0)

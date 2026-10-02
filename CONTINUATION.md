@@ -3,12 +3,15 @@
 ## Session State
 - **Branch**: `claude/brave-ramanujan-s4hhf9`
 - **Base commit**: `7523ff0c2e3164d205036a85d81d12ae0312f997`
-- **Last batch**: batch-21 (F26 SW lifecycle verification, final reconciliation)
+- **Last batch**: batch-22 (Prisma driver-adapter fix, npm overrides, reproducible test evidence)
 - **TypeScript**: 0 errors
 - **ESLint**: 0 errors, 0 warnings (src/)
 - **Dash lint**: 0 violations
 - **Unit tests**: 356/356 passing
-- **npm audit**: 4 vulnerabilities (down from 23→15→4)
+- **npm audit**: 0 vulnerabilities (down from 23→15→4→0)
+- **Browser acceptance**: 22/22 pass
+- **SW lifecycle**: 6/6 pass
+- **DB integration**: 7/7 pass (disposable PostgreSQL)
 
 ## Commits
 1. `6d3fa31` -- Batch 1: F01, F02, F03, F04, F05-partial, F08, F09, F25
@@ -34,7 +37,10 @@
 21. `927330e` -- Batch 19: F12 3D tools, F11 histogram scale, F23 disposal test, F06/F11 dispositions
 22. `3eb950b` -- Batch 20: F22 dependency migration (Next 14→16, Prisma CLI 8-rc→7, postcss 8.5.22→8.5.28)
 23. `47abf13` -- Batch 20b: docs: browser acceptance results, promote F12/F14/F15/F23/F24 to DONE
-24. *(pending)* -- Batch 21: F26 SW lifecycle verification, final reconciliation
+24. `fe61570` -- Batch 21: F26 SW lifecycle verification, final reconciliation
+25. `006cf09` -- Batch 22a: fix(F22): complete Prisma 7 driver-adapter migration
+26. `0f29e67` -- Batch 22b: fix(F22): resolve all npm audit vulnerabilities via overrides
+27. `a000437` -- Batch 22c: test: add portable e2e scripts and raw results
 
 ## Batch 11 Changes
 
@@ -203,20 +209,37 @@
 - F26 promoted from PARTIAL to DONE.
 - All stabilization checklist items complete.
 
+## Batch 22 Changes
+
+### F22: Prisma 7 driver-adapter migration (CRITICAL FIX)
+- `src/lib/db.ts`: Rewritten to use `PrismaPg` from `@prisma/adapter-pg`. Prisma 7.10.0 rejects `datasourceUrl` constructor option.
+- `package.json`: Added `@prisma/adapter-pg@^7.10.0`, `pg@^8.23.1` deps. Added overrides for `mysql2` (3.23.2) and `deepmerge-ts` (8.0.2).
+- Result: `npm audit` reports 0 vulnerabilities. Prisma client constructs, connects, reads, writes.
+
+### Database integration testing
+- `e2e/scripts/db-integration.mjs`: 7 tests against disposable PostgreSQL. All pass.
+- Tests: construction, durable write, read-after-restart, idempotency, acknowledged IDs, bad-connection throws, no-config null.
+
+### Browser acceptance error filter
+- `e2e/scripts/browser-acceptance.mjs`: Fixed. Root cause: SW caches proxy's HTML error page for plausible.io, serves it as 200 text/html. Filter now tracks response content-type mismatches for blocked analytics hosts.
+- 22/22 pass. Raw errors preserved in output.
+
+### Reproducible test evidence
+- `e2e/scripts/`: Three portable test scripts (browser, SW, DB).
+- `e2e/results/`: Raw outputs with commit hash, build type, Chromium version, commands.
+
 ## Final Status
 
-### DONE (23 findings)
-F01, F02, F04, F05, F06, F07, F08, F09, F10, F11, F12, F13, F14, F15, F16, F17, F18, F19, F20, F21, F23, F24, F25, F26
+### DONE (24 findings)
+F01, F02, F04, F05, F06, F07, F08, F09, F10, F11, F12, F13, F14, F15, F16, F17, F18, F19, F20, F21, F22, F23, F24, F25, F26
 
 ### ACCEPTED (1 finding)
 - **F03**: Small-angle model by design. Energy conservation exact (deviation <1e-15). Borda period-error warning disclosed.
 
-### PARTIAL (1 finding)
-- **F22**: All framework upgrades done. 4 remaining vulns in prisma transitive deps (deepmerge-ts, mysql2), unfixable without breaking downgrade to prisma 6.x.
+### PARTIAL (0 findings)
 
 ### Not verifiable in current environment
 - Real mobile touch interaction (physical device required)
 - Assistive technology / screen reader compatibility
 - Multi-build service worker update lifecycle (requires two production builds on same origin)
-- Database integration (no DATABASE_URL configured)
 - GPU memory profiling (requires browser DevTools)

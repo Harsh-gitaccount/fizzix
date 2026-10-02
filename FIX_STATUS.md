@@ -27,7 +27,7 @@ Current head includes batch 19 fixes (F12 3D tools, F11 histogram scale, F23 dis
 | F19 | Adaptive quiz label mismatch | DONE | 2,7 | Badge shows item difficulty. `saveQuizResult` and `trackEvent` now use `q.difficulty` (question's own difficulty) instead of `s.difficulty` (adaptive store difficulty). |
 | F20 | Longitudinal wave speed | DONE | 4 | Correct spring-mass chain dispersion formula. |
 | F21 | Drag coefficient units | DONE | 2,11,13 | Symbol/unit renamed. Compare-mode legend symbol corrected from 'Cd' to 'b' matching module definition. Acceleration vector now shows actual net acceleration (gravity + drag) when drag > 0, with correct direction and magnitude. Legend label switches from "Gravity" to "Net Acceleration" when drag is enabled. Trajectory cap raised from 100s (100001 steps) to 250s (250001 steps), covering worst-case slider combination (v0=50, theta=90, g=0.5, y0=50 → ~214s TOF). |
-| F22 | Dependency advisories | PARTIAL | 5,7,9,14,20 | Upgraded vitest 2→5, eslint-config-next 14→15, next 14.2.35→16.3.8, prisma CLI 8.0.0-rc.15→7.10.0. Reduced from 23 to 4 vulnerable packages. postcss 8.5.22→8.5.28. Prisma schema migrated to v7 format (url moved from datasource to prisma.config.ts). Lint script updated (next lint→eslint). Remaining 4 high-severity: deepmerge-ts + mysql2 in prisma 7.10.0 transitive deps (project uses PostgreSQL, no mysql2 runtime exposure; deepmerge-ts requires crafted recursive input). Fix requires prisma 6.x downgrade (breaking client compatibility). |
+| F22 | Dependency advisories | DONE | 5,7,9,14,20,22 | Upgraded vitest 2→5, eslint-config-next 14→15, next 14.2.35→16.3.8, prisma CLI 8.0.0-rc.15→7.10.0. postcss 8.5.22→8.5.28. Prisma schema migrated to v7 format. Lint script updated (next lint→eslint). Prisma 7 driver-adapter migration: `db.ts` rewritten to use `PrismaPg` from `@prisma/adapter-pg` (replaces rejected `datasourceUrl` constructor). npm overrides (`"mysql2": "3.23.2"`, `"deepmerge-ts": "8.0.2"`) resolve all remaining transitive vulnerabilities. `npm audit`: 0 vulnerabilities. DB integration verified: 7/7 tests pass (durable writes, idempotency, read-after-restart, bad-connection throws, no-config returns null). |
 | F23 | Animation performance | DONE | 12,16,19,20 | `clearScene()` disposes label textures/materials via `disposeSprite()` and force arrow geometries/materials via `disposeGroup()`. Regression test tracks specific resource types with threshold assertions. Browser-verified: thermodynamics↔projectile-motion navigation and electrostatics field-3d tab switching produce no JS errors (scene disposal works cleanly). GPU memory profiling remains outside current environment. |
 | F24 | Teaching preset gaps | DONE | 11,16,20 | `low-drive` and `moon-vs-earth` hookQuestions fixed. `does-mass-matter` preset now uses distinct masses: `mass: 1` in params, `mass: 10` in compareParams, both with `drag: 0`. Mass symbol added to renderer2d. Browser-verified: mass preset activates compare mode. |
 | F25 | Threshold preset wording | DONE | 1 | "At Threshold" renamed to "Near Threshold". |
@@ -35,10 +35,9 @@ Current head includes batch 19 fixes (F12 3D tools, F11 histogram scale, F23 dis
 
 ## Summary
 
-- **DONE**: 23 findings (F01, F02, F04, F05, F06, F07, F08, F09, F10, F11, F12, F13, F14, F15, F16, F17, F18, F19, F20, F21, F23, F24, F25, F26)
+- **DONE**: 24 findings (F01, F02, F04, F05, F06, F07, F08, F09, F10, F11, F12, F13, F14, F15, F16, F17, F18, F19, F20, F21, F22, F23, F24, F25, F26)
 - **ACCEPTED**: 1 finding (F03 - small-angle model by design, energy exact within model)
-- **PARTIAL**: 1 finding (F22)
-  - F22: 4 remaining vulns in prisma transitive deps (deepmerge-ts, mysql2), unfixable without breaking downgrade to prisma 6.x
+- **PARTIAL**: 0 findings
 
 ## Batch 9 changes (third verification response)
 
@@ -308,3 +307,58 @@ Current head includes batch 19 fixes (F12 3D tools, F11 histogram scale, F23 dis
 - Unit tests: 356/356 pass
 - npm audit: 4 vulnerabilities
 - Browser acceptance: 22/22 pass (batch 20) + 6/6 SW lifecycle pass (batch 21)
+
+## Batch 22 changes (Prisma driver-adapter fix, npm overrides, reproducible test evidence)
+
+### F22: Prisma 7 driver-adapter migration (CRITICAL FIX)
+- **src/lib/db.ts**: Completely rewritten. Prisma 7.10.0 rejects `datasourceUrl` in PrismaClient constructor (`PrismaClientConstructorValidationError: Unknown property datasourceUrl`). Now uses `PrismaPg` adapter from `@prisma/adapter-pg`:
+  ```
+  const adapter = new PrismaPg({ connectionString: process.env.DATABASE_URL })
+  prismaInstance = new PrismaClient({ adapter })
+  ```
+  Three distinct behaviors: no DATABASE_URL → returns null; valid DATABASE_URL → connected client; broken DATABASE_URL → throws (not silent null).
+- **package.json**: Added `@prisma/adapter-pg@^7.10.0` and `pg@^8.23.1` to dependencies.
+
+### F22: npm audit 0 vulnerabilities
+- **package.json**: Added overrides section:
+  ```json
+  "overrides": {
+    "mysql2": "3.23.2",
+    "deepmerge-ts": "8.0.2"
+  }
+  ```
+  Resolves all 4 remaining high-severity transitive vulnerabilities (3 unique advisories: GHSA-qj55-gcm5-9c3p mysql2 credential leak, GHSA-qhjj-4xpp-wxfh mysql2 decompression, GHSA-cg34-jjc8-25j9 deepmerge-ts stack exhaustion). `npm audit` now reports 0 vulnerabilities.
+
+### Database integration testing
+- **e2e/scripts/db-integration.mjs**: 7 tests against disposable PostgreSQL:
+  1. Client construction with PrismaPg adapter
+  2. Durable write: quiz result stored and readable
+  3. Read after restart: data persists across client instances
+  4. Idempotency: skipDuplicates prevents duplicate inserts
+  5. Acknowledged IDs correspond to durable records
+  6. Bad connection: query throws (not silent null)
+  7. Missing DATABASE_URL: getPrisma returns null
+- All 7 pass. Tested with Prisma 7.10.0, PostgreSQL on localhost:5432 (disposable fizzix_test database).
+
+### Browser acceptance error filter fixed
+- **e2e/scripts/browser-acceptance.mjs**: Root cause identified: when the service worker is active, it caches the proxy's HTML error page for `plausible.io/js/script.js` and serves it as HTTP 200 with `text/html` content type. Browser parses HTML as JavaScript, producing `"Unexpected token '<'"`. The `requestfailed` event never fires (request "succeeds" via SW cache).
+  - Fix: tracks `response` events for blocked analytics hosts returning `text/html` content type. Only filters `"Unexpected token '<'"` when that specific mismatch is detected. Raw errors preserved in output.
+
+### Reproducible test evidence
+- **e2e/scripts/**: Three portable test scripts (browser-acceptance.mjs, sw-lifecycle.mjs, db-integration.mjs)
+- **e2e/results/**: Raw test outputs with metadata (commit hash, build type, Chromium version, exact command)
+- Commit `a000437`: 22/22 browser, 6/6 SW, 7/7 DB on commit `0f29e67`, Chromium 141.0.7390.37
+
+### F22 promoted to DONE
+- All vulnerabilities resolved (0 remaining). Prisma client constructs and connects. Full-stack API integration verified (POST → store → read → idempotent replay).
+
+### Verification results (batch 22)
+- TypeScript: `tsc --noEmit` exits zero
+- ESLint: 0 errors, 0 warnings (src/)
+- Dash lint: 0 violations
+- Production build: succeeds
+- Unit tests: 356/356 pass
+- npm audit: 0 vulnerabilities (was 4)
+- Browser acceptance: 22/22 pass
+- SW lifecycle: 6/6 pass
+- DB integration: 7/7 pass (disposable PostgreSQL)

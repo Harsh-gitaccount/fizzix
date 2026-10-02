@@ -37,7 +37,8 @@ self.addEventListener('activate', (e) => {
               const ct = (res.headers.get('content-type') || '').toLowerCase()
               const url = new URL(req.url)
               const isScript = url.pathname.endsWith('.js') || url.pathname.includes('/js/')
-              if (isScript && ct.includes('text/html')) return cache.delete(req)
+              const isStyle = url.pathname.endsWith('.css') || url.pathname.includes('/css/')
+              if ((isScript || isStyle) && ct.includes('text/html')) return cache.delete(req)
             })
           )
         )
@@ -65,10 +66,16 @@ self.addEventListener('fetch', (e) => {
   if (url.pathname.startsWith('/_next/static/')) {
     e.respondWith(
       caches.open(CACHE_NAME).then((cache) =>
-        cache.match(e.request).then((hit) => hit || fetch(e.request).then((res) => {
-          if (res.ok && hasValidContentType(res, e.request)) cache.put(e.request, res.clone())
-          return res
-        }))
+        cache.match(e.request).then((hit) => {
+          if (hit && !hasValidContentType(hit, e.request)) {
+            cache.delete(e.request)
+            hit = null
+          }
+          return hit || fetch(e.request).then((res) => {
+            if (res.ok && hasValidContentType(res, e.request)) cache.put(e.request, res.clone())
+            return res
+          })
+        })
       )
     )
     return

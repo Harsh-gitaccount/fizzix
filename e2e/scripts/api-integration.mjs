@@ -4,33 +4,42 @@
  * Sends requests through the production app's actual route, NOT the ORM.
  * ORM-level tests remain in db-integration.mjs.
  *
+ * This script manages its own server process for genuine restart testing.
+ *
  * Prerequisites:
- *   - Production build running: DATABASE_URL=... npx next start -p 3099
+ *   - Production build available (npx next build already run)
  *   - PostgreSQL with fizzix_test database (Prisma schema pushed)
  *
  * Usage:
- *   DATABASE_URL="postgresql://..." node e2e/scripts/api-integration.mjs
+ *   DATABASE_URL="postgresql://...fizzix_test..." node e2e/scripts/api-integration.mjs
  *
  * Environment:
- *   BASE_URL - server URL (default: http://localhost:3099)
- *   DATABASE_URL - PostgreSQL connection string (for direct verification)
+ *   DATABASE_URL - PostgreSQL connection string (must contain "fizzix_test")
  */
 
 import { createRequire } from 'module'
 import { resolve, dirname } from 'path'
 import { fileURLToPath } from 'url'
+import { spawn } from 'child_process'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
 const projectRoot = resolve(__dirname, '../..')
 const require = createRequire(resolve(projectRoot, 'package.json'))
 
-const BASE = process.env.BASE_URL || 'http://localhost:3099'
+const PORT = 3099
+const BASE = process.env.BASE_URL || `http://localhost:${PORT}`
 const DB_URL = process.env.DATABASE_URL
 const API = `${BASE}/api/quiz/results/batch`
+
+if (DB_URL && !DB_URL.includes('fizzix_test')) {
+  console.error('SAFETY: DATABASE_URL must target a fizzix_test database. Aborting.')
+  process.exit(1)
+}
 
 let passed = 0
 let failed = 0
 const failures = []
+const SESSION_PREFIX = 'api-integ-'
 
 async function assert(name, fn) {
   try {
@@ -66,24 +75,61 @@ async function getDbClient() {
   return new PrismaClient({ adapter })
 }
 
+let serverChild = null
+
+async function startServer() {
+  serverChild = spawn('npx', ['next', 'start', '-p', String(PORT)], {
+    cwd: projectRoot,
+    stdio: ['ignore', 'pipe', 'pipe'],
+    env: { ...process.env },
+  })
+  for (let i = 0; i < 60; i++) {
+    try {
+      const res = await fetch(`http://localhost:${PORT}/`)
+      if (res.ok || res.status < 500) {
+        console.log(`  Server running (PID ${serverChild.pid})`)
+        return
+      }
+    } catch {}
+    await new Promise(r => setTimeout(r, 1000))
+  }
+  throw new Error('Server did not start within 60s')
+}
+
+function stopServer() {
+  return new Promise((resolve) => {
+    if (!serverChild || serverChild.exitCode !== null) { resolve(); return }
+    let done = false
+    serverChild.on('exit', () => { if (!done) { done = true; resolve() } })
+    serverChild.kill('SIGTERM')
+    setTimeout(() => {
+      try { serverChild.kill('SIGKILL') } catch {}
+      if (!done) { done = true; resolve() }
+    }, 5000)
+  })
+}
+
 async function run() {
   console.log(`\nTarget: ${API}`)
-  console.log(`Database: ${DB_URL ? 'configured' : 'NOT configured'}`)
+  console.log(`Database: ${DB_URL ? 'configured (fizzix_test)' : 'NOT configured'}`)
+
+  console.log('Starting server...')
+  await startServer()
 
   const db = await getDbClient()
+
   if (db) {
-    await db.quizResult.deleteMany({})
-    await db.quizAggregate.deleteMany({})
+    await db.quizResult.deleteMany({ where: { sessionId: { startsWith: SESSION_PREFIX } } })
   }
 
   console.log('\n=== HTTP API Integration Tests ===')
 
-  const testId = 'api-http-' + Date.now()
+  const testId = `${SESSION_PREFIX}http-${Date.now()}`
 
   await assert('POST single result returns stored:true with DB', async () => {
     const { status, body } = await postResults([{
       id: testId,
-      sessionId: 'api-session-1',
+      sessionId: `${SESSION_PREFIX}s1`,
       topicId: 'projectile-motion',
       questionId: 'pm-e1',
       selected: 2,
@@ -103,7 +149,7 @@ async function run() {
     if (!db) throw new Error('No DATABASE_URL — cannot verify')
     const row = await db.quizResult.findUnique({ where: { id: testId } })
     if (!row) throw new Error('Row not found in database')
-    eq(row.sessionId, 'api-session-1', 'sessionId')
+    eq(row.sessionId, `${SESSION_PREFIX}s1`, 'sessionId')
     eq(row.topicId, 'projectile-motion', 'topicId')
     eq(typeof row.correct, 'boolean', 'correct is boolean')
   })
@@ -111,7 +157,7 @@ async function run() {
   await assert('Replay with same ID does not duplicate (skipDuplicates)', async () => {
     const { status, body } = await postResults([{
       id: testId,
-      sessionId: 'api-session-1',
+      sessionId: `${SESSION_PREFIX}s1`,
       topicId: 'projectile-motion',
       questionId: 'pm-e1',
       selected: 2,
@@ -122,16 +168,16 @@ async function run() {
     eq(status, 200, 'HTTP status')
     eq(body.stored, true, 'stored')
     if (db) {
-      const count = await db.quizResult.count()
+      const count = await db.quizResult.count({ where: { id: testId } })
       eq(count, 1, 'Row count after replay')
     }
   })
 
-  const batchIds = ['api-batch-a', 'api-batch-b', 'api-batch-c']
+  const batchIds = [`${SESSION_PREFIX}b-a`, `${SESSION_PREFIX}b-b`, `${SESSION_PREFIX}b-c`]
   await assert('POST batch of 3 results stored and all IDs acknowledged', async () => {
     const { status, body } = await postResults(batchIds.map((id, i) => ({
       id,
-      sessionId: 'api-session-2',
+      sessionId: `${SESSION_PREFIX}s2`,
       topicId: 'shm',
       questionId: `shm-e${i + 1}`,
       selected: i,
@@ -152,15 +198,13 @@ async function run() {
       const row = await db.quizResult.findUnique({ where: { id } })
       if (!row) throw new Error(`Row ${id} not found`)
     }
-    const total = await db.quizResult.count()
-    eq(total, 4, 'Total rows (1 single + 3 batch)')
   })
 
-  await assert('Server derives correctness (overrides client-sent correct)', async () => {
-    const wrongId = 'api-correctness-' + Date.now()
-    const { status, body } = await postResults([{
-      id: wrongId,
-      sessionId: 'api-session-3',
+  const correctFalseId = `${SESSION_PREFIX}cf-${Date.now()}`
+  await assert('Server derives correctness: pm-e1 selected:0 → correct:false', async () => {
+    const { status } = await postResults([{
+      id: correctFalseId,
+      sessionId: `${SESSION_PREFIX}s3`,
       topicId: 'projectile-motion',
       questionId: 'pm-e1',
       selected: 0,
@@ -170,18 +214,60 @@ async function run() {
     }])
     eq(status, 200, 'HTTP status')
     if (db) {
-      const row = await db.quizResult.findUnique({ where: { id: wrongId } })
+      const row = await db.quizResult.findUnique({ where: { id: correctFalseId } })
       if (!row) throw new Error('Row not found')
+      eq(row.correct, false, 'server overrode correct to false (selected:0, correctIndex:1)')
     }
   })
 
-  await assert('Data persists after app restart (reconnect client)', async () => {
+  const correctTrueId = `${SESSION_PREFIX}ct-${Date.now()}`
+  await assert('Server derives correctness: pm-e1 selected:1 → correct:true', async () => {
+    const { status } = await postResults([{
+      id: correctTrueId,
+      sessionId: `${SESSION_PREFIX}s3`,
+      topicId: 'projectile-motion',
+      questionId: 'pm-e1',
+      selected: 1,
+      correct: false,
+      difficulty: 'easy',
+      timestamp: 1727740800000,
+    }])
+    eq(status, 200, 'HTTP status')
+    if (db) {
+      const row = await db.quizResult.findUnique({ where: { id: correctTrueId } })
+      if (!row) throw new Error('Row not found')
+      eq(row.correct, true, 'server overrode correct to true (selected:1, correctIndex:1)')
+    }
+  })
+
+  await assert('Data persists after genuine server process restart', async () => {
     if (!db) throw new Error('No DATABASE_URL — cannot verify')
+    const oldPid = serverChild.pid
+    console.log(`    Stopping server (PID ${oldPid})...`)
+    await stopServer()
+    await new Promise(r => setTimeout(r, 2000))
+
+    console.log('    Starting new server...')
+    await startServer()
+
     await db.$disconnect()
     const db2 = await getDbClient()
     const row = await db2.quizResult.findUnique({ where: { id: testId } })
-    if (!row) throw new Error('Row not found after reconnect')
-    eq(row.sessionId, 'api-session-1', 'sessionId')
+    if (!row) throw new Error('Row not found after server restart')
+    eq(row.sessionId, `${SESSION_PREFIX}s1`, 'sessionId persisted')
+
+    const restartId = `${SESSION_PREFIX}restart-${Date.now()}`
+    const { status } = await postResults([{
+      id: restartId,
+      sessionId: `${SESSION_PREFIX}s-restart`,
+      topicId: 'projectile-motion',
+      questionId: 'pm-e1',
+      selected: 1,
+      correct: true,
+      difficulty: 'easy',
+      timestamp: Date.now(),
+    }])
+    eq(status, 200, 'HTTP API responds after restart')
     await db2.$disconnect()
   })
 
@@ -213,9 +299,12 @@ async function run() {
   })
 
   if (db) {
-    await db.quizResult.deleteMany({})
-    await db.$disconnect()
+    const freshDb = await getDbClient()
+    await freshDb.quizResult.deleteMany({ where: { sessionId: { startsWith: SESSION_PREFIX } } })
+    await freshDb.$disconnect()
   }
+
+  await stopServer()
 
   console.log(`\n=== Results: ${passed} passed, ${failed} failed ===`)
   if (failures.length > 0) {
@@ -225,7 +314,8 @@ async function run() {
   process.exit(failed > 0 ? 1 : 0)
 }
 
-run().catch(err => {
+run().catch(async (err) => {
+  await stopServer()
   console.error('Fatal:', err)
   process.exit(1)
 })

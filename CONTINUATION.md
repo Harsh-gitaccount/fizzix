@@ -271,3 +271,32 @@ Independent verification of batch 22 changes, extending test coverage.
 - FIX_STATUS.md: Count corrected from "24 DONE" to "25 DONE". F06 opt-e8 description corrected from "Snell's law" to "mirage/TIR".
 - DEPENDENCY_AUDIT.md: Updated to reflect 0 vulnerabilities (npm overrides for mysql2 and deepmerge-ts).
 - CONTINUATION.md: Count corrected, verification session documented.
+
+## Batch 23: R1–R6 Verification Report Fixes
+
+Addresses all findings from the independent verification report on commit `ad4e30f`.
+
+### R1: SW legacy HTML-as-CSS cache purge
+- `public/sw.js`: Activate handler extended to purge HTML entries under `.css`/`/css/` URLs. Fetch handler validates cached hits with `hasValidContentType()`.
+- `src/__tests__/batch16-fixes.test.ts`: Two regression tests added (activate purge, stale hit eviction).
+
+### R2: API integration hardening
+- `e2e/scripts/api-integration.mjs`: Rewritten with fizzix_test guard, scoped cleanup, exact correctness assertions (pm-e1 server-side derivation), genuine server restart via spawn/PID tracking.
+
+### R3: Two-build SW scenario hardening
+- `e2e/scripts/sw-update-scenario.mjs`: Rewritten with spawn-based PID tracking, error assertions, IndexedDB verification, enhanced offline test, build identity logging.
+
+### R4: Permissive assertion fixes
+- `e2e/scripts/perf-a11y.mjs`: WCAG luminance contrast ratio, painted focus indicators, canvas aria-label verification.
+- `e2e/scripts/browser-acceptance.mjs`: Mass preset test uses aria-pressed and A/B label verification instead of body text digit scanning.
+
+### R5: Performance evidence
+- `e2e/scripts/perf-a11y.mjs`: Canvas pixel-change verification, warmed baseline transitions, BLOCKED markers for unavailable APIs.
+
+### R6: Documentation
+- `FINAL_STABILIZATION_HANDOFF.md`: Closure checklist with all 26 findings reconciled (25 DONE, 1 ACCEPTED).
+
+### Gate checks
+- Unit tests: 7/7 pass
+- TypeScript: 0 errors
+- Production build: success

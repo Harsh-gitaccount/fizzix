@@ -343,12 +343,21 @@ async function run() {
     if (btnCount === 0) throw new Error('Required mass preset button not found on compare tab')
     await massBtn.first().click()
     await page.waitForTimeout(500)
+
+    const pressed = await massBtn.first().getAttribute('aria-pressed')
+    if (pressed !== 'true') throw new Error('Mass preset button aria-pressed is not "true" after click')
+
     const isCompareSelected = await page.locator('#tab-compare').getAttribute('aria-selected')
     if (isCompareSelected !== 'true') throw new Error('Compare tab not selected after mass preset')
-    const bodyText = await page.textContent('body')
-    if (!bodyText.includes('1') || !bodyText.includes('10')) {
-      throw new Error('Distinct masses (1 / 10) not visible in compare mode')
+
+    const labelA = page.locator('text=/\\bA\\b/').first()
+    const labelB = page.locator('text=/\\bB\\b/').first()
+    const hasA = await labelA.count() > 0
+    const hasB = await labelB.count() > 0
+    if (!hasA || !hasB) {
+      throw new Error(`Compare mode A/B labels missing: A=${hasA}, B=${hasB}`)
     }
+
     await page.close()
   })
 

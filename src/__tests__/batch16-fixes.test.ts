@@ -165,6 +165,128 @@ describe('F26 - Service worker static asset caching', () => {
   })
 })
 
+describe('R1 - Legacy HTML-as-CSS purged on activate and stale hit rejected', () => {
+  it('activate purges HTML entries cached under .css URLs alongside .js URLs', async () => {
+    const fs = await import('fs')
+    const path = await import('path')
+    const vm = await import('vm')
+
+    const swPath = path.resolve(__dirname, '../../public/sw.js')
+    const swSource = fs.readFileSync(swPath, 'utf-8')
+
+    const stores = new Map<string, Map<string, Response>>()
+    const handlers: Record<string, (e: unknown) => void> = {}
+    const caches = {
+      async open(n: string) {
+        if (!stores.has(n)) stores.set(n, new Map())
+        const m = stores.get(n)!
+        return {
+          async keys() { return [...m.keys()].map(url => ({ url })) },
+          async match(q: { url?: string } | string) { const k = typeof q === 'string' ? q : q.url ?? ''; return m.get(k)?.clone() },
+          async put(q: { url?: string } | string, r: Response) { const k = typeof q === 'string' ? q : q.url ?? ''; m.set(k, r.clone()) },
+          async delete(q: { url?: string } | string) { const k = typeof q === 'string' ? q : q.url ?? ''; return m.delete(k) },
+          async addAll() {},
+        }
+      },
+      async keys() { return [...stores.keys()] },
+      async delete(n: string) { return stores.delete(n) },
+    }
+
+    vm.runInNewContext(swSource, {
+      self: {
+        addEventListener: (name: string, fn: (e: unknown) => void) => { handlers[name] = fn },
+        skipWaiting() {},
+        clients: { claim() {} },
+        location: { origin: 'https://localhost' },
+      },
+      caches,
+      fetch: async () => new Response('ok'),
+      URL,
+      Response,
+    })
+
+    const cache = await caches.open('fizzix-v1')
+    const htmlResp = new Response('<html>proxy error</html>', { headers: { 'content-type': 'text/html' } })
+    await cache.put({ url: 'https://localhost/_next/static/css/old.css' }, htmlResp.clone())
+    await cache.put({ url: 'https://localhost/_next/static/chunks/old.js' }, htmlResp.clone())
+    await cache.put({ url: 'https://localhost/' }, new Response('<html>home</html>', { headers: { 'content-type': 'text/html' } }))
+
+    let activation: Promise<void> | undefined
+    handlers.activate({ waitUntil(p: Promise<void>) { activation = p } })
+    await activation
+
+    const cssHit = await cache.match({ url: 'https://localhost/_next/static/css/old.css' })
+    const jsHit = await cache.match({ url: 'https://localhost/_next/static/chunks/old.js' })
+    const homeHit = await cache.match({ url: 'https://localhost/' })
+
+    expect(cssHit).toBeUndefined()
+    expect(jsHit).toBeUndefined()
+    expect(homeHit).toBeDefined()
+  })
+
+  it('stale cached hit with wrong content-type is evicted and not served', async () => {
+    const fs = await import('fs')
+    const path = await import('path')
+    const vm = await import('vm')
+
+    const swPath = path.resolve(__dirname, '../../public/sw.js')
+    const swSource = fs.readFileSync(swPath, 'utf-8')
+
+    const stores = new Map<string, Map<string, Response>>()
+    const handlers: Record<string, (e: unknown) => void> = {}
+    const caches = {
+      async open(n: string) {
+        if (!stores.has(n)) stores.set(n, new Map())
+        const m = stores.get(n)!
+        return {
+          async keys() { return [...m.keys()].map(url => ({ url })) },
+          async match(q: { url?: string } | string) { const k = typeof q === 'string' ? q : q.url ?? ''; return m.get(k)?.clone() },
+          async put(q: { url?: string } | string, r: Response) { const k = typeof q === 'string' ? q : q.url ?? ''; m.set(k, r.clone()) },
+          async delete(q: { url?: string } | string) { const k = typeof q === 'string' ? q : q.url ?? ''; return m.delete(k) },
+          async addAll() {},
+        }
+      },
+      async keys() { return [...stores.keys()] },
+      async delete(n: string) { return stores.delete(n) },
+    }
+
+    let fetchCalled = false
+    vm.runInNewContext(swSource, {
+      self: {
+        addEventListener: (name: string, fn: (e: unknown) => void) => { handlers[name] = fn },
+        skipWaiting() {},
+        clients: { claim() {} },
+        location: { origin: 'https://localhost' },
+      },
+      caches,
+      fetch: async () => { fetchCalled = true; return new Response('console.log(1)', { headers: { 'content-type': 'application/javascript' } }) },
+      URL,
+      Response,
+    })
+
+    const cache = await caches.open('fizzix-v1')
+    await cache.put(
+      { url: 'https://localhost/_next/static/chunks/stale.js' },
+      new Response('<html>wrong</html>', { headers: { 'content-type': 'text/html' } })
+    )
+
+    let response: Promise<Response> | undefined
+    handlers.fetch({
+      request: { method: 'GET', url: 'https://localhost/_next/static/chunks/stale.js', mode: 'cors', destination: 'script' },
+      respondWith(p: Promise<Response>) { response = p },
+    })
+
+    const res = await response!
+    const body = await res.text()
+    expect(body).not.toContain('<html>')
+    expect(fetchCalled).toBe(true)
+
+    const evicted = await cache.match({ url: 'https://localhost/_next/static/chunks/stale.js' })
+    const evictedBody = evicted ? await evicted.text() : ''
+    expect(evictedBody).not.toContain('<html>')
+  })
+})
+
 describe('F24 - Mass preset uses distinct masses', () => {
   it('does-mass-matter preset has different mass values for A and B', () => {
     const preset = PRESETS.find(p => p.id === 'does-mass-matter')

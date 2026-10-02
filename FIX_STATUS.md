@@ -27,7 +27,7 @@ Current head includes batch 19 fixes (F12 3D tools, F11 histogram scale, F23 dis
 | F19 | Adaptive quiz label mismatch | DONE | 2,7 | Badge shows item difficulty. `saveQuizResult` and `trackEvent` now use `q.difficulty` (question's own difficulty) instead of `s.difficulty` (adaptive store difficulty). |
 | F20 | Longitudinal wave speed | DONE | 4 | Correct spring-mass chain dispersion formula. |
 | F21 | Drag coefficient units | DONE | 2,11,13 | Symbol/unit renamed. Compare-mode legend symbol corrected from 'Cd' to 'b' matching module definition. Acceleration vector now shows actual net acceleration (gravity + drag) when drag > 0, with correct direction and magnitude. Legend label switches from "Gravity" to "Net Acceleration" when drag is enabled. Trajectory cap raised from 100s (100001 steps) to 250s (250001 steps), covering worst-case slider combination (v0=50, theta=90, g=0.5, y0=50 → ~214s TOF). |
-| F22 | Dependency advisories | PARTIAL | 5,7,9,14 | Upgraded vitest 2→5 (dev-only, resolves @vitest/mocker path traversal + vite/esbuild advisories). Upgraded eslint-config-next 14→15 (resolves glob CLI injection). Reduced from 23 to 15 vulnerable packages, 79 to 72 unique advisories. Remaining 15 packages (1 critical, 9 high, 5 moderate) all in next 14.x (23 advisories + postcss) and prisma chain (hono/valibot/lodash). Both require major framework upgrades (next 14→16, prisma 7). Per-advisory reachability analysis in `DEPENDENCY_AUDIT.md`. |
+| F22 | Dependency advisories | PARTIAL | 5,7,9,14,20 | Upgraded vitest 2→5, eslint-config-next 14→15, next 14.2.35→16.3.8, prisma CLI 8.0.0-rc.15→7.10.0. Reduced from 23 to 4 vulnerable packages. postcss 8.5.22→8.5.28. Prisma schema migrated to v7 format (url moved from datasource to prisma.config.ts). Lint script updated (next lint→eslint). Remaining 4 high-severity: deepmerge-ts + mysql2 in prisma 7.10.0 transitive deps (project uses PostgreSQL, no mysql2 runtime exposure; deepmerge-ts requires crafted recursive input). Fix requires prisma 6.x downgrade (breaking client compatibility). |
 | F23 | Animation performance | PARTIAL | 12,16,19 | `clearScene()` disposes label textures/materials via `disposeSprite()` and force arrow geometries/materials via `disposeGroup()`. Regression test tracks specific resource types (Texture, SpriteMaterial, CylinderGeometry, ConeGeometry, MeshPhongMaterial) and asserts 2+ texture disposals, 2+ sprite material disposals, 4+ arrow geometry disposals, 4+ arrow material disposals on rebuild, plus texture/material disposal on final `dispose()`. Test uses try/finally for prototype cleanup. Browser profiling not performed. |
 | F24 | Teaching preset gaps | PARTIAL | 11,16 | `low-drive` and `moon-vs-earth` hookQuestions fixed. `does-mass-matter` preset now uses distinct masses: `mass: 1` in params, `mass: 10` in compareParams, both with `drag: 0`. hookQuestion updated to "A 1 kg ball and a 10 kg ball are launched identically (no air resistance). Do their paths differ?". Mass symbol added to renderer2d `PARAM_SYMBOLS` and `getDiffLabel`. Not browser-verified. |
 | F25 | Threshold preset wording | DONE | 1 | "At Threshold" renamed to "Near Threshold". |
@@ -228,3 +228,32 @@ Current head includes batch 19 fixes (F12 3D tools, F11 histogram scale, F23 dis
 - Dash lint: 0 violations
 - Production build: succeeds
 - Unit tests: 356/356 pass (351 + 5 layer-toggles-3d)
+
+## Batch 20 changes (F22 dependency migration: Next 16 + Prisma 7)
+
+### F22: Next.js 14.2.35 → 16.3.8
+- **package.json**: `next` upgraded from `14.2.35` to `^16.3.8`. Lint script changed from `next lint` to `eslint src/` (Next 16 removed `next lint` subcommand).
+- **tsconfig.json** (auto-updated by Next 16): `jsx` changed from `"preserve"` to `"react-jsx"`, `target` set to `"ES2017"`, `.next/dev/types/**/*.ts` added to include.
+- App surface is minimal (4 files in src/app/, 1 API route), all using stable APIs (`useParams`, `NextRequest`/`NextResponse`, `Metadata`/`Viewport` exports). No breaking changes required in application code.
+- postcss upgraded from 8.5.22 (vulnerable) to 8.5.28 (patched) as Next 16 dependency.
+
+### F22: Prisma CLI 8.0.0-rc.15 → 7.10.0
+- **package.json**: `prisma` changed from `^8.0.0-rc.15` to `^7.10.0`. Now matches `@prisma/client@7.10.0`.
+- **prisma/schema.prisma**: Removed `url = env("DATABASE_URL")` from datasource block (no longer supported in Prisma 7 schema).
+- **prisma.config.ts** (new): Defines schema path and datasource URL for CLI operations (migrations, generate).
+- **src/lib/db.ts**: PrismaClient constructor now receives `{ datasourceUrl: process.env.DATABASE_URL }` explicitly.
+- `prisma generate` succeeds with Prisma 7.10.0 CLI.
+- No-database graceful degradation verified: `getPrisma()` returns null when `DATABASE_URL` is unset.
+
+### Vulnerability reduction
+- 23 → 15 → 4 vulnerable packages across all batches.
+- Resolved: postcss path traversal (1 critical), hono chain (28 advisories), lodash prototype pollution (3 advisories), valibot (1 advisory), plus earlier vitest/esbuild/glob fixes.
+- Remaining 4 high: deepmerge-ts (stack exhaustion on crafted recursive input) and mysql2 (credential leak + decompression bomb), both transitive through prisma@7.10.0. Project uses PostgreSQL (no mysql2 runtime exposure). Fix requires prisma@6.x (breaks client compatibility).
+
+### Verification results (batch 20)
+- TypeScript: `tsc --noEmit` exits zero
+- ESLint: 0 errors, 0 warnings (src/)
+- Dash lint: 0 violations
+- Production build: succeeds (Next 16, all routes correct)
+- Unit tests: 356/356 pass
+- npm audit: 4 vulnerabilities (was 15)

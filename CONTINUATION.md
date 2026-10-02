@@ -3,12 +3,12 @@
 ## Session State
 - **Branch**: `claude/brave-ramanujan-s4hhf9`
 - **Base commit**: `7523ff0c2e3164d205036a85d81d12ae0312f997`
-- **Last batch**: batch-19 (F12 3D tools, F11 histogram scale, F23 disposal test, F06/F11 dispositions)
+- **Last batch**: batch-20 (F22 dependency migration: Next 16 + Prisma 7)
 - **TypeScript**: 0 errors
 - **ESLint**: 0 errors, 0 warnings (src/)
 - **Dash lint**: 0 violations
 - **Unit tests**: 356/356 passing
-- **npm audit**: 15 vulnerabilities (down from 23)
+- **npm audit**: 4 vulnerabilities (down from 23→15→4)
 
 ## Commits
 1. `6d3fa31` -- Batch 1: F01, F02, F03, F04, F05-partial, F08, F09, F25
@@ -31,7 +31,8 @@
 18. `8672430` -- Batch 16: F12 rays toggle, F23 resource disposal, F24 mass preset, F26 static caching
 19. `806880b` -- Batch 17: F03 error metric, F06 quiz subcriteria, F11 KE qualifier + histogram
 20. `049bc32` -- Batch 18: Verification reproduced failures, quiz corrections, histogram/KE/volume disclosure
-21. *(pending)* -- Batch 19: F12 3D tools, F11 histogram scale, F23 disposal test, F06/F11 dispositions
+21. `927330e` -- Batch 19: F12 3D tools, F11 histogram scale, F23 disposal test, F06/F11 dispositions
+22. *(pending)* -- Batch 20: F22 dependency migration (Next 14→16, Prisma CLI 8-rc→7, postcss 8.5.22→8.5.28)
 
 ## Batch 11 Changes
 
@@ -164,6 +165,23 @@
 - F06: DONE. opt-e8 retained as curriculum-aligned editorial choice.
 - F11: DONE. Uniform speed initialization documented as model limitation.
 
+## Batch 20 Changes
+
+### F22: Next.js 14.2.35 → 16.3.8
+- `package.json`: `next` upgraded to `^16.3.8`. Lint script: `next lint` → `eslint src/`.
+- `tsconfig.json`: Auto-updated by Next 16 (`jsx: "react-jsx"`, `target: "ES2017"`, `.next/dev/types` include).
+- postcss 8.5.22 → 8.5.28 (resolves path traversal CVEs).
+
+### F22: Prisma CLI 8.0.0-rc.15 → 7.10.0
+- `package.json`: `prisma` changed to `^7.10.0` (matches client).
+- `prisma/schema.prisma`: Removed `url = env("DATABASE_URL")` (Prisma 7 format).
+- `prisma.config.ts` (new): Schema path + datasource URL for CLI operations.
+- `src/lib/db.ts`: `PrismaClient({ datasourceUrl: process.env.DATABASE_URL })`.
+- Resolves hono (28 advisories), lodash (3), valibot (1) chains.
+
+### Vulnerability summary
+- 23 → 4 total (across all batches). Remaining 4 in prisma transitive deps (deepmerge-ts, mysql2); no runtime exposure.
+
 ## Remaining Work
 
 ### DONE (18 findings)
@@ -172,11 +190,11 @@ F01, F02, F04, F05, F06, F07, F08, F09, F10, F11, F13, F16, F17, F18, F19, F20, 
 ### ACCEPTED (1 finding)
 - **F03**: Small-angle model by design. Energy conservation exact (deviation <1e-15). Borda period-error warning disclosed.
 
-### PARTIAL (7 findings)
+### PARTIAL (6 findings)
 - **F12**: Rays toggle wired; 3D tools hidden. Not browser-verified.
 - **F14**: True touch/zoom/assistive-technology verification; actual device testing.
 - **F15**: Full assistive technology testing not performed.
-- **F22**: vitest/eslint-config-next upgraded; next 14→16 and prisma remain (major, breaking).
+- **F22**: All framework upgrades done (next 16, prisma 7, vitest 5, eslint-config-next 15). 4 remaining vulns in prisma transitive deps, unfixable without breaking downgrade.
 - **F23**: Resource disposal added and regression-tested; browser profiling not performed.
 - **F24**: Mass preset fixed; not browser-verified.
 - **F26**: res.ok check added; multi-build updates, production offline verification not done.

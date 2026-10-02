@@ -14,7 +14,7 @@ export async function getPrisma() {
     const mod = require('@prisma/client')
     const Client = mod.PrismaClient || mod.default?.PrismaClient
     if (!Client) return null
-    prismaInstance = new Client()
+    prismaInstance = new Client({ datasourceUrl: process.env.DATABASE_URL })
     return prismaInstance
   } catch {
     return null

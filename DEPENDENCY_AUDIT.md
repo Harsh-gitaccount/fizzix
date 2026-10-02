@@ -3,24 +3,20 @@
 Date: 2 October 2026 (updated)
 Branch: `claude/brave-ramanujan-s4hhf9`
 
-## Batch 20 Update (2 October 2026)
+## Batch 22 Update (2 October 2026)
 
-**Upgrades applied:** next 14.2.35 → 16.3.8, prisma CLI 8.0.0-rc.15 → 7.10.0, postcss 8.5.22 → 8.5.28 (via next 16).
+**Upgrades applied (batch 20):** next 14.2.35 → 16.3.8, prisma CLI 8.0.0-rc.15 → 7.10.0, postcss 8.5.22 → 8.5.28 (via next 16).
+**Overrides applied (batch 22):** `mysql2` pinned to 3.23.2, `deepmerge-ts` pinned to 8.0.2.
 
 | Level | Packages | Unique Advisories |
 |-------|----------|-------------------|
-| High | 4 | 3 |
-| **Total** | **4 packages** | **3 unique advisories** |
+| **Total** | **0 packages** | **0 unique advisories** |
 
 **Resolved chains:**
 - next 14.x: All 23 direct + 4 postcss advisories resolved by upgrading to next@16.3.8.
 - prisma 8.0.0-rc chain: hono (28 advisories), lodash (3), valibot (1), @hono/node-server (3), @mrleebo/prisma-ast resolved by downgrading to prisma@7.10.0 stable.
-
-**Remaining (4 packages, 3 unique advisories):**
-- `deepmerge-ts <8.0.0` (GHSA-ggr8-5vv4-36mx, high): Stack exhaustion on crafted recursive object graphs. Transitive via prisma@7.10.0 → @prisma/config. **Not reachable**: requires attacker-controlled deeply nested input to prisma config; CLI-only usage.
-- `mysql2 <=3.23.0` (GHSA-3f6p-5ww8-9rcr, GHSA-rgwj-5xj2-c3m3, high): Auth downgrade + decompression bomb. Transitive via prisma@7.10.0. **Not reachable**: project uses PostgreSQL datasource; mysql2 is never loaded at runtime.
-
-**Fix path**: prisma@6.19.3 would resolve these but breaks @prisma/client@7.10.0 compatibility. No fix available within prisma 7.x.
+- deepmerge-ts (GHSA-cg34-jjc8-25j9): Resolved by npm override to 8.0.2.
+- mysql2 (GHSA-qj55-gcm5-9c3p, GHSA-qhjj-4xpp-wxfh): Resolved by npm override to 3.23.2. Project uses PostgreSQL; mysql2 is a transitive prisma dependency never loaded at runtime.
 
 ---
 

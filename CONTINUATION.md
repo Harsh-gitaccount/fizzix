@@ -3,7 +3,7 @@
 ## Session State
 - **Branch**: `claude/brave-ramanujan-s4hhf9`
 - **Base commit**: `7523ff0c2e3164d205036a85d81d12ae0312f997`
-- **Last batch**: batch-22 (Prisma driver-adapter fix, npm overrides, reproducible test evidence)
+- **Last batch**: batch-22 verification (independent verification session: SW cache, browser tests, API integration, SW update scenario, perf/a11y, doc reconciliation)
 - **TypeScript**: 0 errors
 - **ESLint**: 0 errors, 0 warnings (src/)
 - **Dash lint**: 0 violations
@@ -170,7 +170,7 @@
 - `src/__tests__/batch16-fixes.test.ts`: Tracks Texture, SpriteMaterial, CylinderGeometry, ConeGeometry, MeshPhongMaterial disposals specifically. try/finally cleanup.
 
 ### F06/F11: Explicit dispositions
-- F06: DONE. opt-e8 retained as curriculum-aligned editorial choice.
+- F06: DONE. opt-e8 (mirage/TIR) retained as curriculum-aligned editorial choice.
 - F11: DONE. Uniform speed initialization documented as model limitation.
 
 ## Batch 20 Changes
@@ -230,7 +230,7 @@
 
 ## Final Status
 
-### DONE (24 findings)
+### DONE (25 findings)
 F01, F02, F04, F05, F06, F07, F08, F09, F10, F11, F12, F13, F14, F15, F16, F17, F18, F19, F20, F21, F22, F23, F24, F25, F26
 
 ### ACCEPTED (1 finding)
@@ -241,5 +241,33 @@ F01, F02, F04, F05, F06, F07, F08, F09, F10, F11, F12, F13, F14, F15, F16, F17, 
 ### Not verifiable in current environment
 - Real mobile touch interaction (physical device required)
 - Assistive technology / screen reader compatibility
-- Multi-build service worker update lifecycle (requires two production builds on same origin)
 - GPU memory profiling (requires browser DevTools)
+
+## Batch 22 Verification Session
+
+Independent verification of batch 22 changes, extending test coverage.
+
+### Task 1: SW cache policy regression tests
+- `public/sw.js`: Same-origin restriction, content-type validation (script/style), activation-time purge of HTML-as-script entries.
+- `e2e/scripts/sw-lifecycle.mjs`: 10 tests (6 existing + 4 regression). Cross-origin exclusion, no HTML-as-script entries, content-type validation, no homepage HTML for script miss.
+- `src/__tests__/batch16-fixes.test.ts`: VM context fixed with `self.location.origin` and `request.destination`.
+
+### Task 2: Browser error collection
+- `e2e/scripts/browser-acceptance.mjs`: Error filter uses response-based `analyticsServedHTML` detection (not `requestfailed`). Exact URL matching for plausible.io script. Stack-trace attribution requires `stack.includes('plausible.io')`. Negative control injects `eval("var x = <bad>")` and asserts error is NOT suppressed.
+
+### Task 3: Browser acceptance test hardening
+- 24 tests. Tab assertions scoped: `[role="tab"][id^="tab-"]` for simulation, `[role="tab"][id^="panel-tab-"]` for panel. Panel tab aria-controls verified by clicking each tab first (conditional rendering). Mass preset navigates to Compare tab first.
+
+### Task 4: HTTP-level API integration
+- `e2e/scripts/api-integration.mjs`: 10 tests against disposable PostgreSQL. POST single, verify DB row, replay idempotency, batch of 3, batch verification, server correctness derivation, persistence across reconnect, invalid/empty/malformed requests return 400.
+
+### Task 5: Two-production-build SW update scenario
+- `e2e/scripts/sw-update-scenario.mjs`: 8 tests. Build A (v1): register SW, seed caches. Build B (v2): verify SW updates, old cache purged, non-fizzix caches survive, hydration works, offline lesson works. Restores original sw.js and rebuilds.
+
+### Task 6: Performance and accessibility
+- `e2e/scripts/perf-a11y.mjs`: 9 passed, 4 blocked. Frame timing (idle <100ms, active 2D <50ms, 3D <100ms). Resource transitions (heap growth <50MB, no uncaught errors). Accessibility (alt text, skip-to-content, color contrast, focus visibility). 4 BLOCKED with justification (real device, screen reader, GPU, real network).
+
+### Task 7: Documentation reconciliation
+- FIX_STATUS.md: Count corrected from "24 DONE" to "25 DONE". F06 opt-e8 description corrected from "Snell's law" to "mirage/TIR".
+- DEPENDENCY_AUDIT.md: Updated to reflect 0 vulnerabilities (npm overrides for mysql2 and deepmerge-ts).
+- CONTINUATION.md: Count corrected, verification session documented.

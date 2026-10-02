@@ -11,7 +11,7 @@ Current head includes batch 19 fixes (F12 3D tools, F11 histogram scale, F23 dis
 | F03 | Pendulum energy inconsistency | ACCEPTED | 1,11,17 | PE switched to small-angle quadratic form. Warning uses Borda approximation (θ²/16) labeled as "period error." Simulation uses small-angle model by design. Independent verification confirms nonlinear solver is NOT required; energy conservation is exact within the small-angle model (relative deviation <1e-15 over 100 periods). Accepted scope: small-angle simulation with disclosed error metric. |
 | F04 | Bohr model ignores Z | DONE | 1 | modernStateAtTime passes Z to bohrRadiusPm, electronSpeed, bohrRadius. |
 | F05 | Optics f=0 / virtual ray issues | DONE | 1,6,11 | lensPower null for f=0; virtual ray rendering improved. `drawPrincipalRays` now receives `imgScreenH` (final image height) instead of `animImgH`. Principal rays point to the correct final image position throughout the reveal animation. |
-| F06 | Quiz answer errors | DONE | 2,11,17,18 | Two numerical corrections (thermo-h1, opt-h1). `elec-e4` distractor fixed. `pm-m7`: rewritten with explicit assumptions and T=2Vy/g formula. `pm-h7`: anchored to fixture with corrected explanation. `thermo-h8`: rewritten as positive-evidence Brownian motion question. `mp-e9`: "for a given metal." `mp-h6`: clarified. `opt-e8`: retained as curriculum-aligned editorial choice (Snell's law question uses standard textbook framing); explicitly not changing. |
+| F06 | Quiz answer errors | DONE | 2,11,17,18 | Two numerical corrections (thermo-h1, opt-h1). `elec-e4` distractor fixed. `pm-m7`: rewritten with explicit assumptions and T=2Vy/g formula. `pm-h7`: anchored to fixture with corrected explanation. `thermo-h8`: rewritten as positive-evidence Brownian motion question. `mp-e9`: "for a given metal." `mp-h6`: clarified. `opt-e8`: retained as curriculum-aligned editorial choice (mirage/TIR question uses standard textbook framing); explicitly not changing. |
 | F07 | Topic lifecycle leaks | DONE | 2,7 | `resetQuiz()` now clears `sessionQuestions`. URL param restoration moved after topic defaults in init effect with clamping/validation. Topic change resets playback, undo, quiz, compare, ghosts. |
 | F08 | Keyboard shortcuts topic-locked | DONE | 1,8,10 | Rewrote to accept SimulationModule, uses topic.tabs and topic.timeOfFlight. Keyboard stepping now uses compare-mode max(tofA, tofB) matching PlaybackBar and Canvas2D. New keyboard-shortcuts test dispatches actual KeyboardEvents through `useKeyboardShortcuts` hook via `renderHook`, verifying ArrowRight at t=5 in compare mode advances (not jumps backward). |
 | F09 | Compare mode truncated playback | DONE | 1,7,8 | PlaybackBar, Canvas2D animation loop, and keyboard stepping all use max(tofA, tofB) in compare mode. All input paths now share the same comparison time domain. |
@@ -31,11 +31,11 @@ Current head includes batch 19 fixes (F12 3D tools, F11 histogram scale, F23 dis
 | F23 | Animation performance | DONE | 12,16,19,20 | `clearScene()` disposes label textures/materials via `disposeSprite()` and force arrow geometries/materials via `disposeGroup()`. Regression test tracks specific resource types with threshold assertions. Browser-verified: thermodynamics↔projectile-motion navigation and electrostatics field-3d tab switching produce no JS errors (scene disposal works cleanly). GPU memory profiling remains outside current environment. |
 | F24 | Teaching preset gaps | DONE | 11,16,20 | `low-drive` and `moon-vs-earth` hookQuestions fixed. `does-mass-matter` preset now uses distinct masses: `mass: 1` in params, `mass: 10` in compareParams, both with `drag: 0`. Mass symbol added to renderer2d. Browser-verified: mass preset activates compare mode. |
 | F25 | Threshold preset wording | DONE | 1 | "At Threshold" renamed to "Near Threshold". |
-| F26 | Offline caching | DONE | 7,16,21 | Fixed: cache cleanup only deletes `fizzix-` prefixed caches. Navigation fallback returns home-page shell or 503. Static asset handler (`/_next/static/`) now checks `res.ok` before caching. Browser-verified (6/6 tests): SW registers and activates on topic pages, precache contains `/` and `/manifest.json`, home page served offline after SW registration, unvisited topics fall back to cached home page, static assets cached after reload, non-fizzix caches preserved. Remaining limitation: multi-build SW update lifecycle (two production builds on same origin) not testable in current environment. |
+| F26 | Offline caching | DONE | 7,16,21,22v | Fixed: cache cleanup only deletes `fizzix-` prefixed caches. Navigation fallback returns home-page shell or 503. Static asset handler (`/_next/static/`) now checks `res.ok` before caching. Browser-verified (6/6 tests): SW registers and activates on topic pages, precache contains `/` and `/manifest.json`, home page served offline after SW registration, unvisited topics fall back to cached home page, static assets cached after reload, non-fizzix caches preserved. Multi-build SW update lifecycle verified (8/8 tests): two-build scenario confirms cache purge, non-fizzix cache survival, hydration, offline lesson. |
 
 ## Summary
 
-- **DONE**: 24 findings (F01, F02, F04, F05, F06, F07, F08, F09, F10, F11, F12, F13, F14, F15, F16, F17, F18, F19, F20, F21, F22, F23, F24, F25, F26)
+- **DONE**: 25 findings (F01, F02, F04, F05, F06, F07, F08, F09, F10, F11, F12, F13, F14, F15, F16, F17, F18, F19, F20, F21, F22, F23, F24, F25, F26)
 - **ACCEPTED**: 1 finding (F03 - small-angle model by design, energy exact within model)
 - **PARTIAL**: 0 findings
 
@@ -217,7 +217,7 @@ Current head includes batch 19 fixes (F12 3D tools, F11 histogram scale, F23 dis
 - **batch16-fixes.test.ts**: F23 test rewritten to track specific resource types (Texture, SpriteMaterial, CylinderGeometry/ConeGeometry, MeshPhongMaterial) via prototype patching. Asserts: 2+ texture disposals (label maps), 2+ sprite material disposals, 4+ arrow geometry disposals (2 shafts + 2 cones), 4+ arrow MeshPhong material disposals on rebuild. Also verifies final `dispose()` cleans up textures and sprite materials. Uses try/finally for guaranteed prototype restoration.
 
 ### F06: opt-e8 disposition
-- F06 status changed to DONE. opt-e8 (Snell's law question) explicitly retained as curriculum-aligned editorial choice; documented rather than left as open implementation item.
+- F06 status changed to DONE. opt-e8 (mirage/TIR question) explicitly retained as curriculum-aligned editorial choice; documented rather than left as open implementation item.
 
 ### F11: Illustrative distribution scope
 - F11 status changed to DONE. Worker speed initialization is uniform (illustrative particles), not equilibrium Maxwell. No equilibrium claim is made in the UI. Documented as model limitation, not defect.
@@ -362,3 +362,14 @@ Current head includes batch 19 fixes (F12 3D tools, F11 histogram scale, F23 dis
 - Browser acceptance: 22/22 pass
 - SW lifecycle: 6/6 pass
 - DB integration: 7/7 pass (disposable PostgreSQL)
+
+## Batch 22 verification session (independent verification of batch 22)
+
+### Extended test coverage
+- **SW cache policy** (Task 1): 4 regression tests added to `sw-lifecycle.mjs` (10 total). Cross-origin exclusion, content-type validation, no HTML-as-script entries, no homepage HTML for script miss.
+- **Browser error filter** (Task 2): Error filter hardened. Response-based `analyticsServedHTML` detection, exact URL matching, stack-trace attribution. Negative control: injected error NOT suppressed. 24 browser acceptance tests pass.
+- **Browser acceptance hardening** (Task 3): Tab assertions scoped by id prefix. Panel tab aria-controls verified via click-first pattern. Mass preset navigates to Compare tab.
+- **API integration** (Task 4): `api-integration.mjs` — 10 HTTP-level tests against disposable PostgreSQL. POST, verify, replay, batch, correctness derivation, persistence, error responses.
+- **SW update lifecycle** (Task 5): `sw-update-scenario.mjs` — 8 tests. Two-production-build update on same origin: cache purge, non-fizzix cache survival, hydration, offline lesson. Previously listed as untestable; now verified.
+- **Performance/accessibility** (Task 6): `perf-a11y.mjs` — 9 passed, 4 blocked. Frame timing, heap growth, error-free transitions, alt text, skip-to-content, color contrast, focus visibility.
+- **Documentation reconciliation** (Task 7): Count corrected (25 DONE), F06 opt-e8 description corrected (mirage/TIR), DEPENDENCY_AUDIT.md updated to 0 vulnerabilities.

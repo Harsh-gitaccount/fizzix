@@ -36,18 +36,22 @@ async function run() {
       // Check that the page has a heading with the topic name
       const h1Text = await page.$eval('h1', el => el.textContent).catch(() => null)
 
-      // Try to interact: change first slider if present
+      // Try to interact: change first slider and verify value actually changed
       let sliderWorked = false
       if (sliderCount > 0) {
         try {
           const slider = await page.$('input[type="range"]')
           if (slider) {
+            const valueBefore = await slider.evaluate(el => el.value)
             const box = await slider.boundingBox()
             if (box) {
-              // Click slightly right of center to change value
-              await slider.click({ position: { x: box.width * 0.7, y: box.height / 2 } })
-              await page.waitForTimeout(500)
-              sliderWorked = true
+              await slider.click({ position: { x: box.width * 0.75, y: box.height / 2 } })
+              await page.waitForTimeout(600)
+              const valueAfter = await slider.evaluate(el => el.value)
+              sliderWorked = valueBefore !== valueAfter
+              if (!sliderWorked) {
+                console.log(`       slider value unchanged: ${valueBefore} -> ${valueAfter}`)
+              }
             }
           }
         } catch (e) {
@@ -63,7 +67,7 @@ async function run() {
         h1Text: h1Text?.trim()?.substring(0, 40),
         sliderWorked,
         jsErrors: errors.length,
-        pass: status === 200 && hasCanvas && sliderCount > 0 && errors.length === 0,
+        pass: status === 200 && hasCanvas && sliderCount > 0 && sliderWorked && errors.length === 0,
       })
     } catch (e) {
       results.push({ slug: topic.slug, error: e.message, pass: false })

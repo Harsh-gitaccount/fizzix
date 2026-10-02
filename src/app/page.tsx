@@ -62,7 +62,7 @@ export default function Home() {
                 <span className="w-px h-3 bg-slate-700" aria-hidden="true" />
                 <span>Hindi &amp; English</span>
                 <span className="w-px h-3 bg-slate-700" aria-hidden="true" />
-                <span>Works offline once installed</span>
+                <span>Lessons cached offline after first visit</span>
               </div>
             </div>
 

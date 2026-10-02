@@ -85,13 +85,12 @@ function MobileIndex({ topics }: { topics: Topic[] }) {
   return (
     <div className="md:hidden">
       {/* pill selector */}
-      <div className="flex gap-2 overflow-x-auto pb-3 -mx-4 px-4 scrollbar-hide" role="tablist">
+      <div className="flex gap-2 overflow-x-auto pb-3 -mx-4 px-4 scrollbar-hide" role="group" aria-label="Select a topic">
         {topics.map((t, i) => (
           <button
             key={t.slug}
             onClick={() => setSelected(i)}
-            role="tab"
-            aria-selected={i === selected}
+            aria-pressed={i === selected}
             className={`shrink-0 text-xs px-3 py-1.5 rounded-full border transition-colors whitespace-nowrap ${
               i === selected
                 ? 'bg-white/[0.08] border-white/[0.12] text-white'

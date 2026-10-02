@@ -1,0 +1,20 @@
+=== Database Integration Test Results ===
+Date: 2026-10-02T09:42:01Z
+Tested commit: 0f29e6727784a98d266cc8d01b7f5ab0eba34fb1
+Database: PostgreSQL (disposable fizzix_test on localhost:5432)
+Prisma: 7.10.0
+Command: DATABASE_URL="postgresql://fizzix_test:fizzix_test_pw@localhost:5432/fizzix_test" node e2e/scripts/db-integration.mjs
+
+
+=== Prisma 7 PostgreSQL Integration Tests ===
+
+  PASS: Client construction with PrismaPg adapter
+  PASS: Durable write: quiz result stored and readable
+  PASS: Read after restart: data persists across client instances
+  PASS: Idempotency: skipDuplicates prevents duplicate inserts
+  PASS: Acknowledged IDs correspond to durable records
+  PASS: Bad connection: query throws (not silent null)
+  PASS: Missing DATABASE_URL: getPrisma returns null
+
+=== Results: 7 passed, 0 failed ===
+exit code: 0

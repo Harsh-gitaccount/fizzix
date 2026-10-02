@@ -1,0 +1,61 @@
+=== Browser Acceptance Test Results ===
+Date: 2026-10-02T09:40:35Z
+Tested commit: 0f29e6727784a98d266cc8d01b7f5ab0eba34fb1
+Build: production (npx next build && npx next start -p 3099)
+Chromium: Chromium 141.0.7390.37 
+Command: PLAYWRIGHT_BROWSERS_PATH=/opt/pw-browsers CHROMIUM_PATH=/opt/pw-browsers/chromium-1194/chrome-linux/chrome BASE_URL=http://localhost:3099 node e2e/scripts/browser-acceptance.mjs
+
+
+Target: http://localhost:3099
+Chromium: /opt/pw-browsers/chromium-1194/chrome-linux/chrome
+
+=== Home page ===
+  PASS: Home loads all topics
+
+=== F12: 3D tools hidden/shown ===
+  PASS: Tools hidden on thermodynamics (3D view)
+  PASS: Tools visible on projectile-motion (2D view)
+
+=== F14: responsive layout ===
+  PASS: No horizontal scroll at 320px
+  PASS: No horizontal scroll at 390px
+  PASS: No horizontal scroll at 768px
+  PASS: No horizontal scroll at 1440px
+
+=== F15: ARIA structure ===
+  PASS: Tablist with tabs
+  PASS: Tabs have aria-controls
+  PASS: aria-pressed on toggle buttons
+  PASS: 3D scene has role=img and aria-label
+  PASS: Tab keyboard navigation (ArrowRight moves focus)
+  PASS: Quiz panel has radiogroup
+
+=== All topics render ===
+  PASS: projectile-motion renders without JS errors
+  PASS: shm renders without JS errors
+  PASS: optics renders without JS errors
+  PASS: electrostatics renders without JS errors
+  PASS: thermodynamics renders without JS errors
+  PASS: modern-physics renders without JS errors
+
+=== F23: Scene transitions ===
+  PASS: Navigate thermo→projectile→thermo without errors
+  PASS: Field-3d tab switching without errors
+
+=== F24: Mass preset ===
+  PASS: Mass preset activates compare mode
+
+=== Results: 22 passed, 0 failed ===
+
+=== Raw JS errors (10, including filtered) ===
+  [http://localhost:3099/projectile-motion] Unexpected token '<'
+  [http://localhost:3099/shm] Unexpected token '<'
+  [http://localhost:3099/optics] Unexpected token '<'
+  [http://localhost:3099/electrostatics] Unexpected token '<'
+  [http://localhost:3099/thermodynamics] Unexpected token '<'
+  [http://localhost:3099/modern-physics] Unexpected token '<'
+  [http://localhost:3099/thermodynamics] Unexpected token '<'
+  [http://localhost:3099/projectile-motion] Unexpected token '<'
+  [http://localhost:3099/thermodynamics] Unexpected token '<'
+  [http://localhost:3099/electrostatics] Unexpected token '<'
+exit code: 0

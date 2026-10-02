@@ -274,7 +274,7 @@ export default function Scene3DGas() {
 
       const dpr = window.devicePixelRatio || 1
       const w = 180
-      const h = 110
+      const h = 120
       canvas.width = w * dpr
       canvas.height = h * dpr
       canvas.style.width = `${w}px`
@@ -344,11 +344,20 @@ export default function Scene3DGas() {
         ctx.fillRect(bx, by, barW, barH)
       }
 
-      // X-axis label
-      ctx.font = '9px system-ui'
+      // X-axis numeric ticks
+      ctx.font = '7px system-ui'
       ctx.fillStyle = isDark ? '#9CA3AF' : '#6B7280'
       ctx.textAlign = 'center'
-      ctx.fillText(lang === 'hi' ? 'चाल →' : 'Speed →', chartX + chartW / 2, chartY + chartH + 14)
+      const fmtSpd = (v: number) => v < 10 ? v.toFixed(1) : Math.round(v).toString()
+      ctx.fillText('0', chartX, chartY + chartH + 8)
+      ctx.fillText(fmtSpd(maxSpeed / 2), chartX + chartW / 2, chartY + chartH + 8)
+      ctx.textAlign = 'right'
+      ctx.fillText(fmtSpd(maxSpeed), chartX + chartW, chartY + chartH + 8)
+
+      // X-axis label
+      ctx.font = '8px system-ui'
+      ctx.textAlign = 'center'
+      ctx.fillText(lang === 'hi' ? 'चाल (सिम्.)' : 'Speed (sim.)', chartX + chartW / 2, chartY + chartH + 18)
 
       requestAnimationFrame(draw)
     }

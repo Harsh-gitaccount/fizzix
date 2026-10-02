@@ -178,22 +178,38 @@ describe('F24 - Mass preset uses distinct masses', () => {
 })
 
 describe('F23 - fieldView3D resource disposal', () => {
-  it('clearScene disposes label and arrow resources', async () => {
+  it('clearScene disposes label textures/materials and arrow geometries/materials', async () => {
     const THREE = await import('three')
     const { createFieldView3D } = await import('@/lib/three/fieldView3D')
 
     const scene = new THREE.Scene()
-    const disposed: string[] = []
 
-    const origMeshDispose = THREE.BufferGeometry.prototype.dispose
-    THREE.BufferGeometry.prototype.dispose = function () {
-      disposed.push('geometry')
-      return origMeshDispose.call(this)
+    const textureDisposes: unknown[] = []
+    const spriteMatDisposes: unknown[] = []
+    const arrowGeoDisposes: unknown[] = []
+    const arrowMatDisposes: unknown[] = []
+
+    const origTexDispose = THREE.Texture.prototype.dispose
+    THREE.Texture.prototype.dispose = function () {
+      textureDisposes.push(this)
+      return origTexDispose.call(this)
     }
-    const origMatDispose = THREE.Material.prototype.dispose
-    THREE.Material.prototype.dispose = function () {
-      disposed.push('material')
-      return origMatDispose.call(this)
+    const origSpriteMatDispose = THREE.SpriteMaterial.prototype.dispose
+    THREE.SpriteMaterial.prototype.dispose = function () {
+      spriteMatDisposes.push(this)
+      return origSpriteMatDispose.call(this)
+    }
+    const origGeoDispose = THREE.BufferGeometry.prototype.dispose
+    THREE.BufferGeometry.prototype.dispose = function () {
+      if (this instanceof THREE.CylinderGeometry || this instanceof THREE.ConeGeometry) {
+        arrowGeoDisposes.push(this)
+      }
+      return origGeoDispose.call(this)
+    }
+    const origPhongDispose = THREE.MeshPhongMaterial.prototype.dispose
+    THREE.MeshPhongMaterial.prototype.dispose = function () {
+      arrowMatDisposes.push(this)
+      return origPhongDispose.call(this)
     }
 
     const mockCanvas = document.createElement('canvas')
@@ -207,26 +223,45 @@ describe('F23 - fieldView3D resource disposal', () => {
     } as unknown as CanvasRenderingContext2D)
     vi.spyOn(document, 'createElement').mockReturnValue(mockCanvas as unknown as HTMLElement)
 
-    const container = document.createElement('div') as HTMLDivElement
-    const builder = createFieldView3D({
-      scene,
-      camera: new THREE.PerspectiveCamera(),
-      renderer: { domElement: document.createElement('div') } as unknown as import('three').WebGLRenderer,
-      container,
-    })
+    try {
+      const container = document.createElement('div') as HTMLDivElement
+      const builder = createFieldView3D({
+        scene,
+        camera: new THREE.PerspectiveCamera(),
+        renderer: { domElement: document.createElement('div') } as unknown as import('three').WebGLRenderer,
+        container,
+      })
 
-    builder.update({ q1: 1, q2: -1, distance: 2 }, 0, false)
-    const childrenAfterBuild = scene.children.length
-    expect(childrenAfterBuild).toBeGreaterThan(0)
+      builder.update({ q1: 1, q2: -1, distance: 2 }, 0, false)
+      expect(scene.children.length).toBeGreaterThan(0)
 
-    disposed.length = 0
-    builder.update({ q1: 2, q2: -2, distance: 3 }, 0, false)
+      textureDisposes.length = 0
+      spriteMatDisposes.length = 0
+      arrowGeoDisposes.length = 0
+      arrowMatDisposes.length = 0
 
-    expect(disposed.filter(d => d === 'material').length).toBeGreaterThan(3)
-    expect(disposed.filter(d => d === 'geometry').length).toBeGreaterThan(0)
+      builder.update({ q1: 2, q2: -2, distance: 3 }, 0, false)
 
-    THREE.BufferGeometry.prototype.dispose = origMeshDispose
-    THREE.Material.prototype.dispose = origMatDispose
-    vi.restoreAllMocks()
+      // Labels: 2 sprites each with a CanvasTexture map + SpriteMaterial
+      expect(textureDisposes.length).toBeGreaterThanOrEqual(2)
+      expect(spriteMatDisposes.length).toBeGreaterThanOrEqual(2)
+
+      // Force arrows: 2 arrows, each with shaft (CylinderGeometry) + cone (ConeGeometry) + 2 MeshPhongMaterials
+      expect(arrowGeoDisposes.length).toBeGreaterThanOrEqual(4)
+      expect(arrowMatDisposes.length).toBeGreaterThanOrEqual(4)
+
+      // Final dispose should also clean up
+      textureDisposes.length = 0
+      spriteMatDisposes.length = 0
+      builder.dispose()
+      expect(textureDisposes.length).toBeGreaterThanOrEqual(2)
+      expect(spriteMatDisposes.length).toBeGreaterThanOrEqual(2)
+    } finally {
+      THREE.Texture.prototype.dispose = origTexDispose
+      THREE.SpriteMaterial.prototype.dispose = origSpriteMatDispose
+      THREE.BufferGeometry.prototype.dispose = origGeoDispose
+      THREE.MeshPhongMaterial.prototype.dispose = origPhongDispose
+      vi.restoreAllMocks()
+    }
   })
 })

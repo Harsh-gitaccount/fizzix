@@ -3,11 +3,11 @@
 ## Session State
 - **Branch**: `claude/brave-ramanujan-s4hhf9`
 - **Base commit**: `7523ff0c2e3164d205036a85d81d12ae0312f997`
-- **Last batch**: batch-18 (verification reproduced failures, quiz corrections, histogram/KE/volume disclosure)
+- **Last batch**: batch-19 (F12 3D tools, F11 histogram scale, F23 disposal test, F06/F11 dispositions)
 - **TypeScript**: 0 errors
 - **ESLint**: 0 errors, 0 warnings (src/)
 - **Dash lint**: 0 violations
-- **Unit tests**: 351/351 passing
+- **Unit tests**: 356/356 passing
 - **npm audit**: 15 vulnerabilities (down from 23)
 
 ## Commits
@@ -30,7 +30,8 @@
 17. `a44769f` -- Batch 15: Keyboard widget isolation, ARIA panel targets, @types/node alignment
 18. `8672430` -- Batch 16: F12 rays toggle, F23 resource disposal, F24 mass preset, F26 static caching
 19. `806880b` -- Batch 17: F03 error metric, F06 quiz subcriteria, F11 KE qualifier + histogram
-20. *(pending)* -- Batch 18: Verification reproduced failures, quiz corrections, histogram/KE/volume disclosure
+20. `049bc32` -- Batch 18: Verification reproduced failures, quiz corrections, histogram/KE/volume disclosure
+21. *(pending)* -- Batch 19: F12 3D tools, F11 histogram scale, F23 disposal test, F06/F11 dispositions
 
 ## Batch 11 Changes
 
@@ -147,19 +148,36 @@
 ### F03 reconciliation
 - Status changed to ACCEPTED. Energy exact within small-angle model per independent verification.
 
+## Batch 19 Changes
+
+### F12: 3D tools hidden
+- `src/components/simulation/LayerToggles.tsx`: Tools section hidden on 3D views via `is3DView` gate.
+- `src/__tests__/layer-toggles-3d.test.ts` (new): 5 tests for 3D/2D tool visibility.
+
+### F11: Numeric speed scale
+- `src/components/simulation/Scene3DGas.tsx`: X-axis numeric ticks (0, mid, max), canvas height 110→120px.
+
+### F23: Disposal test strengthened
+- `src/__tests__/batch16-fixes.test.ts`: Tracks Texture, SpriteMaterial, CylinderGeometry, ConeGeometry, MeshPhongMaterial disposals specifically. try/finally cleanup.
+
+### F06/F11: Explicit dispositions
+- F06: DONE. opt-e8 retained as curriculum-aligned editorial choice.
+- F11: DONE. Uniform speed initialization documented as model limitation.
+
 ## Remaining Work
+
+### DONE (18 findings)
+F01, F02, F04, F05, F06, F07, F08, F09, F10, F11, F13, F16, F17, F18, F19, F20, F21, F25
 
 ### ACCEPTED (1 finding)
 - **F03**: Small-angle model by design. Energy conservation exact (deviation <1e-15). Borda period-error warning disclosed.
 
-### PARTIAL (9 findings)
-- **F06**: 5 subcriteria addressed. Remaining: `opt-e8` curriculum-aligned, not changing.
-- **F11**: KE qualified as translational; active histogram labeled with sim-units note; volume disclosure added. Worker speed initialization is uniform (not Maxwell); no equilibrium claim made.
-- **F12**: Rays toggle wired for refraction/TIR; not browser-verified.
+### PARTIAL (7 findings)
+- **F12**: Rays toggle wired; 3D tools hidden. Not browser-verified.
 - **F14**: True touch/zoom/assistive-technology verification; actual device testing.
 - **F15**: Full assistive technology testing not performed.
-- **F22**: vitest/eslint-config-next upgraded; next 14→16 and prisma 7 remain (major, breaking).
-- **F23**: Resource disposal added; browser profiling not performed.
+- **F22**: vitest/eslint-config-next upgraded; next 14→16 and prisma remain (major, breaking).
+- **F23**: Resource disposal added and regression-tested; browser profiling not performed.
 - **F24**: Mass preset fixed; not browser-verified.
 - **F26**: res.ok check added; multi-build updates, production offline verification not done.
 

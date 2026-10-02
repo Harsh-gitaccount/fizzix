@@ -1,8 +1,8 @@
 # Fizzix Audit Fix Status
 
 Tracking fixes for audit findings F01-F26 from the comprehensive audit at commit `7523ff0`.
-Reconciled against independent verification at commits `fcb3b41`, `6be4bac`, `b9bf820`, and `e97d111`.
-Current head includes batch 14 fixes (F15 arrow key nav, F22 dependency upgrades).
+Reconciled against independent verification at commits `fcb3b41`, `6be4bac`, `b9bf820`, `e97d111`, `049bc32`.
+Current head includes batch 19 fixes (F12 3D tools, F11 histogram scale, F23 disposal test).
 
 | Finding | Title | Status | Batch | Notes |
 |---------|-------|--------|-------|-------|
@@ -11,13 +11,13 @@ Current head includes batch 14 fixes (F15 arrow key nav, F22 dependency upgrades
 | F03 | Pendulum energy inconsistency | ACCEPTED | 1,11,17 | PE switched to small-angle quadratic form. Warning uses Borda approximation (θ²/16) labeled as "period error." Simulation uses small-angle model by design. Independent verification confirms nonlinear solver is NOT required; energy conservation is exact within the small-angle model (relative deviation <1e-15 over 100 periods). Accepted scope: small-angle simulation with disclosed error metric. |
 | F04 | Bohr model ignores Z | DONE | 1 | modernStateAtTime passes Z to bohrRadiusPm, electronSpeed, bohrRadius. |
 | F05 | Optics f=0 / virtual ray issues | DONE | 1,6,11 | lensPower null for f=0; virtual ray rendering improved. `drawPrincipalRays` now receives `imgScreenH` (final image height) instead of `animImgH`. Principal rays point to the correct final image position throughout the reveal animation. |
-| F06 | Quiz answer errors | PARTIAL | 2,11,17,18 | Two numerical corrections (thermo-h1, opt-h1). `elec-e4` distractor fixed. `pm-m7`: rewritten to specify "same height, no air resistance, constant g" with T=2Vy/g formula. `pm-h7`: anchored to explicit fixture (30 m/s, 45°, b=0.01); explanation corrected (removed descent-offsets-peak claim). `thermo-h8`: rewritten as positive-evidence question about Brownian motion demonstrating particulate nature of matter (Einstein 1905, Perrin). `mp-e9`: question now says "for a given metal." `mp-h6`: question wording and explanation clarified. Remaining: `opt-e8` curriculum-aligned, not changing. |
+| F06 | Quiz answer errors | DONE | 2,11,17,18 | Two numerical corrections (thermo-h1, opt-h1). `elec-e4` distractor fixed. `pm-m7`: rewritten with explicit assumptions and T=2Vy/g formula. `pm-h7`: anchored to fixture with corrected explanation. `thermo-h8`: rewritten as positive-evidence Brownian motion question. `mp-e9`: "for a given metal." `mp-h6`: clarified. `opt-e8`: retained as curriculum-aligned editorial choice (Snell's law question uses standard textbook framing); explicitly not changing. |
 | F07 | Topic lifecycle leaks | DONE | 2,7 | `resetQuiz()` now clears `sessionQuestions`. URL param restoration moved after topic defaults in init effect with clamping/validation. Topic change resets playback, undo, quiz, compare, ghosts. |
 | F08 | Keyboard shortcuts topic-locked | DONE | 1,8,10 | Rewrote to accept SimulationModule, uses topic.tabs and topic.timeOfFlight. Keyboard stepping now uses compare-mode max(tofA, tofB) matching PlaybackBar and Canvas2D. New keyboard-shortcuts test dispatches actual KeyboardEvents through `useKeyboardShortcuts` hook via `renderHook`, verifying ArrowRight at t=5 in compare mode advances (not jumps backward). |
 | F09 | Compare mode truncated playback | DONE | 1,7,8 | PlaybackBar, Canvas2D animation loop, and keyboard stepping all use max(tofA, tofB) in compare mode. All input paths now share the same comparison time domain. |
 | F10 | Gas worker sync | DONE | 3,7 | Worker reset handler added. `Scene3DGas` passes `deltaReal * speed` (scaled time) to `builder.step()` so simulation clock matches display at all playback speeds. |
-| F11 | Gas PV/pressure inconsistency | PARTIAL | 3,12,17,18 | Pressure uses effectiveVolume. Inline calculations deduplicated. PV product added. avgKE symbol `⟨KE⟩ₜᵣ` / "Avg translational KE." totalKE now `KEₜᵣ` / "Total translational KE" (was misleading "Total KE"). Active Scene3DGas histogram has axis labels (N, Speed →), title clarifies "(sim. units)". Gas box panel displays "Box is schematic; not to volume scale" disclosure. 2D thermoRenderer histogram also labeled (batch 17). Remaining: worker speed initialization is uniform, not Maxwell; equilibrium claim not made. |
-| F12 | Disconnected controls | PARTIAL | 4,7,11,16 | Removed dead 'graph' layer toggle. Added Speed Distribution histogram overlay to 3D gas scene. Canvas2D vector layer gating removed. Optics refraction/TIR renderers now gate ray drawing on `activeLayers.rays`, so the Rays toggle actually controls incident/refracted/reflected rays while leaving angle arcs and labels visible. Not browser-verified. |
+| F11 | Gas PV/pressure inconsistency | DONE | 3,12,17,18,19 | Pressure uses effectiveVolume. PV product added. avgKE `⟨KE⟩ₜᵣ` / "Avg translational KE." totalKE `KEₜᵣ` / "Total translational KE." Active Scene3DGas histogram: axis labels (N, Speed), numeric tick values (0, mid, max), title "(sim. units)." Gas box: "Box is schematic; not to volume scale." Worker speed initialization is uniform (illustrative), not equilibrium Maxwell; no equilibrium claim is made. This is a documented model limitation, not a defect. |
+| F12 | Disconnected controls | PARTIAL | 4,7,11,16,19 | Removed dead 'graph' layer toggle. Added Speed Distribution histogram overlay to 3D gas scene. Canvas2D vector layer gating removed. Optics rays toggle gates ray drawing. Ruler and Protractor tool buttons now hidden on 3D views (thermodynamics all tabs, field-3d, long-wave) since they only function in Canvas2D. Focused component test verifies tools hidden/shown per view type. Not browser-verified. |
 | F13 | Generic data table | DONE | 2 | DataTable rewritten to use topic.derivedValues/derivedValueKeys. |
 | F14 | Small-screen layout | PARTIAL | 2,7,8,9 | Canvas container given responsive height. Main content area scrollable on mobile. Control panel no longer competes for flex space. TopBar secondary actions (Screenshot, Share, Fullscreen, Language) moved into overflow menu on mobile. PlaybackBar condensed with responsive sizing, speed selector and time readout hidden on very narrow viewports. Full touch/zoom/assistive-technology verification not performed; header and playback no longer clip at 320/390px widths in layout, but actual device testing has not been done. |
 | F15 | Accessibility | PARTIAL | 2,13,14 | Slider ARIA attributes added. Viewport scaling fixed. Layer/tool toggles: `aria-pressed`. TabBar: `role="tablist"`, `aria-controls`, `tabIndex` roving, ArrowLeft/ArrowRight/Home/End keyboard navigation. SimulationPage panel tabs: `role="tabpanel"`, `aria-labelledby`. PlaybackBar: `aria-pressed` on sound/pause-at-key-points toggles, "Replay" label for landed state. PresetStrip: `aria-pressed` on active preset. QuizPanel: `role="radiogroup"` + `role="radio"` + `aria-checked`. Toast: `role="status"` + `aria-live="polite"`. 3D scenes: `role="img"` + `aria-label`, `tabIndex=0`, keyboard camera controls (arrow keys rotate, +/- zoom), focus outline. Language toggle: `aria-label`. Remaining: full assistive technology testing not performed. |
@@ -28,16 +28,16 @@ Current head includes batch 14 fixes (F15 arrow key nav, F22 dependency upgrades
 | F20 | Longitudinal wave speed | DONE | 4 | Correct spring-mass chain dispersion formula. |
 | F21 | Drag coefficient units | DONE | 2,11,13 | Symbol/unit renamed. Compare-mode legend symbol corrected from 'Cd' to 'b' matching module definition. Acceleration vector now shows actual net acceleration (gravity + drag) when drag > 0, with correct direction and magnitude. Legend label switches from "Gravity" to "Net Acceleration" when drag is enabled. Trajectory cap raised from 100s (100001 steps) to 250s (250001 steps), covering worst-case slider combination (v0=50, theta=90, g=0.5, y0=50 → ~214s TOF). |
 | F22 | Dependency advisories | PARTIAL | 5,7,9,14 | Upgraded vitest 2→5 (dev-only, resolves @vitest/mocker path traversal + vite/esbuild advisories). Upgraded eslint-config-next 14→15 (resolves glob CLI injection). Reduced from 23 to 15 vulnerable packages, 79 to 72 unique advisories. Remaining 15 packages (1 critical, 9 high, 5 moderate) all in next 14.x (23 advisories + postcss) and prisma chain (hono/valibot/lodash). Both require major framework upgrades (next 14→16, prisma 7). Per-advisory reachability analysis in `DEPENDENCY_AUDIT.md`. |
-| F23 | Animation performance | PARTIAL | 12,16 | Playwright-based performance profiling test added. `clearScene()` in fieldView3D.ts now disposes label textures/materials via `disposeSprite()` and force arrow geometries/materials via `disposeGroup()`, preventing GPU memory leaks on topic change. Browser profiling not performed. |
+| F23 | Animation performance | PARTIAL | 12,16,19 | `clearScene()` disposes label textures/materials via `disposeSprite()` and force arrow geometries/materials via `disposeGroup()`. Regression test tracks specific resource types (Texture, SpriteMaterial, CylinderGeometry, ConeGeometry, MeshPhongMaterial) and asserts 2+ texture disposals, 2+ sprite material disposals, 4+ arrow geometry disposals, 4+ arrow material disposals on rebuild, plus texture/material disposal on final `dispose()`. Test uses try/finally for prototype cleanup. Browser profiling not performed. |
 | F24 | Teaching preset gaps | PARTIAL | 11,16 | `low-drive` and `moon-vs-earth` hookQuestions fixed. `does-mass-matter` preset now uses distinct masses: `mass: 1` in params, `mass: 10` in compareParams, both with `drag: 0`. hookQuestion updated to "A 1 kg ball and a 10 kg ball are launched identically (no air resistance). Do their paths differ?". Mass symbol added to renderer2d `PARAM_SYMBOLS` and `getDiffLabel`. Not browser-verified. |
 | F25 | Threshold preset wording | DONE | 1 | "At Threshold" renamed to "Near Threshold". |
 | F26 | Offline caching | PARTIAL | 7,16 | Fixed: cache cleanup only deletes `fizzix-` prefixed caches. Navigation fallback returns home-page shell or 503. Static asset handler (`/_next/static/`) now checks `res.ok` before caching, preventing error responses from being cached. Remaining: topic pages not precached; multi-build update behavior not verified. |
 
 ## Summary
 
-- **DONE**: 16 findings (F01, F02, F04, F05, F07, F08, F09, F10, F13, F16, F17, F18, F19, F20, F21, F25)
+- **DONE**: 18 findings (F01, F02, F04, F05, F06, F07, F08, F09, F10, F11, F13, F16, F17, F18, F19, F20, F21, F25)
 - **ACCEPTED**: 1 finding (F03 - small-angle model by design, energy exact within model)
-- **PARTIAL**: 9 findings (F06, F11, F12, F14, F15, F22, F23, F24, F26)
+- **PARTIAL**: 7 findings (F12, F14, F15, F22, F23, F24, F26)
 
 ## Batch 9 changes (third verification response)
 
@@ -203,3 +203,28 @@ Current head includes batch 14 fixes (F15 arrow key nav, F22 dependency upgrades
 - ESLint: 0 errors, 0 warnings (src/)
 - Dash lint: 0 violations
 - Unit tests: 351/351 pass
+
+## Batch 19 changes (F12 3D tools, F11 histogram scale, F23 disposal test, F06/F11 dispositions)
+
+### F12: Unsupported 3D tools hidden
+- **LayerToggles.tsx**: Tools section (Ruler, Protractor) conditionally rendered with `{!is3DView && (...)}`. `is3DView` is true when `topic.slug === 'thermodynamics'` or `activeTab` is `'long-wave'` or `'field-3d'`. These three cases correspond exactly to the three 3D scene components (Scene3DGas, Scene3DLongWave, Scene3DField) in SimulationPage.tsx.
+- **layer-toggles-3d.test.ts** (new): 5 tests verifying is3DView logic for all topic/tab combinations, plus source inspection confirming LayerToggles uses the gating.
+
+### F11: Numeric speed scale on active histogram
+- **Scene3DGas.tsx**: Histogram X-axis now has numeric tick values at 0, midpoint and max speed in simulation units. X-axis label changed to "Speed (sim.)" for clarity. Canvas height increased from 110 to 120px to accommodate ticks.
+
+### F23: Disposal test strengthened
+- **batch16-fixes.test.ts**: F23 test rewritten to track specific resource types (Texture, SpriteMaterial, CylinderGeometry/ConeGeometry, MeshPhongMaterial) via prototype patching. Asserts: 2+ texture disposals (label maps), 2+ sprite material disposals, 4+ arrow geometry disposals (2 shafts + 2 cones), 4+ arrow MeshPhong material disposals on rebuild. Also verifies final `dispose()` cleans up textures and sprite materials. Uses try/finally for guaranteed prototype restoration.
+
+### F06: opt-e8 disposition
+- F06 status changed to DONE. opt-e8 (Snell's law question) explicitly retained as curriculum-aligned editorial choice; documented rather than left as open implementation item.
+
+### F11: Illustrative distribution scope
+- F11 status changed to DONE. Worker speed initialization is uniform (illustrative particles), not equilibrium Maxwell. No equilibrium claim is made in the UI. Documented as model limitation, not defect.
+
+### Verification results (batch 19)
+- TypeScript: `tsc --noEmit` exits zero
+- ESLint: 0 errors, 0 warnings (src/)
+- Dash lint: 0 violations
+- Production build: succeeds
+- Unit tests: 356/356 pass (351 + 5 layer-toggles-3d)

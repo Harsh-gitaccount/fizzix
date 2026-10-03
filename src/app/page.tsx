@@ -20,7 +20,7 @@ export default function Home() {
   }))
 
   return (
-    <div className="min-h-screen bg-fb-page text-fb-ink selection:bg-fb-accent/20">
+    <div className="min-h-screen bg-fb-page dark:bg-slate-950 text-fb-ink dark:text-gray-100 selection:bg-fb-accent/20">
       <Header modules={headerModules} />
 
       {/* Experiment Stage */}
@@ -33,20 +33,20 @@ export default function Home() {
       <ChapterExplorer topics={topics} />
 
       {/* Feature pills */}
-      <section className="py-10 px-4 sm:px-6 border-t border-fb-rule/60">
-        <div className="max-w-3xl mx-auto flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-xs text-fb-dim">
+      <section className="py-10 px-4 sm:px-6 border-t border-fb-rule/60 dark:border-slate-800">
+        <div className="max-w-3xl mx-auto flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-xs text-fb-dim dark:text-gray-500">
           <span>No login required</span>
-          <span className="w-px h-3 bg-fb-rule" aria-hidden="true" />
+          <span className="w-px h-3 bg-fb-rule dark:bg-slate-700" aria-hidden="true" />
           <span>Hindi &amp; English</span>
-          <span className="w-px h-3 bg-fb-rule" aria-hidden="true" />
+          <span className="w-px h-3 bg-fb-rule dark:bg-slate-700" aria-hidden="true" />
           <span>Works offline after first visit</span>
-          <span className="w-px h-3 bg-fb-rule" aria-hidden="true" />
+          <span className="w-px h-3 bg-fb-rule dark:bg-slate-700" aria-hidden="true" />
           <span>Free forever</span>
         </div>
       </section>
 
       {/* Footer */}
-      <footer className="py-10 px-4 sm:px-6 border-t border-fb-rule/60">
+      <footer className="py-10 px-4 sm:px-6 border-t border-fb-rule/60 dark:border-slate-800">
         <div className="max-w-6xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-3">
             <Image
@@ -54,15 +54,15 @@ export default function Home() {
               alt="Fizzix"
               width={120}
               height={34}
-              className="h-7 w-auto opacity-70"
+              className="h-7 w-auto opacity-70 dark:invert"
             />
           </div>
-          <div className="flex items-center gap-4 text-xs text-fb-dim">
-            <Link href="/guide" className="hover:text-fb-ink transition-colors">Guide</Link>
-            <Link href="/guide/teachers" className="hover:text-fb-ink transition-colors">For teachers</Link>
-            <Link href="/guide/topics" className="hover:text-fb-ink transition-colors">Topic reference</Link>
+          <div className="flex items-center gap-4 text-xs text-fb-dim dark:text-gray-500">
+            <Link href="/guide" className="hover:text-fb-ink dark:hover:text-gray-200 transition-colors">Guide</Link>
+            <Link href="/guide/teachers" className="hover:text-fb-ink dark:hover:text-gray-200 transition-colors">For teachers</Link>
+            <Link href="/guide/topics" className="hover:text-fb-ink dark:hover:text-gray-200 transition-colors">Topic reference</Link>
           </div>
-          <p className="text-xs text-fb-dim">
+          <p className="text-xs text-fb-dim dark:text-gray-500">
             Free physics lab for Indian students &middot; Class 6&ndash;12
           </p>
         </div>

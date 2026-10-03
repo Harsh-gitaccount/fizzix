@@ -17,7 +17,21 @@ export default function TeacherGuidePage() {
         question, procedure, and expected observations.
       </p>
 
-      <h2>Why interactive simulations?</h2>
+      <nav aria-label="On this page" className="mb-10 text-sm print:hidden">
+        <p className="font-semibold text-fb-ink mb-2">On this page</p>
+        <ol className="list-decimal pl-5 space-y-0.5 text-fb-muted">
+          <li><a href="#why-simulations" className="hover:text-fb-accent">Why interactive simulations?</a></li>
+          <li><a href="#projectile-activity" className="hover:text-fb-accent">Projectile Motion: complementary angle symmetry</a></li>
+          <li><a href="#shm-activity" className="hover:text-fb-accent">Simple Harmonic Motion: period and length</a></li>
+          <li><a href="#electrostatics-activity" className="hover:text-fb-accent">Electrostatics: Coulomb&rsquo;s law and distance</a></li>
+          <li><a href="#optics-activity" className="hover:text-fb-accent">Optics: finding the critical angle</a></li>
+          <li><a href="#thermo-activity" className="hover:text-fb-accent">Thermodynamics: temperature and molecular speed</a></li>
+          <li><a href="#modern-activity" className="hover:text-fb-accent">Modern Physics: photoelectric threshold</a></li>
+          <li><a href="#using-in-class" className="hover:text-fb-accent">Using Fizzix in class</a></li>
+        </ol>
+      </nav>
+
+      <h2 id="why-simulations">Why interactive simulations?</h2>
       <p>
         Physics concepts become concrete when students manipulate variables and immediately see
         the effect. A slider that changes launch angle is faster than deriving the range formula
@@ -169,14 +183,16 @@ export default function TeacherGuidePage() {
       </p>
       <p>
         <strong>Procedure:</strong> Slowly increase θ₁ from 30° toward 42°. At approximately 42°
-        (the critical angle for glass-to-air), the refracted ray vanishes and all light reflects
-        internally. Try the &ldquo;Diamond Sparkle&rdquo; preset to see the same effect with a higher
-        refractive index.
+        (the critical angle for glass-to-air), the refracted ray runs along the interface &mdash;
+        it bends to exactly 90° from the normal. Beyond this angle, no refracted ray exists and all
+        light reflects internally. Try the &ldquo;Diamond Sparkle&rdquo; preset to see the same
+        effect with a higher refractive index.
       </p>
       <p>
-        <strong>Expected observation:</strong> Total internal reflection occurs when θ₁ ≥ arcsin(n₂/n₁).
-        For glass-to-air, this is about 42°. For diamond (n₁ = 2.42), it is about 24°, which is why
-        diamonds sparkle.
+        <strong>Expected observation:</strong> At the critical angle, the refracted ray grazes the
+        surface. Total internal reflection occurs above the critical angle, when
+        θ₁ &gt; arcsin(n₂/n₁). For glass-to-air, this threshold is about 42°. For diamond
+        (n₁ = 2.42), it is about 24°, which is why diamonds sparkle.
       </p>
 
       <hr className="my-10 border-fb-rule/60" />
@@ -202,9 +218,11 @@ export default function TeacherGuidePage() {
       </p>
       <p>
         <strong>Model limitation:</strong> The particle motion on screen is illustrative &mdash;
-        particle positions are randomised for visual clarity, not sampled from a physically accurate
-        Maxwell&ndash;Boltzmann velocity distribution. The Speed Distribution histogram does show
-        the correct analytical distribution for the given temperature and molar mass.
+        particle positions are randomised for visual clarity. The Speed Distribution histogram bins
+        the simulated particle speeds at each instant, showing their distribution rather than the
+        theoretical Maxwell&ndash;Boltzmann curve. The shape is qualitatively similar but will
+        fluctuate between frames because it reflects the current state of the simulation, not an
+        analytical function.
       </p>
 
       <hr className="my-10 border-fb-rule/60" />
@@ -234,7 +252,7 @@ export default function TeacherGuidePage() {
 
       <hr className="my-10 border-fb-rule/60" />
 
-      <h2>Using Fizzix in class</h2>
+      <h2 id="using-in-class">Using Fizzix in class</h2>
       <h3>Before class</h3>
       <ol>
         <li>Open the simulation and try the activity yourself to verify the settings.</li>
@@ -261,8 +279,10 @@ export default function TeacherGuidePage() {
       <h2>Accessibility</h2>
       <p>
         Fizzix works on any device with a modern browser. Sliders and buttons have accessible labels
-        and respond to keyboard input. When a student&rsquo;s device has reduced-motion preferences enabled,
-        CSS animations are suppressed and simulation animations display static positions instead.
+        and respond to keyboard input. A global CSS rule suppresses animation and transition durations
+        when <code>prefers-reduced-motion</code> is active. The homepage experiment checks this
+        setting and skips its animation loop. Lesson-page canvas animations do not currently check
+        the preference.
       </p>
 
       <h2>What Fizzix does not do</h2>

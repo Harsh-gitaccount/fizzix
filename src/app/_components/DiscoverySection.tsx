@@ -7,14 +7,14 @@ const V0 = 20
 const G = 9.81
 
 const SVG_W = 600
-const SVG_H = 280
-const GROUND_Y = 240
+const SVG_H = 320
+const GROUND_Y = 280
 const PLOT_L = 50
 const PLOT_R = 570
 const PLOT_W = PLOT_R - PLOT_L
 const PLOT_H = GROUND_Y - 20
 const WORLD_W = 42
-const WORLD_H = 14
+const WORLD_H = 17
 const SX = PLOT_W / WORLD_W
 const SY = PLOT_H / WORLD_H
 

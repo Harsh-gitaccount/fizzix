@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import { getAllModules } from '@/simulations/registry'
+import { t } from '@/lib/i18n'
 
 export const metadata: Metadata = {
   title: 'Topic Reference – Fizzix Guide',
@@ -17,7 +18,7 @@ const CONCEPTS: Record<string, string> = {
 }
 
 const MODEL_NOTES: Record<string, string> = {
-  'thermodynamics': 'The particle motion on screen is illustrative — particle positions are randomised for visual clarity. The Speed Distribution histogram shows the correct analytical Maxwell–Boltzmann distribution for the given temperature and molar mass.',
+  'thermodynamics': 'The particle motion on screen is illustrative — particle positions are randomised for visual clarity. The Speed Distribution histogram bins the simulated particle speeds, showing their distribution at that instant rather than the theoretical Maxwell–Boltzmann curve.',
   'shm': 'The Pendulum tab uses the small-angle approximation. At angles above about 20°, the true period deviates from T = 2π√(L/g).',
   'modern-physics': 'Transition energy calculations use the Bohr model for hydrogen-like atoms. Multi-electron atoms and quantum mechanical corrections are not modelled.',
 }
@@ -86,7 +87,7 @@ export default function TopicReferencePage() {
             <p>{mod.layerDefs.map(l => l.label).join(', ')}</p>
 
             <h3>Tabs</h3>
-            <p>{mod.tabs.map(t => t.id.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase())).join(', ')}</p>
+            <p>{mod.tabs.map(tab => t(tab.labelKey, 'en')).join(', ')}</p>
 
             <h3>Presets</h3>
             <p>{mod.presets.map(p => p.label).join(' · ')}</p>

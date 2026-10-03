@@ -39,14 +39,12 @@ export function ChapterExplorer({ topics }: { topics: Topic[] }) {
           </p>
         </div>
 
-        {/* Chapter tabs */}
-        <div className="flex flex-wrap gap-2 mb-6" role="tablist" aria-label="Topic chapters">
+        {/* Chapter selector */}
+        <div className="flex flex-wrap gap-2 mb-6" role="group" aria-label="Topic chapters">
           {topics.map((topic, i) => (
             <button
               key={topic.slug}
-              role="tab"
-              aria-selected={active === i}
-              aria-controls="chapter-panel"
+              aria-pressed={active === i}
               onClick={() => setActive(i)}
               className={`text-sm px-3 py-1.5 rounded-md font-medium transition-colors ${
                 active === i
@@ -63,8 +61,6 @@ export function ChapterExplorer({ topics }: { topics: Topic[] }) {
         {/* Active chapter panel */}
         {current && (
           <div
-            id="chapter-panel"
-            role="tabpanel"
             className="rounded-xl border border-fb-rule overflow-hidden"
           >
             <div className="flex flex-col sm:flex-row">

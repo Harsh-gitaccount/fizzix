@@ -13,19 +13,33 @@
 `src/app/guide/layout.tsx` — provides:
 - Header with logo, guide nav links, "Back to lab" link
 - Desktop sidebar with guide navigation
+- Mobile hamburger nav with `aria-expanded`/`aria-controls`
 - Footer with logo and tagline
 - Wraps content in `.guide-prose` for typography styling
+
+## Features
+
+- **On this page** — Getting Started and Teacher Guide have `<nav aria-label="On this page">` with anchor links to each section
+- **Print styling** — `@media print` rules in globals.css hide nav/header/footer, adjust typography, and append URLs to internal links
+- **Annotated illustration** — Getting Started includes an inline SVG diagram of the simulation interface layout (tabs, canvas, sliders, layers)
 
 ## Content Sources
 
 All documentation content is derived from the actual codebase:
 
 - **Topic data** (`src/simulations/registry.ts`): module names, slugs, descriptions, class ranges
-- **Parameter lists** (`src/simulations/*/module.ts`): extracted from each module's `params` array with exact ranges and units
-- **Layer lists** (`src/simulations/*/module.ts`): extracted from each module's `layers` array
+- **Parameter lists** (`src/simulations/*/module.ts`): extracted from each module's `paramDefs` array with exact ranges and units
+- **Layer lists** (`src/simulations/*/module.ts`): extracted from each module's `layerDefs` array
+- **Tab names** (`src/lib/i18n.ts`): rendered via `t(tab.labelKey, 'en')` using the i18n dictionary, not string-manipulated IDs
 - **Preset examples** (`src/simulations/*/presets.ts`): representative names from each module's preset list
 - **Offline behavior** (`public/sw.js`): precache strategy and stale-while-revalidate documented accurately
-- **Accessibility features**: derived from actual component implementations (Header.tsx, FieldbookStage.tsx)
+- **Accessibility features**: derived from actual component implementations
+
+## Content Accuracy Notes
+
+- **Speed Distribution histogram** (thermodynamics): bins simulated particle speeds at each frame, not the analytical Maxwell–Boltzmann distribution. Documented as such in both Topic Reference model notes and Teacher Guide.
+- **Reduced motion**: global CSS rule suppresses animation/transition durations. Homepage experiment checks `prefers-reduced-motion` and skips requestAnimationFrame. Lesson-page canvas animations do not check the preference. Documented accurately in both guides.
+- **Optics TIR**: at the critical angle the refracted ray runs along the interface (90° from normal). Total internal reflection occurs above the critical angle. Teacher Guide corrected accordingly.
 
 ## Content Guidelines Applied
 
@@ -45,3 +59,4 @@ Guide typography is handled by `.guide-prose` in `globals.css`:
 - Links: orange (#E8740C) with underline
 - Code: monospace on subtle paper background
 - Lists: standard disc/decimal with comfortable spacing
+- Print: header/footer/nav hidden, link URLs appended, page breaks managed

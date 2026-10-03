@@ -1,7 +1,21 @@
 import { chromium } from 'playwright-core'
+import { existsSync } from 'fs'
 
-const BASE = 'http://localhost:3456'
-const CHROME = '/opt/pw-browsers/chromium-1194/chrome-linux/chrome'
+const BASE = process.env.SCREENSHOT_BASE_URL || 'http://localhost:3456'
+
+const CHROME_CANDIDATES = [
+  process.env.CHROME_PATH,
+  '/opt/pw-browsers/chromium-1194/chrome-linux/chrome',
+  '/usr/bin/chromium-browser',
+  '/usr/bin/chromium',
+  '/usr/bin/google-chrome',
+].filter(Boolean)
+
+const CHROME = CHROME_CANDIDATES.find(p => existsSync(p))
+if (!CHROME) {
+  console.error('No Chromium found. Set CHROME_PATH or install Chromium.')
+  process.exit(1)
+}
 
 const pages = [
   { name: 'homepage', path: '/' },

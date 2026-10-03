@@ -1,6 +1,6 @@
 # Homepage Design — The Fizzix Fieldbook
 
-**Branch:** `claude/brave-ramanujan-s4hhf9`
+**Branch:** `homepage/living-physics-atlas`
 **Concept:** Interactive scientific fieldbook — warm paper aesthetic, open experiment stage
 
 ## Brand
@@ -16,22 +16,18 @@ Fixed-position nav with backdrop blur on warm paper background (`fb-page`). Desk
 ### Experiment Stage (`_components/FieldbookStage.tsx`)
 Open experiment integrated directly into the page — no boxed card. The projectile motion diagram renders on the light paper background with navy ink and orange accent, like a physics textbook figure.
 
-- **Chapter rail** (desktop only): numbered circles along the left edge linking to each topic lesson. Each circle uses the topic's color.
 - **Title area**: mono label "EXPERIMENT 01 — PROJECTILE MOTION", serif heading "Physics, in your hands.", subtitle.
 - **Open SVG diagram**: trajectory path, sampled dots, height/range annotations, launcher, angle arc, animated ball. Navy ink palette on light background.
 - **Instrument strip**: slider control, readouts (range, height, time), Launch/Reset buttons, separated by ruled borders.
 - **Model disclosure**: V₀ = 20 m/s · g = 9.81 m/s² · no drag + link to full simulation.
 
-Physics calculations reused from HeroExperiment: `calcTrajectory(angleDeg)` and `calcPositionAtTime(angleDeg, t)` with V0=20, G=9.81.
+Physics calculations: `calcTrajectory(angleDeg)` and `calcPositionAtTime(angleDeg, t)` with V0=20, G=9.81.
 
-### Learning Journey
-Warm paper background (`fb-paper`). Three numbered steps with connecting vertical line: Change a variable, Observe the result, Understand why. Serif step numbers in orange circles.
+### Discovery Section (`_components/DiscoverySection.tsx`)
+Complementary-angle comparison: 30° and 60° trajectories overlaid in an SVG diagram (WORLD_H=17 to accommodate 60° maxH ≈ 15.3 m). Prediction question with reveal button.
 
-### Fieldbook Chapters (`#chapters`)
-Left-aligned section title "THE FIELDBOOK" / "Six chapters of experiments". 3-column grid (desktop), single column (mobile) of topic cards. Each card:
-- Dark field (`fb-field`) illustration area using existing `TopicIllustrations.tsx` SVGs with chapter number label
-- Light paper info area with topic name, class range badge, description
-- Entire card is a link to the lesson; hover lifts illustration and changes title color
+### Chapter Explorer (`_components/ChapterExplorer.tsx`)
+Topic selector using `role="group"` with `aria-pressed` buttons (not tablist/tab). Six chapter buttons, active panel with illustration and link, compact grid of all topics.
 
 ### Feature Pills
 Centered row: No login required · Hindi & English · Lessons cached offline after first visit · Free forever
@@ -63,12 +59,12 @@ Existing `TopicIllustrations.tsx` SVGs rendered inside dark `fb-field` container
 ## Accessibility
 - Mobile menu: `aria-expanded`, `aria-controls`, Escape closes, focus managed
 - Experiment: `role="img"` with descriptive `aria-label`, slider with full ARIA value attributes
-- `prefers-reduced-motion` honored (animation stops, ball at apex)
-- Chapter rail links have descriptive `aria-label`
+- `prefers-reduced-motion`: global CSS rule suppresses animation/transition durations; homepage experiment skips requestAnimationFrame loop; lesson-page canvas animations do not currently check the preference
+- Chapter explorer: `role="group"` with `aria-pressed` buttons
 - All interactive elements keyboard-accessible
 
 ## Offline Behavior
-Unchanged from previous revision. Service worker precaches `/`, `/manifest.json`, and icons. Lesson pages cached after first visit. Homepage says "Lessons cached offline after first visit."
+Unchanged from previous revision. Service worker registered inside SimulationPage (not the homepage). Lesson pages cached after first visit. Homepage says "Lessons cached offline after first visit."
 
 ## Safety Constraints
 - No fabricated statistics, testimonials, or awards
@@ -76,6 +72,6 @@ Unchanged from previous revision. Service worker precaches `/`, `/manifest.json`
 - No chatbot UI, dependencies, or placeholder
 - No scroll hijacking, no mandatory intro
 - Navigation never delayed by animation
-- `prefers-reduced-motion` honored
+- `prefers-reduced-motion` honored (CSS global rule + homepage experiment)
 - All 6 lesson links verified working (HTTP 200)
 - Offline claim qualified accurately

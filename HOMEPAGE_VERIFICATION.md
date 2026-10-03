@@ -1,7 +1,7 @@
 # Homepage Verification Report
 
-**Branch:** `claude/brave-ramanujan-s4hhf9`
-**Revision:** Fieldbook redesign
+**Branch:** `homepage/living-physics-atlas`
+**Revision:** Fieldbook revision — corrections and completions
 **Date:** 2026-10-03
 
 ## Test Environment
@@ -36,42 +36,40 @@
 | Teacher Guide | `/guide/teachers` | 200 |
 | Topic Reference | `/guide/topics` | 200 |
 
-## Horizontal Overflow
+## Focused Checks
 
-| Viewport | bodyScrollWidth > viewportWidth | Status |
-|----------|-------------------------------|--------|
-| 1440px | No | PASS |
-| 768px | No | PASS |
-| 390px | No | PASS |
-| 320px | No | PASS |
+| Check | Detail | Result |
+|-------|--------|--------|
+| chapter-aria | `role="tab"` count=0, `aria-pressed` count=6 | PASS |
+| diagram-bounds | SVG viewBox height=320, WORLD_H=17 (60° maxH≈15.3m fits) | PASS |
+| guide-navigation | Getting Started page loads correctly | PASS |
+| on-this-page-links | `<nav aria-label="On this page">` present | PASS |
+| tab-names-i18n | "Total Internal Reflection" present, raw "Tir" absent | PASS |
 
-## Accessibility
+## Documentation Corrections Verified
 
-### Mobile Menu Keyboard
-- Button: `aria-expanded`, `aria-controls="mobile-menu"`
-- Escape key closes menu: **Verified** (Playwright)
-- Focus moves to first link on open: **Verified**
-- Focus returns to toggle on close: **Verified**
-
-### Hero Experiment
-- SVG: `role="img"` with descriptive `aria-label`
-- Slider: `aria-valuemin`, `aria-valuemax`, `aria-valuenow`, `aria-valuetext`
-- Arrow keys adjust angle (step ±1)
-- `prefers-reduced-motion`: animation disabled, ball shown at trajectory apex
-
-### Chapter Rail
-- Each numbered circle: `aria-label` with topic name and class range
-- Links navigate to lesson pages
+| Claim | Before | After | Verified |
+|-------|--------|-------|----------|
+| Speed Distribution | "shows the correct analytical Maxwell–Boltzmann distribution" | "bins the simulated particle speeds" | Yes — matches thermoRenderer.ts and Scene3DGas.tsx |
+| Reduced motion | "simulation animations show static positions" | "Lesson-page canvas animations do not currently check the preference" | Yes — only CSS global rule + homepage FieldbookStage check |
+| Tab names | `t.id.replace(/-/g, ' ')` title-case conversion | `t(tab.labelKey, 'en')` i18n lookup | Yes — "Total Internal Reflection" not "Tir" |
+| Optics TIR | "the refracted ray vanishes" at critical angle | "refracted ray runs along the interface" at critical angle, TIR above it | Yes — physically correct |
 
 ## Screenshot Evidence
 
 Saved to `e2e/results/evidence/`:
-- `fieldbook-desktop-full.png` — full-page at 1440×900
-- `fieldbook-desktop-chapters.png` — chapters section at 1440×900
-- `fieldbook-mobile-full.png` — full-page at 390×844
-- `fieldbook-mobile-menu.png` — mobile menu expanded
-- `fieldbook-guide-desktop.png` — guide page at 1440×900
-- `fieldbook-guide-mobile.png` — guide page at 390×844
+
+| File | Description |
+|------|-------------|
+| `desktop-homepage.png` | Full homepage at 1440×900 |
+| `desktop-chapter-selection.png` | Chapter explorer with third topic selected |
+| `desktop-teacher-guide.png` | Full Teacher Guide at 1440×900 |
+| `desktop-topic-reference.png` | Full Topic Reference at 1440×900 |
+| `desktop-getting-started.png` | Full Getting Started at 1440×900 |
+| `mobile-homepage.png` | Full homepage at 390×844 |
+| `mobile-teacher-guide.png` | Full Teacher Guide at 390×844 |
+| `mobile-topic-reference.png` | Full Topic Reference at 390×844 |
+| `mobile-guide-nav-open.png` | Guide page with mobile nav open |
 
 ## Console Errors
 Only `ERR_TUNNEL_CONNECTION_FAILED` from proxy environment (analytics hosts blocked). No application errors.
@@ -81,7 +79,7 @@ Only `ERR_TUNNEL_CONNECTION_FAILED` from proxy environment (analytics hosts bloc
 - No dead links or placeholder actions
 - No scroll hijacking or mandatory intro
 - Navigation never delayed by animation
-- `prefers-reduced-motion` honored
+- `prefers-reduced-motion` honored (CSS global + homepage experiment)
 - All lesson links verified working
 - Offline claim qualified: "Lessons cached offline after first visit"
 - No chatbot UI or dependencies

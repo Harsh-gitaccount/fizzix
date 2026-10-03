@@ -9,6 +9,7 @@ import { captureScreenshot, copyShareURL } from '@/lib/share'
 import { t } from '@/lib/i18n'
 import { trackEvent } from '@/lib/analytics'
 import ThemeToggle from '@/components/ui/ThemeToggle'
+import BetaBadge from '@/components/ui/BetaBadge'
 import { useTheme } from '@/hooks/useTheme'
 
 export default function TopBar() {
@@ -217,13 +218,7 @@ export default function TopBar() {
           )}
         </div>
 
-        <a
-          href="mailto:harshchaudhary.tech@gmail.com?subject=Fizzix%20Beta%20Feedback"
-          className="px-1.5 md:px-2 py-1 bg-amber-50 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400 rounded font-semibold text-[10px] md:text-xs hover:bg-amber-100 dark:hover:bg-amber-900/50 transition-colors"
-          title="Fizzix is in beta - tap to send feedback"
-        >
-          Beta
-        </a>
+        <BetaBadge />
       </div>
     </div>
   )

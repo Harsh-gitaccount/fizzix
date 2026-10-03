@@ -4,6 +4,7 @@ import { useState, useRef, useEffect, useCallback } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import ThemeToggle from '@/components/ui/ThemeToggle'
+import BetaBadge from '@/components/ui/BetaBadge'
 
 interface HeaderModule {
   slug: string
@@ -33,8 +34,8 @@ export function Header({ modules }: { modules: HeaderModule[] }) {
   }, [open, close])
 
   return (
-    <header className="fixed top-0 left-0 right-0 z-50 border-b border-fb-rule/60">
-      <div className="backdrop-blur-xl bg-fb-page/90 supports-[backdrop-filter]:bg-fb-page/80">
+    <header className="fixed top-0 left-0 right-0 z-50 border-b border-fb-rule/60 dark:border-slate-800">
+      <div className="backdrop-blur-xl bg-fb-page/90 dark:bg-slate-950/90 supports-[backdrop-filter]:bg-fb-page/80 dark:supports-[backdrop-filter]:bg-slate-950/80">
         <nav className="max-w-6xl mx-auto px-4 sm:px-6 h-14 flex items-center justify-between">
           <div className="flex items-center gap-2 shrink-0">
             <Link href="/" className="flex items-center gap-2" aria-label="Fizzix home">
@@ -43,30 +44,24 @@ export function Header({ modules }: { modules: HeaderModule[] }) {
                 alt="Fizzix"
                 width={140}
                 height={40}
-                className="h-9 w-auto"
+                className="h-9 w-auto dark:invert"
                 priority
               />
             </Link>
-            <a
-              href="mailto:harshchaudhary.tech@gmail.com?subject=Fizzix%20Beta%20Feedback"
-              className="px-1.5 py-0.5 bg-amber-50 text-amber-700 rounded text-[10px] font-semibold hover:bg-amber-100 transition-colors"
-              title="Fizzix is in beta - click to send feedback"
-            >
-              Beta
-            </a>
+            <BetaBadge />
           </div>
 
           <div className="hidden md:flex items-center gap-7">
-            <a href="#chapters" className="text-[13px] text-fb-muted hover:text-fb-ink transition-colors">
+            <a href="#chapters" className="text-[13px] text-fb-muted dark:text-gray-400 hover:text-fb-ink dark:hover:text-gray-200 transition-colors">
               Explore
             </a>
-            <Link href="/guide/teachers" className="text-[13px] text-fb-muted hover:text-fb-ink transition-colors">
+            <Link href="/guide/teachers" className="text-[13px] text-fb-muted dark:text-gray-400 hover:text-fb-ink dark:hover:text-gray-200 transition-colors">
               For teachers
             </Link>
-            <Link href="/guide" className="text-[13px] text-fb-muted hover:text-fb-ink transition-colors">
+            <Link href="/guide" className="text-[13px] text-fb-muted dark:text-gray-400 hover:text-fb-ink dark:hover:text-gray-200 transition-colors">
               Guide
             </Link>
-            <ThemeToggle className="w-8 h-8 flex items-center justify-center rounded hover:bg-fb-rule/60 text-fb-muted" />
+            <ThemeToggle className="w-8 h-8 flex items-center justify-center rounded hover:bg-fb-rule/60 dark:hover:bg-slate-800 text-fb-muted dark:text-gray-400" />
             <a
               href="#experiment"
               className="text-[13px] font-semibold text-white bg-fb-accent hover:bg-fb-accent-hover transition-colors px-4 py-1.5 rounded-full"
@@ -78,7 +73,7 @@ export function Header({ modules }: { modules: HeaderModule[] }) {
           <button
             ref={toggleRef}
             onClick={() => open ? close() : setOpen(true)}
-            className="md:hidden w-10 h-10 flex items-center justify-center text-fb-muted"
+            className="md:hidden w-10 h-10 flex items-center justify-center text-fb-muted dark:text-gray-400"
             aria-label={open ? 'Close menu' : 'Open menu'}
             aria-expanded={open}
             aria-controls="mobile-menu"
@@ -94,23 +89,23 @@ export function Header({ modules }: { modules: HeaderModule[] }) {
         </nav>
 
         {open && (
-          <div id="mobile-menu" ref={menuRef} className="md:hidden border-t border-fb-rule/60 px-4 pb-4 pt-2 bg-fb-page">
-            <a href="#experiment" onClick={close} className="block py-2.5 text-sm text-fb-ink hover:text-fb-accent">
+          <div id="mobile-menu" ref={menuRef} className="md:hidden border-t border-fb-rule/60 dark:border-slate-800 px-4 pb-4 pt-2 bg-fb-page dark:bg-slate-950">
+            <a href="#experiment" onClick={close} className="block py-2.5 text-sm text-fb-ink dark:text-gray-100 hover:text-fb-accent">
               Start experimenting
             </a>
-            <a href="#chapters" onClick={close} className="block py-2.5 text-sm text-fb-muted hover:text-fb-ink">
+            <a href="#chapters" onClick={close} className="block py-2.5 text-sm text-fb-muted dark:text-gray-400 hover:text-fb-ink dark:hover:text-gray-200">
               Explore topics
             </a>
-            <Link href="/guide/teachers" onClick={close} className="block py-2.5 text-sm text-fb-muted hover:text-fb-ink">
+            <Link href="/guide/teachers" onClick={close} className="block py-2.5 text-sm text-fb-muted dark:text-gray-400 hover:text-fb-ink dark:hover:text-gray-200">
               For teachers
             </Link>
-            <Link href="/guide" onClick={close} className="block py-2.5 text-sm text-fb-muted hover:text-fb-ink">
+            <Link href="/guide" onClick={close} className="block py-2.5 text-sm text-fb-muted dark:text-gray-400 hover:text-fb-ink dark:hover:text-gray-200">
               Guide
             </Link>
-            <div className="mt-3 pt-3 border-t border-fb-rule/60">
-              <div className="text-[10px] font-bold text-fb-dim uppercase tracking-[0.15em] mb-1">Subjects</div>
+            <div className="mt-3 pt-3 border-t border-fb-rule/60 dark:border-slate-800">
+              <div className="text-[10px] font-bold text-fb-dim dark:text-gray-500 uppercase tracking-[0.15em] mb-1">Subjects</div>
               {modules.map(mod => (
-                <Link key={mod.slug} href={`/${mod.slug}`} onClick={close} className="block py-2 text-sm text-fb-muted hover:text-fb-ink">
+                <Link key={mod.slug} href={`/${mod.slug}`} onClick={close} className="block py-2 text-sm text-fb-muted dark:text-gray-400 hover:text-fb-ink dark:hover:text-gray-200">
                   {mod.name}
                 </Link>
               ))}

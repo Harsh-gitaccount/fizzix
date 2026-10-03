@@ -11,8 +11,7 @@
 /test-results
 
 # e2e disposable outputs (screenshots regenerated on each run)
-/e2e/results/redesign
-/e2e/results/homepage
+/e2e/results/
 
 # next.js
 /.next/

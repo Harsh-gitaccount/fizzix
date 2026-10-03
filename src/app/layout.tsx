@@ -1,5 +1,13 @@
 import type { Metadata, Viewport } from 'next'
+import { Source_Serif_4 } from 'next/font/google'
 import './globals.css'
+
+const serif = Source_Serif_4({
+  subsets: ['latin'],
+  weight: ['400', '700', '900'],
+  display: 'swap',
+  variable: '--font-serif',
+})
 
 export const metadata: Metadata = {
   metadataBase: new URL('https://fizzix.app'),
@@ -29,7 +37,6 @@ export const viewport: Viewport = {
   themeColor: '#2563eb',
   width: 'device-width',
   initialScale: 1,
-  maximumScale: 1,
 }
 
 export default function RootLayout({
@@ -54,7 +61,7 @@ export default function RootLayout({
           }}
         />
       </head>
-      <body className="antialiased">
+      <body className={`antialiased ${serif.variable}`}>
         <noscript>
           <div style={{ padding: '2rem', textAlign: 'center', fontFamily: 'system-ui' }}>
             <h1>Fizzix requires JavaScript</h1>

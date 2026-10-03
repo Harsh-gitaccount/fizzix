@@ -21,7 +21,7 @@ import {
   modernStateAtTime,
   modernDerivedValues,
   modernTimeOfFlight,
-  h, eV, c, me, a0, ln2,
+  h, eV, c, me, ln2,
 } from '@/lib/physics/modernPhysics'
 
 // ===== PHOTOELECTRIC EFFECT (NCERT Class 12 Ch.11) =====

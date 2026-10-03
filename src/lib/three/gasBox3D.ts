@@ -1,4 +1,5 @@
 import * as THREE from 'three'
+import { effectiveVolume, idealGasPressure } from '@/lib/physics/thermodynamics'
 
 const BOX_SIZE = 5
 
@@ -83,16 +84,10 @@ export function createGasBox3D(setup: GasBox3DSetup) {
 
   startWorker()
 
-  let prevBx = 0
-  let prevBy = 0
-  let prevBz = 0
-
   function buildBox(bx: number, by: number, bz: number, isDark: boolean, thermoType: number) {
     if (boxHelper) { scene.remove(boxHelper); boxHelper.geometry.dispose(); (boxHelper.material as THREE.Material).dispose(); boxHelper = null }
     if (pistonMesh) { scene.remove(pistonMesh); pistonMesh.geometry.dispose(); (pistonMesh.material as THREE.Material).dispose(); pistonMesh = null }
     if (wallsMesh) { scene.remove(wallsMesh); wallsMesh.geometry.dispose(); (wallsMesh.material as THREE.Material).dispose(); wallsMesh = null }
-
-    prevBx = bx; prevBy = by; prevBz = bz
 
     const edgeColor = isDark ? 0x94a3b8 : 0x6b7280
     const boxGeo = new THREE.BoxGeometry(bx, by, bz)
@@ -227,10 +222,8 @@ export function createGasBox3D(setup: GasBox3DSetup) {
       pressureArrows = null
     }
     if (showPressure) {
-      const n = params.moles ?? 1
-      const T = params.temperature ?? 300
-      const V = params.volume ?? 22.4
-      const P_kPa = (n * 8.314 * T) / (V / 1000) / 1000
+      const V_eff = effectiveVolume(params)
+      const P_kPa = idealGasPressure(params.moles ?? 1, params.temperature ?? 300, V_eff) / 1000
       const arrowLen = Math.min(1.5, Math.max(0.3, P_kPa / 150))
 
       pressureArrows = new THREE.Group()
@@ -292,10 +285,34 @@ export function createGasBox3D(setup: GasBox3DSetup) {
     if (workerRef) { workerRef.terminate(); workerRef = null }
   }
 
+  function reset(params?: Record<string, number>) {
+    if (workerReady && workerRef) {
+      workerRef.postMessage({ type: 'reset', params: params ?? null })
+    }
+    latestState = null
+    stateChanged = false
+    prevHash = ''
+  }
+
+  function getParticleSpeeds(): number[] {
+    if (!latestState) return []
+    const numParticles = latestState[0]
+    const speeds: number[] = []
+    for (let i = 0; i < numParticles; i++) {
+      const off = 2 + i * 6
+      if (latestState[off + 5] < 0.5) {
+        speeds.push(latestState[off + 3])
+      }
+    }
+    return speeds
+  }
+
   return {
     update,
     step,
+    reset,
     dispose,
+    getParticleSpeeds,
     get hasNewState() { return stateChanged },
     consumeNewState() { stateChanged = false },
   }

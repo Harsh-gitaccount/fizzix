@@ -261,12 +261,12 @@ describe('lensPower golden values', () => {
     expect(lensPower(50)).toBeCloseTo(2, 3)
   })
 
-  it('f = 0 returns 0', () => {
-    expect(lensPower(0)).toBe(0)
+  it('f = 0 returns null', () => {
+    expect(lensPower(0)).toBeNull()
   })
 
-  it('NaN returns 0', () => {
-    expect(lensPower(NaN)).toBe(0)
+  it('NaN returns null', () => {
+    expect(lensPower(NaN)).toBeNull()
   })
 })
 

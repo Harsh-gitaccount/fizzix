@@ -13,7 +13,7 @@ export default function PresetStrip() {
   const topic = useTopic()
   const [activePreset, setActivePreset] = useState<string | null>(null)
   const setParams = useSimulationStore((s) => s.setParams)
-  const setParam = useSimulationStore((s) => s.setParam)
+
   const clearGhostTrails = useSimulationStore((s) => s.clearGhostTrails)
   const addGhostTrail = useSimulationStore((s) => s.addGhostTrail)
   const setCompareMode = useSimulationStore((s) => s.setCompareMode)
@@ -85,6 +85,7 @@ export default function PresetStrip() {
           key={preset.id}
           onClick={() => loadPreset(preset.id)}
           title={preset.hookQuestion}
+          aria-pressed={activePreset === preset.id}
           className={`preset-pill shrink-0 px-3 py-1 text-[11px] font-semibold rounded-full border transition-all ${
             activePreset === preset.id
               ? 'bg-blue-600 text-white border-blue-600'

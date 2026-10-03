@@ -1,16 +1,15 @@
 import type { CanvasBounds, GhostTrail, CanvasBackground } from '@/lib/physics/types'
-import { t, type Lang } from '@/lib/i18n'
+import { type Lang } from '@/lib/i18n'
 import {
   photonEnergy_eV,
   maxKE_eV,
   bohrEnergy,
-  bohrRadiusPm,
+
   transitionEnergy,
   transitionWavelength,
   decayConstant,
   nucleiRemaining,
-  thresholdWavelength,
-  WORK_FUNCTIONS,
+
 } from '@/lib/physics/modernPhysics'
 import type { RulerState, ProtractorState } from '@/store/toolStore'
 import { drawRuler, drawProtractor } from './measurementTools'

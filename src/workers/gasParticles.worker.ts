@@ -1,6 +1,3 @@
-const R = 8.314
-const k_B = 1.38e-23
-
 interface Particle {
   x: number; y: number; z: number
   vx: number; vy: number; vz: number
@@ -216,5 +213,15 @@ self.onmessage = (e: MessageEvent) => {
     handleStep(params, dt)
     const data = serializeState()
     ;(self as unknown as Worker).postMessage({ type: 'state', data }, [data.buffer])
+  } else if (type === 'reset') {
+    particles = []
+    brownianTrace = []
+    lastHash = ''
+    lastTemp = 0
+    if (params) {
+      handleInit(params)
+      const data = serializeState()
+      ;(self as unknown as Worker).postMessage({ type: 'state', data }, [data.buffer])
+    }
   }
 }

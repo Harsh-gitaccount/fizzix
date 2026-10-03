@@ -1,5 +1,6 @@
 'use client'
 
+import { useCallback } from 'react'
 import { useUIStore } from '@/store/uiStore'
 import { useSimulationStore } from '@/store/simulationStore'
 import { usePlaybackStore } from '@/store/playbackStore'
@@ -11,13 +12,13 @@ export default function TabBar() {
   const activeTab = useUIStore((s) => s.activeTab)
   const setActiveTab = useUIStore((s) => s.setActiveTab)
   const lang = useUIStore((s) => s.lang)
-  const setParam = useSimulationStore((s) => s.setParam)
+
   const setParams = useSimulationStore((s) => s.setParams)
   const params = useSimulationStore((s) => s.params)
   const setCurrentTime = usePlaybackStore((s) => s.setCurrentTime)
   const setPlaybackState = usePlaybackStore((s) => s.setPlaybackState)
 
-  const handleTabChange = (tabId: string) => {
+  const handleTabChange = useCallback((tabId: string) => {
     setActiveTab(tabId)
     setCurrentTime(0)
     setPlaybackState('ready')
@@ -39,7 +40,7 @@ export default function TabBar() {
     if (topic.slug === 'optics') {
       const typeMap: Record<string, number> = { 'refraction': 0, 'lenses': 1, 'tir': 2, 'free-play': 3 }
       const opticsType = typeMap[tabId] ?? 0
-      const tirDefaults = opticsType === 2 ? { n1: 1.5, n2: 1.0, theta1: 30 } : {}
+      const tirDefaults: Record<string, number> = opticsType === 2 ? { n1: 1.5, n2: 1.0, theta1: 30 } : {}
       setParams({ ...topic.defaultParams, ...params, ...tirDefaults, opticsType })
     }
 
@@ -54,15 +55,34 @@ export default function TabBar() {
       const modernType = typeMap[tabId] ?? 0
       setParams({ ...topic.defaultParams, ...params, modernType })
     }
-  }
+  }, [topic.slug, topic.defaultParams, params, setActiveTab, setCurrentTime, setPlaybackState, setParams])
+
+  const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
+    const tabs = topic.tabs
+    const idx = tabs.findIndex((tab) => tab.id === activeTab)
+    let next = -1
+    if (e.key === 'ArrowRight') next = (idx + 1) % tabs.length
+    else if (e.key === 'ArrowLeft') next = (idx - 1 + tabs.length) % tabs.length
+    else if (e.key === 'Home') next = 0
+    else if (e.key === 'End') next = tabs.length - 1
+    if (next >= 0) {
+      e.preventDefault()
+      handleTabChange(tabs[next].id)
+      const el = document.getElementById(`tab-${tabs[next].id}`)
+      el?.focus()
+    }
+  }, [topic.tabs, activeTab, handleTabChange])
 
   return (
-    <div className="flex border-b border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-900 shrink-0">
+    <div role="tablist" className="flex border-b border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-900 shrink-0" onKeyDown={handleKeyDown}>
       {topic.tabs.map((tab) => (
         <button
           key={tab.id}
           role="tab"
+          id={`tab-${tab.id}`}
           aria-selected={activeTab === tab.id}
+          aria-controls="simulation-viewport"
+          tabIndex={activeTab === tab.id ? 0 : -1}
           onClick={() => handleTabChange(tab.id)}
           className={`px-4 py-2 text-xs font-bold border-b-2 transition-colors ${
             activeTab === tab.id

@@ -12,7 +12,7 @@ function layerBtn(page: import('@playwright/test').Page, name: string) {
 
 test.describe('Teacher Golden Path', () => {
   test.beforeEach(async ({ page }) => {
-    await page.goto('/')
+    await page.goto('/projectile-motion')
     await page.waitForSelector('canvas', { timeout: 10000 })
   })
 
@@ -83,7 +83,7 @@ test.describe('Teacher Golden Path', () => {
 
 test.describe('Canvas Visual Regression', () => {
   test.beforeEach(async ({ page }) => {
-    await page.goto('/')
+    await page.goto('/projectile-motion')
     await page.waitForSelector('canvas', { timeout: 10000 })
   })
 

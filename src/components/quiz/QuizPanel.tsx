@@ -198,8 +198,8 @@ export default function QuizPanel() {
           <span className="text-xs font-bold text-gray-400 uppercase tracking-wider">
             {t('quiz.question', lang)} {currentIndex + 1} {t('quiz.of', lang)} {sessionQuestions.length}
           </span>
-          <span className={`px-2 py-0.5 text-[10px] font-bold rounded-full ${DIFFICULTY_COLORS[difficulty]}`}>
-            {lang === 'hi' ? (difficulty === 'easy' ? 'आसान' : difficulty === 'medium' ? 'मध्यम' : 'कठिन') : difficulty.charAt(0).toUpperCase() + difficulty.slice(1)}
+          <span className={`px-2 py-0.5 text-[10px] font-bold rounded-full ${DIFFICULTY_COLORS[currentQuestion?.difficulty ?? difficulty]}`}>
+            {(() => { const d = currentQuestion?.difficulty ?? difficulty; return lang === 'hi' ? (d === 'easy' ? 'आसान' : d === 'medium' ? 'मध्यम' : 'कठिन') : d.charAt(0).toUpperCase() + d.slice(1) })()}
           </span>
         </div>
         {/* Progress bar */}
@@ -218,7 +218,27 @@ export default function QuizPanel() {
         </p>
 
         {/* Options */}
-        <div className="space-y-2">
+        <div
+          role="radiogroup"
+          aria-label="Answer options"
+          className="space-y-2"
+          onKeyDown={(e) => {
+            if (showResult) return
+            const count = currentQuestion.options.length
+            let next = -1
+            if (e.key === 'ArrowDown' || e.key === 'ArrowRight') {
+              next = selected === null ? 0 : (selected + 1) % count
+            } else if (e.key === 'ArrowUp' || e.key === 'ArrowLeft') {
+              next = selected === null ? count - 1 : (selected - 1 + count) % count
+            }
+            if (next >= 0) {
+              e.preventDefault()
+              handleSelect(next)
+              const el = document.getElementById(`quiz-option-${next}`)
+              el?.focus()
+            }
+          }}
+        >
           {currentQuestion.options.map((opt, idx) => {
             let optClass = 'border-gray-200 dark:border-slate-600 bg-gray-50 dark:bg-slate-800'
             if (showResult) {
@@ -234,6 +254,10 @@ export default function QuizPanel() {
             return (
               <button
                 key={idx}
+                id={`quiz-option-${idx}`}
+                role="radio"
+                aria-checked={selected === idx}
+                tabIndex={selected === idx || (selected === null && idx === 0) ? 0 : -1}
                 onClick={() => handleSelect(idx)}
                 disabled={showResult}
                 className={`w-full flex items-start gap-3 p-3 rounded-lg border-2 transition-colors text-left ${optClass} ${

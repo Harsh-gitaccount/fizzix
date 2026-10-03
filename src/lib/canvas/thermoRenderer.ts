@@ -1,5 +1,5 @@
-import type { CanvasBounds, CanvasBackground } from '@/lib/physics/types'
-import { t, type Lang } from '@/lib/i18n'
+import type { CanvasBounds, CanvasBackground, GhostTrail } from '@/lib/physics/types'
+import { type Lang } from '@/lib/i18n'
 import {
   type GasParticle,
   initParticles,
@@ -7,6 +7,7 @@ import {
   stepParticles,
   rescaleParticleSpeeds,
   effectiveVolume,
+  idealGasPressure,
 } from '@/lib/physics/thermodynamics'
 import type { RulerState, ProtractorState } from '@/store/toolStore'
 import { drawRuler, drawProtractor } from './measurementTools'
@@ -18,7 +19,7 @@ interface ThermoRenderOptions {
   activeLayers: Record<string, boolean>
   isDark: boolean
   background: CanvasBackground
-  ghostTrails: never[]
+  ghostTrails: GhostTrail[]
   compareMode: boolean
   paramsB?: Record<string, number>
   dragHandles?: { angleArc: boolean; speedArrow: boolean }
@@ -151,7 +152,7 @@ function drawContainer(
   cw: number, ch: number,
   isDark: boolean,
   thermoType: number,
-  pistonFrac: number,
+  _pistonFrac: number,
 ) {
   ctx.fillStyle = isDark ? C.containerFillDark : C.containerFill
   ctx.fillRect(ox, oy, cw, ch)
@@ -287,6 +288,13 @@ function drawSpeedHistogram(
     ctx.fillStyle = speedToColor(ratio * maxSpeed, maxSpeed)
     ctx.fillRect(bx, by, barW, barH)
   }
+
+  ctx.font = '8px system-ui'
+  ctx.fillStyle = isDark ? '#9CA3AF' : '#6B7280'
+  ctx.textAlign = 'right'
+  ctx.fillText(lang === 'hi' ? 'चाल →' : 'Speed →', x + w, y + h + 10)
+  ctx.textAlign = 'left'
+  ctx.fillText('N', x - pad + 1, y + 4)
 }
 
 function drawPressureArrows(
@@ -483,7 +491,8 @@ export function renderThermoFrame(
   drawParticles(ctx, ox, oy, showSpeedColors, isDark)
 
   if (options.activeLayers.pressure) {
-    const P_kPa = (params.moles ?? 1) * 8.314 * (params.temperature ?? 300) / ((params.volume ?? 22.4) / 1000) / 1000
+    const V_eff = effectiveVolume(params)
+    const P_kPa = idealGasPressure(params.moles ?? 1, params.temperature ?? 300, V_eff) / 1000
     drawPressureArrows(ctx, ox, oy, containerW, containerH, P_kPa)
   }
 
@@ -497,8 +506,10 @@ export function renderThermoFrame(
   drawLegend(ctx, cw, isDark, showSpeedColors, thermoType, lang)
 
   // Measurement tools
-  if (options.tools?.ruler) drawRuler(ctx, options.tools.ruler, { xMin: 0, xMax: cw, yMin: 0, yMax: ch, scale: 1 })
-  if (options.tools?.protractor) drawProtractor(ctx, options.tools.protractor, { xMin: 0, xMax: cw, yMin: 0, yMax: ch, scale: 1 })
+  const identityX = (x: number) => x
+  const identityY = (y: number) => y
+  if (options.tools?.ruler) drawRuler(ctx, options.tools.ruler, identityX, identityY, 1, isDark)
+  if (options.tools?.protractor) drawProtractor(ctx, options.tools.protractor, identityX, identityY, isDark)
 
   ctx.restore()
 }

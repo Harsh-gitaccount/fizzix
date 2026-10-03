@@ -78,7 +78,7 @@ export function createLongitudinalWave(setup: Scene3DSetup): ReturnType<Scene3DB
     const damping = params.damping ?? 0
 
     const omega = Math.sqrt(k / mass)
-    const waveSpeed = 2.0
+    const waveSpeed = SPACING * Math.sqrt(k / mass)
     const waveK = omega / waveSpeed
 
     const dampFactor = damping > 0 ? Math.exp(-damping * currentTime * 0.3) : 1

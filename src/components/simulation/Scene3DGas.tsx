@@ -7,7 +7,7 @@ import { useSimulationStore } from '@/store/simulationStore'
 import { useUIStore } from '@/store/uiStore'
 import { useTopic } from '@/simulations/TopicContext'
 import { createGasBox3D } from '@/lib/three/gasBox3D'
-import { t } from '@/lib/i18n'
+
 import { effectiveVolume } from '@/lib/physics/thermodynamics'
 
 const GAS_NAMES: Record<number, string> = {
@@ -58,7 +58,7 @@ export default function Scene3DGas() {
     const container = containerRef.current
     if (!container) return
 
-    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true })
+    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, preserveDrawingBuffer: true })
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
     renderer.setSize(container.clientWidth, container.clientHeight)
     container.appendChild(renderer.domElement)
@@ -93,12 +93,22 @@ export default function Scene3DGas() {
     renderer.render(scene, camera)
 
     lastWallRef.current = performance.now()
+    let prevPlayState = usePlaybackStore.getState().playbackState
 
     const animate = () => {
       rafRef.current = requestAnimationFrame(animate)
 
       const playState = usePlaybackStore.getState().playbackState
       let needsGLRender = false
+
+      if (prevPlayState !== 'ready' && playState === 'ready') {
+        const p = useSimulationStore.getState().params
+        builder.reset(p)
+        const l = useUIStore.getState().activeLayers
+        builder.update(p, isDark, l)
+        needsGLRender = true
+      }
+      prevPlayState = playState
 
       if (playState === 'playing') {
         const now = performance.now()
@@ -119,7 +129,7 @@ export default function Scene3DGas() {
 
         const p = useSimulationStore.getState().params
         const l = useUIStore.getState().activeLayers
-        builder.step(p, deltaReal)
+        builder.step(p, deltaReal * speed)
         builder.update(p, isDark, l)
         needsGLRender = true
       } else {
@@ -214,6 +224,147 @@ export default function Scene3DGas() {
     cameraDirtyRef.current = true
   }, [positionCamera])
 
+  const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
+    const ROTATE_STEP = 0.1
+    const ZOOM_STEP = 1
+    let handled = false
+
+    if (e.key === 'ArrowLeft') {
+      cameraAngleRef.current.theta += ROTATE_STEP
+      handled = true
+    } else if (e.key === 'ArrowRight') {
+      cameraAngleRef.current.theta -= ROTATE_STEP
+      handled = true
+    } else if (e.key === 'ArrowUp') {
+      cameraAngleRef.current.phi = Math.max(0.1, cameraAngleRef.current.phi - ROTATE_STEP)
+      handled = true
+    } else if (e.key === 'ArrowDown') {
+      cameraAngleRef.current.phi = Math.min(Math.PI - 0.1, cameraAngleRef.current.phi + ROTATE_STEP)
+      handled = true
+    } else if (e.key === '+' || e.key === '=') {
+      cameraAngleRef.current.distance = Math.max(4, cameraAngleRef.current.distance - ZOOM_STEP)
+      handled = true
+    } else if (e.key === '-') {
+      cameraAngleRef.current.distance = Math.min(30, cameraAngleRef.current.distance + ZOOM_STEP)
+      handled = true
+    }
+
+    if (handled) {
+      e.preventDefault()
+      e.stopPropagation()
+      positionCamera()
+      cameraDirtyRef.current = true
+    }
+  }, [positionCamera])
+
+  const histCanvasRef = useRef<HTMLCanvasElement>(null)
+  const showHistogram = activeLayers.histogram === true
+
+  useEffect(() => {
+    if (!showHistogram) return
+    const canvas = histCanvasRef.current
+    const builder = builderRef.current
+    if (!canvas || !builder) return
+
+    let running = true
+    const draw = () => {
+      if (!running) return
+      const ctx = canvas.getContext('2d')
+      if (!ctx) return
+
+      const dpr = window.devicePixelRatio || 1
+      const w = 180
+      const h = 120
+      canvas.width = w * dpr
+      canvas.height = h * dpr
+      canvas.style.width = `${w}px`
+      canvas.style.height = `${h}px`
+      ctx.scale(dpr, dpr)
+
+      ctx.clearRect(0, 0, w, h)
+      ctx.fillStyle = isDark ? 'rgba(15,23,42,0.9)' : 'rgba(255,255,255,0.92)'
+      ctx.beginPath()
+      ctx.roundRect(0, 0, w, h, 6)
+      ctx.fill()
+      ctx.strokeStyle = isDark ? '#334155' : '#E5E7EB'
+      ctx.lineWidth = 1
+      ctx.stroke()
+
+      ctx.font = 'bold 10px system-ui'
+      ctx.fillStyle = isDark ? '#D1D5DB' : '#374151'
+      ctx.textAlign = 'left'
+      ctx.fillText(lang === 'hi' ? 'चाल वितरण (सिम्. इकाई)' : 'Speed Distribution (sim. units)', 8, 16)
+
+      const speeds = builder.getParticleSpeeds()
+      if (speeds.length < 5) {
+        requestAnimationFrame(draw)
+        return
+      }
+
+      const maxSpeed = Math.max(...speeds) * 1.1
+      const bins = 12
+      const counts = new Array(bins).fill(0) as number[]
+      for (const s of speeds) {
+        const bin = Math.min(Math.floor((s / maxSpeed) * bins), bins - 1)
+        counts[bin]++
+      }
+      const maxCount = Math.max(...counts, 1)
+
+      const chartX = 22
+      const chartY = 24
+      const chartW = w - 30
+      const chartH = h - 42
+      const barW = chartW / bins - 1
+
+      // Y-axis label
+      ctx.save()
+      ctx.font = '9px system-ui'
+      ctx.fillStyle = isDark ? '#9CA3AF' : '#6B7280'
+      ctx.textAlign = 'center'
+      ctx.translate(8, chartY + chartH / 2)
+      ctx.rotate(-Math.PI / 2)
+      ctx.fillText('N', 0, 0)
+      ctx.restore()
+
+      // Y-axis tick marks
+      ctx.font = '7px system-ui'
+      ctx.fillStyle = isDark ? '#9CA3AF' : '#6B7280'
+      ctx.textAlign = 'right'
+      ctx.fillText(String(maxCount), chartX - 2, chartY + 6)
+      ctx.fillText('0', chartX - 2, chartY + chartH + 3)
+
+      for (let i = 0; i < bins; i++) {
+        const barH = (counts[i] / maxCount) * chartH
+        const bx = chartX + i * (barW + 1)
+        const by = chartY + chartH - barH
+        const ratio = i / bins
+        if (ratio < 0.33) ctx.fillStyle = '#3B82F6'
+        else if (ratio < 0.66) ctx.fillStyle = '#10B981'
+        else ctx.fillStyle = '#EF4444'
+        ctx.fillRect(bx, by, barW, barH)
+      }
+
+      // X-axis numeric ticks
+      ctx.font = '7px system-ui'
+      ctx.fillStyle = isDark ? '#9CA3AF' : '#6B7280'
+      ctx.textAlign = 'center'
+      const fmtSpd = (v: number) => v < 10 ? v.toFixed(1) : Math.round(v).toString()
+      ctx.fillText('0', chartX, chartY + chartH + 8)
+      ctx.fillText(fmtSpd(maxSpeed / 2), chartX + chartW / 2, chartY + chartH + 8)
+      ctx.textAlign = 'right'
+      ctx.fillText(fmtSpd(maxSpeed), chartX + chartW, chartY + chartH + 8)
+
+      // X-axis label
+      ctx.font = '8px system-ui'
+      ctx.textAlign = 'center'
+      ctx.fillText(lang === 'hi' ? 'चाल (सिम्.)' : 'Speed (sim.)', chartX + chartW / 2, chartY + chartH + 18)
+
+      requestAnimationFrame(draw)
+    }
+    requestAnimationFrame(draw)
+    return () => { running = false }
+  }, [showHistogram, isDark, lang])
+
   const T = params.temperature ?? 300
   const n = params.moles ?? 1
   const V = effectiveVolume(params)
@@ -223,12 +374,17 @@ export default function Scene3DGas() {
   return (
     <div
       ref={containerRef}
-      className="absolute inset-0 cursor-grab active:cursor-grabbing"
+      role="img"
+      aria-label="3D gas simulation - use arrow keys to rotate, plus/minus to zoom"
+      tabIndex={0}
+      data-keyboard-trap
+      className="absolute inset-0 cursor-grab active:cursor-grabbing focus:outline-2 focus:outline-blue-500 focus:outline-offset-[-2px]"
       onMouseDown={handleMouseDown}
       onMouseMove={handleMouseMove}
       onMouseUp={handleMouseUp}
       onMouseLeave={handleMouseUp}
       onWheel={handleWheel}
+      onKeyDown={handleKeyDown}
     >
       {/* Live values */}
       <div className="absolute bottom-10 left-2 px-3 py-2 bg-white/85 dark:bg-slate-900/85 backdrop-blur-sm rounded-lg pointer-events-none select-none shadow-sm border border-gray-200 dark:border-slate-700">
@@ -236,7 +392,16 @@ export default function Scene3DGas() {
         <p className="text-xs font-semibold text-gray-700 dark:text-gray-300">n = {n.toFixed(1)} mol</p>
         <p className="text-xs font-semibold text-gray-700 dark:text-gray-300">V = {V.toFixed(1)} L</p>
         <p className="text-xs font-semibold text-gray-700 dark:text-gray-300">{lang === 'hi' ? 'गैस' : 'Gas'}: {gasName}</p>
+        <p className="text-[9px] italic text-gray-500 dark:text-gray-400 mt-1">{lang === 'hi' ? 'बॉक्स योजनाबद्ध है; आयतन के अनुपात में नहीं' : 'Box is schematic; not to volume scale'}</p>
       </div>
+
+      {/* Speed distribution histogram overlay */}
+      {showHistogram && (
+        <canvas
+          ref={histCanvasRef}
+          className="absolute bottom-10 right-2 z-10 pointer-events-none select-none"
+        />
+      )}
 
       {/* Speed legend */}
       <div className="absolute top-2 right-2 z-10 bg-white/90 dark:bg-slate-900/90 backdrop-blur-sm rounded-lg px-3 py-2 pointer-events-none select-none shadow-sm border border-gray-200 dark:border-slate-700">
@@ -266,7 +431,7 @@ export default function Scene3DGas() {
 
       {/* Controls hint */}
       <div className="absolute bottom-2 left-2 px-2 py-1 bg-black/40 text-white text-[10px] rounded pointer-events-none select-none">
-        {lang === 'hi' ? 'घुमाने के लिए खींचें | ज़ूम के लिए स्क्रॉल करें' : 'Drag to rotate | Scroll to zoom'}
+        {lang === 'hi' ? 'घुमाने के लिए खींचें/तीर कुंजियाँ | ज़ूम: स्क्रॉल/+−' : 'Drag/Arrow keys to rotate | Scroll/+- to zoom'}
       </div>
     </div>
   )

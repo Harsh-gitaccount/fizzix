@@ -5,22 +5,29 @@ import { usePlaybackStore } from '@/store/playbackStore'
 import { useUIStore } from '@/store/uiStore'
 import { useUndoStore } from '@/store/undoStore'
 import { useSimulationStore } from '@/store/simulationStore'
-import { timeOfFlight } from '@/lib/physics/projectile'
+import type { SimulationModule } from '@/simulations/types'
 
-const TABS = ['intro', 'vectors', 'compare', 'free-play']
-
-export function useKeyboardShortcuts() {
+export function useKeyboardShortcuts(topic: SimulationModule) {
   useEffect(() => {
+    const tabs = topic.tabs.map(tab => tab.id)
+
     const handler = (e: KeyboardEvent) => {
-      const target = e.target as HTMLElement
-      if (target.tagName === 'INPUT' || target.tagName === 'SELECT' || target.tagName === 'TEXTAREA') return
+      if (e.defaultPrevented) return
+
+      const target = e.target
+      if (target instanceof HTMLElement) {
+        if (target.tagName === 'INPUT' || target.tagName === 'SELECT' || target.tagName === 'TEXTAREA') return
+        if (target.isContentEditable) return
+        if (target.closest('[role="tablist"], [role="radiogroup"], [data-keyboard-trap]')) return
+      }
 
       const { playbackState, currentTime, speedMultiplier, setPlaybackState, setCurrentTime, setSpeedMultiplier } = usePlaybackStore.getState()
       const { setActiveTab } = useUIStore.getState()
-      const params = useSimulationStore.getState().params
+      const { params, compareMode, paramsB } = useSimulationStore.getState()
 
       switch (e.code) {
         case 'Space': {
+          if (target instanceof HTMLElement && target.tagName === 'BUTTON') return
           e.preventDefault()
           if (playbackState === 'playing') {
             setPlaybackState('paused')
@@ -45,8 +52,8 @@ export function useKeyboardShortcuts() {
           if (!e.ctrlKey && !e.metaKey) {
             e.preventDefault()
             const idx = parseInt(e.code.slice(5)) - 1
-            if (idx >= 0 && idx < TABS.length) {
-              setActiveTab(TABS[idx])
+            if (idx >= 0 && idx < tabs.length) {
+              setActiveTab(tabs[idx])
             }
           }
           break
@@ -111,12 +118,8 @@ export function useKeyboardShortcuts() {
         }
         case 'ArrowRight': {
           e.preventDefault()
-          const tof = timeOfFlight({
-            v0: params.v0 ?? 0,
-            theta: params.theta ?? 0,
-            g: params.g ?? 9.8,
-            y0: params.y0 ?? 0,
-          })
+          const tofA = topic.timeOfFlight(params)
+          const tof = compareMode ? Math.max(tofA, topic.timeOfFlight(paramsB)) : tofA
           const step = e.shiftKey ? 0.5 : 1 / 60
           const newT = Math.min(tof, currentTime + step)
           setCurrentTime(newT)
@@ -129,5 +132,5 @@ export function useKeyboardShortcuts() {
 
     window.addEventListener('keydown', handler)
     return () => window.removeEventListener('keydown', handler)
-  }, [])
+  }, [topic])
 }

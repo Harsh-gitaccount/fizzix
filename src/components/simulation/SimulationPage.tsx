@@ -15,13 +15,15 @@ import OfflineBanner from '@/components/ui/OfflineBanner'
 import { useKeyboardShortcuts } from '@/hooks/useKeyboardShortcuts'
 import { useSoundEffects } from '@/hooks/useSoundEffects'
 import { useServiceWorker } from '@/hooks/useServiceWorker'
-import { useURLParams } from '@/hooks/useURLParams'
 import { useLangSync } from '@/hooks/useLangSync'
 import { setupSyncListeners, syncQuizResults } from '@/lib/quiz/offlineStorage'
 import { initSentry } from '@/lib/sentry'
 import { t } from '@/lib/i18n'
 import { useUIStore } from '@/store/uiStore'
 import { useSimulationStore } from '@/store/simulationStore'
+import { usePlaybackStore } from '@/store/playbackStore'
+import { useUndoStore } from '@/store/undoStore'
+import { useQuizStore } from '@/store/quizStore'
 import { useTopic } from '@/simulations/TopicContext'
 
 const Canvas2D = dynamic(() => import('./Canvas2D'), { ssr: false })
@@ -32,10 +34,9 @@ const Scene3DGas = dynamic(() => import('./Scene3DGas'), { ssr: false })
 export default function SimulationPage() {
   const topic = useTopic()
 
-  useKeyboardShortcuts()
+  useKeyboardShortcuts(topic)
   useSoundEffects()
   useServiceWorker()
-  useURLParams()
   useLangSync()
 
   useEffect(() => {
@@ -48,6 +49,41 @@ export default function SimulationPage() {
     useSimulationStore.getState().initTopic(topic.defaultParams, topic.paramLimits)
     useUIStore.getState().setActiveTab(topic.defaultTab)
     useUIStore.getState().setActiveLayers(topic.defaultLayers)
+    usePlaybackStore.getState().setCurrentTime(0)
+    usePlaybackStore.getState().setPlaybackState('ready')
+    useUndoStore.setState({ entries: [], pointer: -1 })
+    useQuizStore.getState().resetQuiz()
+    useSimulationStore.getState().setCompareMode(false)
+    useSimulationStore.getState().clearGhostTrails()
+
+    // Apply URL params after topic defaults so shared links override correctly
+    const url = new URL(window.location.href)
+    const sp = url.searchParams
+    if (sp.size > 0) {
+      const limits = topic.paramLimits ?? {}
+      const parsed: Record<string, number> = {}
+      let hasParam = false
+      for (const key of Object.keys(limits)) {
+        const val = sp.get(key)
+        if (val !== null) {
+          const n = Number(val)
+          if (Number.isFinite(n)) {
+            const [min, max] = limits[key]
+            parsed[key] = Math.max(min, Math.min(max, n))
+            hasParam = true
+          }
+        }
+      }
+      if (hasParam) {
+        const { params, setParams } = useSimulationStore.getState()
+        setParams({ ...params, ...parsed })
+      }
+      const tab = sp.get('tab')
+      if (tab && topic.tabs.some((t: { id: string }) => t.id === tab)) {
+        useUIStore.getState().setActiveTab(tab)
+      }
+      window.history.replaceState({}, '', url.pathname)
+    }
   }, [topic])
 
   const activeTab = useUIStore((s) => s.activeTab)
@@ -80,8 +116,8 @@ export default function SimulationPage() {
       <OfflineBanner />
       <TopBar />
 
-      <div className="flex flex-col md:flex-row flex-1 min-h-0">
-        <div className="flex-1 md:flex-[2] min-w-0 min-h-0 flex flex-col">
+      <div className="flex flex-col md:flex-row flex-1 min-h-0 overflow-y-auto md:overflow-hidden">
+        <div className="shrink-0 md:shrink md:flex-[2] min-w-0 min-h-[200px] md:min-h-0 flex flex-col">
           {simQuizMode === 'sim' && !showMeHint && <TabBar />}
           {simQuizMode === 'sim' && !showMeHint && <PresetStrip />}
           {showMeHint && (
@@ -96,7 +132,7 @@ export default function SimulationPage() {
               </button>
             </div>
           )}
-          <div className="flex-1 min-h-0 relative">
+          <div id="simulation-viewport" role="tabpanel" aria-labelledby={`tab-${activeTab}`} className="h-[50vw] min-h-[180px] max-h-[300px] md:flex-1 md:h-auto md:max-h-none md:min-h-0 relative">
             {activeTab === 'long-wave' ? (
               <Scene3DLongWave />
             ) : activeTab === 'field-3d' ? (
@@ -109,13 +145,33 @@ export default function SimulationPage() {
           </div>
         </div>
 
-        <div id="control-panel" className="flex-1 md:flex-none w-full md:w-[320px] md:shrink-0 min-h-0 flex flex-col border-t md:border-t-0 border-gray-200 dark:border-slate-700">
+        <div id="control-panel" className="shrink-0 md:flex-none w-full md:w-[320px] md:shrink-0 min-h-0 md:min-h-0 flex flex-col border-t md:border-t-0 border-gray-200 dark:border-slate-700 md:overflow-y-auto">
           {simQuizMode === 'sim' ? (
             <>
-              <div className="flex bg-gray-100 dark:bg-slate-800 border-b border-gray-200 dark:border-slate-700" role="tablist">
+              <div
+                className="flex bg-gray-100 dark:bg-slate-800 border-b border-gray-200 dark:border-slate-700"
+                role="tablist"
+                onKeyDown={(e) => {
+                  const tabs: Array<'params' | 'data'> = ['params', 'data']
+                  const idx = tabs.indexOf(panelTab as 'params' | 'data')
+                  let next = -1
+                  if (e.key === 'ArrowRight') next = (idx + 1) % tabs.length
+                  else if (e.key === 'ArrowLeft') next = (idx - 1 + tabs.length) % tabs.length
+                  else if (e.key === 'Home') next = 0
+                  else if (e.key === 'End') next = tabs.length - 1
+                  if (next >= 0) {
+                    e.preventDefault()
+                    setPanelTab(tabs[next])
+                    document.getElementById(`panel-tab-${tabs[next]}`)?.focus()
+                  }
+                }}
+              >
                 <button
                   role="tab"
+                  id="panel-tab-params"
                   aria-selected={panelTab === 'params'}
+                  aria-controls="panel-tabpanel-params"
+                  tabIndex={panelTab === 'params' ? 0 : -1}
                   onClick={() => setPanelTab('params')}
                   className={`flex-1 px-3 py-2 text-[11px] font-bold transition-colors ${
                     panelTab === 'params'
@@ -127,7 +183,10 @@ export default function SimulationPage() {
                 </button>
                 <button
                   role="tab"
+                  id="panel-tab-data"
                   aria-selected={panelTab === 'data'}
+                  aria-controls="panel-tabpanel-data"
+                  tabIndex={panelTab === 'data' ? 0 : -1}
                   onClick={() => setPanelTab('data')}
                   className={`flex-1 px-3 py-2 text-[11px] font-bold transition-colors ${
                     panelTab === 'data'
@@ -138,7 +197,7 @@ export default function SimulationPage() {
                   {t('panel.dataTable', lang)}
                 </button>
               </div>
-              <div className="flex-1 min-h-0 flex flex-col">
+              <div id={`panel-tabpanel-${panelTab}`} role="tabpanel" aria-labelledby={`panel-tab-${panelTab}`} className="flex-1 min-h-0 flex flex-col">
                 {panelTab === 'params' ? (
                   <>
                     <ControlPanel />

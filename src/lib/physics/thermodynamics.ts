@@ -3,7 +3,7 @@ import { type SimulationState, type PhysicsValue, type CanvasBounds, ZERO_STATE 
 // ===== CONSTANTS (NCERT Class 11 Ch.13 Kinetic Theory) =====
 const R = 8.314       // J/(mol·K) - universal gas constant
 const k_B = 1.38e-23  // J/K - Boltzmann constant
-const N_A = 6.022e23  // Avogadro's number
+
 
 // ===== IDEAL GAS LAW =====
 // PV = nRT  (NCERT Class 11 Ch.13)
@@ -144,6 +144,8 @@ export function thermoDerivedValues(
   const vavg = avgSpeed(T, M)
   const keTotal = totalKineticEnergy(n, T)
 
+  const PV = P * (V / 1000)
+
   return {
     pressure: {
       value: P / 1000,
@@ -151,11 +153,17 @@ export function thermoDerivedValues(
       symbol: 'P',
       label: 'Pressure',
     },
+    pv: {
+      value: PV,
+      unit: 'J',
+      symbol: 'PV',
+      label: 'PV Product',
+    },
     avgKE: {
       value: ke * 1e21,
       unit: '×10⁻²¹ J',
-      symbol: 'KE',
-      label: 'Avg KE per molecule',
+      symbol: '⟨KE⟩ₜᵣ',
+      label: 'Avg translational KE',
     },
     rmsSpeed: {
       value: vrms,
@@ -172,8 +180,8 @@ export function thermoDerivedValues(
     totalKE: {
       value: keTotal,
       unit: 'J',
-      symbol: 'KEₜ',
-      label: 'Total KE',
+      symbol: 'KEₜᵣ',
+      label: 'Total translational KE',
     },
   }
 }

@@ -26,7 +26,7 @@ function ParamHelp({ def, lang }: { def: ParamDef; lang: 'en' | 'hi' }) {
       </button>
       {open && (
         <span className="absolute left-5 top-1/2 -translate-y-1/2 z-50 w-48 px-2.5 py-1.5 text-[10px] leading-tight bg-gray-900 dark:bg-gray-100 text-white dark:text-gray-900 rounded-md shadow-lg whitespace-normal">
-          <span className="font-semibold">{def.symbol}</span> — {text}
+          <span className="font-semibold">{def.symbol}</span> - {text}
         </span>
       )}
     </span>
@@ -52,6 +52,10 @@ export default function ControlPanel() {
 
   const v0 = params.v0 ?? 0
   const showUnitWarning = topic.slug === 'projectile-motion' && v0 > 30
+
+  const theta0 = params.theta0 ?? 0
+  const showApproxWarning = topic.slug === 'shm' && theta0 > 15
+  const approxError = showApproxWarning ? +(((theta0 * Math.PI / 180) ** 2 / 16) * 100).toFixed(1) : 0
 
   const flagText = (label: string) =>
     tOr('flag.' + label.toLowerCase().replace(/ /g, '_'), lang, label)
@@ -133,6 +137,10 @@ export default function ControlPanel() {
                 step={def.step}
                 value={params[def.key] ?? topic.defaultParams[def.key] ?? def.min}
                 onChange={(e) => changeParam(def.key, parseFloat(e.target.value))}
+                aria-label={`${def.symbol} - ${lang === 'hi' && def.helpHi ? def.helpHi : def.help}`}
+                aria-valuemin={def.min}
+                aria-valuemax={def.max}
+                aria-valuenow={params[def.key] ?? topic.defaultParams[def.key] ?? def.min}
                 className="flex-1 h-2 bg-gray-200 dark:bg-slate-700 rounded-lg appearance-none cursor-pointer accent-blue-600"
               />
               <span className="w-20 text-right text-sm font-medium text-gray-600 dark:text-gray-400 tabular-nums">
@@ -144,6 +152,13 @@ export default function ControlPanel() {
                 {t('unit.warning', lang)
                   .replace('{value}', v0.toFixed(0))
                   .replace('{converted}', (v0 / 3.6).toFixed(1))}
+              </p>
+            )}
+            {def.key === 'theta0' && showApproxWarning && (
+              <p className="ml-9 mt-1 text-[10px] text-amber-600 dark:text-amber-400">
+                {t('approx.warning', lang)
+                  .replace('{value}', theta0.toFixed(0))
+                  .replace('{error}', String(approxError))}
               </p>
             )}
           </div>
@@ -170,14 +185,14 @@ export default function ControlPanel() {
             <span className="truncate mr-2">{tOr('val.' + key, lang, pv.label)}</span>
             {compareMode && derivedB ? (
               <span className="font-medium tabular-nums whitespace-nowrap">
-                <span className="text-red-500">{Number.isNaN(pv.value) ? '—' : (pv.unit === '' && pv.symbol === '') ? flagText(pv.label) : pv.value.toFixed(2)}</span>
+                <span className="text-red-500">{Number.isNaN(pv.value) ? '-' : (pv.unit === '' && pv.symbol === '') ? flagText(pv.label) : pv.value.toFixed(2)}</span>
                 <span className="mx-0.5 text-gray-300 dark:text-slate-600">|</span>
-                <span className="text-orange-500">{derivedB[key] ? (Number.isNaN(derivedB[key].value) ? '—' : (derivedB[key].unit === '' && derivedB[key].symbol === '') ? flagText(derivedB[key].label) : derivedB[key].value.toFixed(2)) : '—'}</span>
+                <span className="text-orange-500">{derivedB[key] ? (Number.isNaN(derivedB[key].value) ? '-' : (derivedB[key].unit === '' && derivedB[key].symbol === '') ? flagText(derivedB[key].label) : derivedB[key].value.toFixed(2)) : '-'}</span>
                 <span className="ml-1 text-gray-500">{pv.unit}</span>
               </span>
             ) : (
               <span className="font-medium tabular-nums">
-                {Number.isNaN(pv.value) ? '—' : (pv.unit === '' && pv.symbol === '') ? flagText(pv.label) : `${pv.value.toFixed(2)} ${pv.unit}`}
+                {Number.isNaN(pv.value) ? '-' : (pv.unit === '' && pv.symbol === '') ? flagText(pv.label) : `${pv.value.toFixed(2)} ${pv.unit}`}
               </span>
             )}
           </div>

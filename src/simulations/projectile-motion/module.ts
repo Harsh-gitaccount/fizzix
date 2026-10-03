@@ -35,11 +35,11 @@ const projectileModule: SimulationModule = {
   },
 
   paramDefs: [
-    { key: 'v0', symbol: 'v₀', unit: 'm/s', min: 0, max: 50, step: 0.5, help: 'Initial speed — how fast the object is launched', helpHi: 'शुरुआती गति — वस्तु कितनी तेज़ फेंकी गई' },
-    { key: 'theta', symbol: 'θ', unit: '°', min: 0, max: 90, step: 1, help: 'Launch angle — direction of throw above horizontal', helpHi: 'फेंकने का कोण — क्षैतिज से ऊपर की दिशा' },
-    { key: 'g', symbol: 'g', unit: 'm/s²', min: 0.5, max: 20, step: 0.1, help: 'Gravity — pull of the planet (Earth = 9.8, Moon = 1.6)', helpHi: 'गुरुत्वाकर्षण — ग्रह का खिंचाव (पृथ्वी = 9.8, चंद्रमा = 1.6)' },
-    { key: 'y0', symbol: 'y₀', unit: 'm', min: 0, max: 50, step: 0.5, help: 'Starting height — how high above the ground', helpHi: 'शुरुआती ऊँचाई — ज़मीन से कितनी ऊँचाई पर' },
-    { key: 'drag', symbol: 'Cd', unit: '', min: 0, max: 0.5, step: 0.01, help: 'Air resistance — slows the object down (0 = no air)', helpHi: 'वायु प्रतिरोध — वस्तु को धीमा करता है (0 = कोई हवा नहीं)' },
+    { key: 'v0', symbol: 'v₀', unit: 'm/s', min: 0, max: 50, step: 0.5, help: 'Initial speed - how fast the object is launched', helpHi: 'शुरुआती गति - वस्तु कितनी तेज़ फेंकी गई' },
+    { key: 'theta', symbol: 'θ', unit: '°', min: 0, max: 90, step: 1, help: 'Launch angle - direction of throw above horizontal', helpHi: 'फेंकने का कोण - क्षैतिज से ऊपर की दिशा' },
+    { key: 'g', symbol: 'g', unit: 'm/s²', min: 0.5, max: 20, step: 0.1, help: 'Gravity - pull of the planet (Earth = 9.8, Moon = 1.6)', helpHi: 'गुरुत्वाकर्षण - ग्रह का खिंचाव (पृथ्वी = 9.8, चंद्रमा = 1.6)' },
+    { key: 'y0', symbol: 'y₀', unit: 'm', min: 0, max: 50, step: 0.5, help: 'Starting height - how high above the ground', helpHi: 'शुरुआती ऊँचाई - ज़मीन से कितनी ऊँचाई पर' },
+    { key: 'drag', symbol: 'b', unit: '1/m', min: 0, max: 0.5, step: 0.01, help: 'Drag factor - combined air resistance per unit mass (0 = no air, 0.5 = heavy drag)', helpHi: 'ड्रैग गुणांक - प्रति इकाई द्रव्यमान वायु प्रतिरोध (0 = कोई हवा नहीं, 0.5 = भारी ड्रैग)' },
   ],
 
   tabs: [
@@ -56,7 +56,6 @@ const projectileModule: SimulationModule = {
     velocity: false,
     components: false,
     acceleration: false,
-    graph: false,
   },
 
   layerDefs: [
@@ -65,7 +64,6 @@ const projectileModule: SimulationModule = {
     { key: 'velocity', label: 'Velocity', labelHi: 'वेग', icon: '→', defaultOn: false, color: '#059669' },
     { key: 'components', label: 'Components', labelHi: 'घटक', icon: '↕', defaultOn: false, color: '#8B5CF6' },
     { key: 'acceleration', label: 'Acceleration', labelHi: 'त्वरण', icon: '↓', defaultOn: false, color: '#B45309' },
-    { key: 'graph', label: 'Graph', labelHi: 'ग्राफ़', icon: '\u{1F4C8}', defaultOn: false, color: '#EF4444' },
   ],
 
   presets: PRESETS,

@@ -55,8 +55,8 @@ export function lensMagnification(v: number, u: number): number {
 // ===== LENS POWER =====
 // P = 1/f (diopters, f in meters)  (NCERT Class 10 Ch.10)
 
-export function lensPower(f_cm: number): number {
-  if (!Number.isFinite(f_cm) || f_cm === 0) return 0
+export function lensPower(f_cm: number): number | null {
+  if (!Number.isFinite(f_cm) || f_cm === 0) return null
   return 100 / f_cm // convert cm to m: P = 1/(f/100) = 100/f
 }
 
@@ -154,9 +154,21 @@ export function opticsDerivedValues(
     // Lenses
     const u = params.objectDist ?? -30 // negative = real object on left
     const f = params.focalLength ?? 15 // positive = convex
+    const fIsZero = f === 0
     const v = lensImageDistance(u, f)
     const m = v !== null && v !== Infinity ? lensMagnification(v, u) : 0
     const p = lensPower(f)
+
+    let natureLabel: string
+    if (fIsZero) {
+      natureLabel = 'Invalid (f = 0)'
+    } else if (v === Infinity) {
+      natureLabel = 'At Infinity (object at focal point)'
+    } else if (v !== null) {
+      natureLabel = v > 0 ? (m < 0 ? 'Real, Inverted' : 'Real, Erect') : (m > 0 ? 'Virtual, Erect' : 'Virtual, Inverted')
+    } else {
+      natureLabel = 'No Image'
+    }
 
     return {
       imageDistance: {
@@ -172,7 +184,7 @@ export function opticsDerivedValues(
         label: 'Magnification',
       },
       power: {
-        value: p,
+        value: p ?? NaN,
         unit: 'D',
         symbol: 'P',
         label: 'Power',
@@ -181,9 +193,7 @@ export function opticsDerivedValues(
         value: v !== null && v !== Infinity ? (v > 0 ? 1 : -1) : 0,
         unit: '',
         symbol: '',
-        label: v !== null && v !== Infinity
-          ? (v > 0 ? (m < 0 ? 'Real, Inverted' : 'Real, Erect') : (m > 0 ? 'Virtual, Erect' : 'Virtual, Inverted'))
-          : 'At Infinity',
+        label: natureLabel,
       },
     }
   }

@@ -1,0 +1,21 @@
+=== Service Worker Lifecycle Test Results ===
+Date: 2026-10-02T09:41:17Z
+Tested commit: 0f29e6727784a98d266cc8d01b7f5ab0eba34fb1
+Build: production (npx next build && npx next start -p 3099)
+Chromium: Chromium 141.0.7390.37 
+Command: PLAYWRIGHT_BROWSERS_PATH=/opt/pw-browsers CHROMIUM_PATH=/opt/pw-browsers/chromium-1194/chrome-linux/chrome BASE_URL=http://localhost:3099 node e2e/scripts/sw-lifecycle.mjs
+
+
+Target: http://localhost:3099
+Chromium: /opt/pw-browsers/chromium-1194/chrome-linux/chrome
+
+=== F26: Service Worker Lifecycle ===
+  PASS: SW registers and activates on topic page
+  PASS: Precache contains / and /manifest.json
+  PASS: Home page served offline (after SW registration)
+  PASS: Unvisited topic falls back offline
+  PASS: Static assets cached after reload through SW
+  PASS: Non-fizzix caches preserved
+
+=== Results: 6 passed, 0 failed ===
+exit code: 0

@@ -174,8 +174,8 @@ const modernPhysicsModule: SimulationModule = {
     },
     {
       id: 'photoelectric-threshold',
-      label: 'At Threshold',
-      hookQuestion: 'What happens when photon energy exactly equals the work function?',
+      label: 'Near Threshold',
+      hookQuestion: 'What happens when photon energy is near the work function?',
       params: { modernType: 0, wavelength: 580, workFunction: 2.14, intensity: 50 },
       defaultLayers: ['energyBars'],
       defaultTab: 'photoelectric',

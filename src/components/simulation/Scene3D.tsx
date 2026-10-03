@@ -4,7 +4,7 @@ import { useRef, useEffect, useCallback } from 'react'
 import * as THREE from 'three'
 import { usePlaybackStore } from '@/store/playbackStore'
 import { useSimulationStore } from '@/store/simulationStore'
-import { useUIStore } from '@/store/uiStore'
+
 import { useTopic } from '@/simulations/TopicContext'
 
 export interface Scene3DSetup {
@@ -64,7 +64,7 @@ export default function Scene3D({ builder }: Scene3DProps) {
     const container = containerRef.current
     if (!container) return
 
-    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true })
+    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, preserveDrawingBuffer: true })
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
     renderer.setSize(container.clientWidth, container.clientHeight)
     container.appendChild(renderer.domElement)
@@ -206,18 +206,58 @@ export default function Scene3D({ builder }: Scene3DProps) {
     }
   }, [updateCamera])
 
+  const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
+    const ROTATE_STEP = 0.1
+    const ZOOM_STEP = 1
+    let handled = false
+
+    if (e.key === 'ArrowLeft') {
+      cameraAngleRef.current.theta += ROTATE_STEP
+      handled = true
+    } else if (e.key === 'ArrowRight') {
+      cameraAngleRef.current.theta -= ROTATE_STEP
+      handled = true
+    } else if (e.key === 'ArrowUp') {
+      cameraAngleRef.current.phi = Math.max(0.1, cameraAngleRef.current.phi - ROTATE_STEP)
+      handled = true
+    } else if (e.key === 'ArrowDown') {
+      cameraAngleRef.current.phi = Math.min(Math.PI - 0.1, cameraAngleRef.current.phi + ROTATE_STEP)
+      handled = true
+    } else if (e.key === '+' || e.key === '=') {
+      cameraAngleRef.current.distance = Math.max(4, cameraAngleRef.current.distance - ZOOM_STEP)
+      handled = true
+    } else if (e.key === '-') {
+      cameraAngleRef.current.distance = Math.min(30, cameraAngleRef.current.distance + ZOOM_STEP)
+      handled = true
+    }
+
+    if (handled) {
+      e.preventDefault()
+      e.stopPropagation()
+      updateCamera()
+      if (rendererRef.current && sceneRef.current && cameraRef.current) {
+        rendererRef.current.render(sceneRef.current, cameraRef.current)
+      }
+    }
+  }, [updateCamera])
+
   return (
     <div
       ref={containerRef}
-      className="absolute inset-0 cursor-grab active:cursor-grabbing"
+      role="img"
+      aria-label="3D simulation view - use arrow keys to rotate, plus/minus to zoom"
+      tabIndex={0}
+      data-keyboard-trap
+      className="absolute inset-0 cursor-grab active:cursor-grabbing focus:outline-2 focus:outline-blue-500 focus:outline-offset-[-2px]"
       onMouseDown={handleMouseDown}
       onMouseMove={handleMouseMove}
       onMouseUp={handleMouseUp}
       onMouseLeave={handleMouseUp}
       onWheel={handleWheel}
+      onKeyDown={handleKeyDown}
     >
       <div className="absolute bottom-2 left-2 px-2 py-1 bg-black/40 text-white text-[10px] rounded pointer-events-none select-none">
-        Drag to rotate | Scroll to zoom
+        Drag to rotate | Scroll to zoom | Arrow keys to rotate | +/- to zoom
       </div>
     </div>
   )

@@ -189,7 +189,7 @@ const thermoModule: SimulationModule = {
   computeBounds: computeThermoBounds,
 
   derivedValueKeys: [
-    'pressure', 'avgKE', 'rmsSpeed', 'avgSpeed', 'totalKE',
+    'pressure', 'pv', 'avgKE', 'rmsSpeed', 'avgSpeed', 'totalKE',
   ],
 
   quizPool: THERMO_QUIZ_POOL,

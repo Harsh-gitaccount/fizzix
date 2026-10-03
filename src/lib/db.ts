@@ -1,22 +1,32 @@
-// Prisma client singleton - only works when DATABASE_URL is configured
-// and prisma client has been generated
-
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 let prismaInstance: any = null
+let initError: Error | null = null
 
 export async function getPrisma() {
   if (prismaInstance) return prismaInstance
   if (!process.env.DATABASE_URL) return null
+  if (initError) throw initError
 
   try {
-    // Dynamic require avoids build-time type checking against ungenerated client
     // eslint-disable-next-line @typescript-eslint/no-require-imports
-    const mod = require('@prisma/client')
-    const Client = mod.PrismaClient || mod.default?.PrismaClient
-    if (!Client) return null
-    prismaInstance = new Client()
+    const adapterMod = require('@prisma/adapter-pg')
+    const PrismaPg = adapterMod.PrismaPg || adapterMod.default?.PrismaPg
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    const clientMod = require('@prisma/client')
+    const Client = clientMod.PrismaClient || clientMod.default?.PrismaClient
+    if (!Client || !PrismaPg) {
+      initError = new Error('Prisma client or adapter not available')
+      throw initError
+    }
+
+    const adapter = new PrismaPg({ connectionString: process.env.DATABASE_URL })
+    prismaInstance = new Client({ adapter })
     return prismaInstance
-  } catch {
-    return null
+  } catch (e) {
+    if (e instanceof Error && e !== initError) {
+      initError = e
+      console.error('Prisma client initialization failed:', e.message)
+    }
+    throw initError ?? e
   }
 }

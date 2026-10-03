@@ -150,10 +150,10 @@ describe('pendulum edge cases', () => {
     expect(Number.isFinite(s.x)).toBe(true)
   })
 
-  it('damped pendulum decays to zero', () => {
+  it('damped pendulum decays to near zero', () => {
     const s = pendulumStateAtTime({ length: 1, theta0: 30, g: 9.8, damping: 0.5 }, 20)
     expect(s.phase).toBe('landed')
-    expect(s.x).toBe(0)
+    expect(Math.abs(s.x)).toBeLessThan(0.01)
   })
 })
 

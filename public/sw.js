@@ -1,3 +1,4 @@
+const CACHE_PREFIX = 'fizzix-'
 const CACHE_NAME = 'fizzix-v1'
 const PRECACHE = [
   '/',
@@ -5,6 +6,18 @@ const PRECACHE = [
   '/icon-192.svg',
   '/icon-512.svg',
 ]
+
+function isSameOrigin(url) {
+  return url.origin === self.location.origin
+}
+
+function hasValidContentType(response, request) {
+  const ct = (response.headers.get('content-type') || '').toLowerCase()
+  const dest = request.destination
+  if (dest === 'script' && !ct.includes('javascript') && !ct.includes('ecmascript')) return false
+  if (dest === 'style' && !ct.includes('css')) return false
+  return true
+}
 
 self.addEventListener('install', (e) => {
   e.waitUntil(
@@ -15,8 +28,29 @@ self.addEventListener('install', (e) => {
 
 self.addEventListener('activate', (e) => {
   e.waitUntil(
-    caches.keys().then((keys) =>
-      Promise.all(keys.filter((k) => k !== CACHE_NAME).map((k) => caches.delete(k)))
+    caches.open(CACHE_NAME).then((cache) =>
+      cache.keys().then((requests) =>
+        Promise.all(
+          requests.map((req) =>
+            cache.match(req).then((res) => {
+              if (!res) return
+              const ct = (res.headers.get('content-type') || '').toLowerCase()
+              const url = new URL(req.url)
+              const isScript = url.pathname.endsWith('.js') || url.pathname.includes('/js/')
+              const isStyle = url.pathname.endsWith('.css') || url.pathname.includes('/css/')
+              if ((isScript || isStyle) && ct.includes('text/html')) return cache.delete(req)
+            })
+          )
+        )
+      )
+    ).then(() =>
+      caches.keys().then((keys) =>
+        Promise.all(
+          keys
+            .filter((k) => k.startsWith(CACHE_PREFIX) && k !== CACHE_NAME)
+            .map((k) => caches.delete(k))
+        )
+      )
     )
   )
   self.clients.claim()
@@ -27,46 +61,66 @@ self.addEventListener('fetch', (e) => {
 
   if (e.request.method !== 'GET') return
   if (url.protocol !== 'https:' && url.hostname !== 'localhost') return
+  if (!isSameOrigin(url)) return
 
-  // Cache-first for immutable static assets (JS/CSS chunks)
   if (url.pathname.startsWith('/_next/static/')) {
     e.respondWith(
       caches.open(CACHE_NAME).then((cache) =>
-        cache.match(e.request).then((hit) => hit || fetch(e.request).then((res) => {
-          cache.put(e.request, res.clone())
-          return res
-        }))
-      )
-    )
-    return
-  }
-
-  // Stale-while-revalidate for navigation (home page)
-  if (e.request.mode === 'navigate' || url.pathname === '/') {
-    e.respondWith(
-      caches.open(CACHE_NAME).then((cache) =>
-        cache.match(e.request).then((cached) => {
-          const fetchPromise = fetch(e.request).then((res) => {
-            if (res.ok) cache.put(e.request, res.clone())
+        cache.match(e.request).then((hit) => {
+          if (hit && !hasValidContentType(hit, e.request)) {
+            cache.delete(e.request)
+            hit = null
+          }
+          return hit || fetch(e.request).then((res) => {
+            if (res.ok && hasValidContentType(res, e.request)) cache.put(e.request, res.clone())
             return res
-          }).catch(() => cached)
-          return cached || fetchPromise
+          })
         })
       )
     )
     return
   }
 
-  // Network-first for everything else
+  if (e.request.mode === 'navigate') {
+    e.respondWith(
+      caches.open(CACHE_NAME).then((cache) =>
+        cache.match(e.request).then((cached) => {
+          const fetchPromise = fetch(e.request).then((res) => {
+            if (res.ok) cache.put(e.request, res.clone())
+            return res
+          }).catch(() => cached || null)
+          return cached || fetchPromise
+        }).then((response) => {
+          if (response) return response
+          return caches.match('/').then((fallback) =>
+            fallback || new Response('Offline - page not cached', {
+              status: 503,
+              headers: { 'Content-Type': 'text/plain' },
+            })
+          )
+        })
+      )
+    )
+    return
+  }
+
   e.respondWith(
-    fetch(e.request)
-      .then((res) => {
-        if (res.ok) {
-          const clone = res.clone()
-          caches.open(CACHE_NAME).then((cache) => cache.put(e.request, clone))
-        }
-        return res
+    caches.open(CACHE_NAME).then((cache) =>
+      cache.match(e.request).then((hit) => {
+        const fetchPromise = fetch(e.request).then((res) => {
+          if (res.ok && hasValidContentType(res, e.request)) {
+            cache.put(e.request, res.clone())
+          }
+          return res
+        }).catch(() => null)
+        return hit || fetchPromise
+      }).then((response) => {
+        if (response) return response
+        return new Response('Offline - resource not cached', {
+          status: 503,
+          headers: { 'Content-Type': 'text/plain' },
+        })
       })
-      .catch(() => caches.match(e.request).then((hit) => hit || caches.match('/')))
+    )
   )
 })

@@ -1,0 +1,77 @@
+# Homepage Design — The Fizzix Fieldbook
+
+**Branch:** `homepage/living-physics-atlas`
+**Concept:** Interactive scientific fieldbook — warm paper aesthetic, open experiment stage
+
+## Brand
+
+- **Logo:** `public/fizzix-logo.png` — stylized "F" with book/page elements, orange orbital ellipse, "Fizzix" wordmark in navy (#1B2249) with orange dots on the i's
+- The logo is used as an `<img>` via `next/image` in the Header and Footer. The old hand-coded AtomMark SVG is no longer used on the homepage or guide pages.
+
+## Composition
+
+### Header (`_components/Header.tsx`)
+Fixed-position nav with backdrop blur on warm paper background (`fb-page`). Desktop: logo image + "Explore", "For teachers", "Guide" links + "Start experimenting" orange CTA. Mobile: hamburger toggle with `aria-expanded`, Escape-to-close, focus-on-open, focus-return-on-close. `aria-controls="mobile-menu"` links button to panel.
+
+### Experiment Stage (`_components/FieldbookStage.tsx`)
+Open experiment integrated directly into the page — no boxed card. The projectile motion diagram renders on the light paper background with navy ink and orange accent, like a physics textbook figure.
+
+- **Title area**: mono label "EXPERIMENT 01 — PROJECTILE MOTION", serif heading "Physics, in your hands.", subtitle.
+- **Open SVG diagram**: trajectory path, sampled dots, height/range annotations, launcher, angle arc, animated ball. Navy ink palette on light background.
+- **Instrument strip**: slider control, readouts (range, height, time), Launch/Reset buttons, separated by ruled borders.
+- **Model disclosure**: V₀ = 20 m/s · g = 9.81 m/s² · no drag + link to full simulation.
+
+Physics calculations: `calcTrajectory(angleDeg)` and `calcPositionAtTime(angleDeg, t)` with V0=20, G=9.81.
+
+### Discovery Section (`_components/DiscoverySection.tsx`)
+Complementary-angle comparison: 30° and 60° trajectories overlaid in an SVG diagram (WORLD_H=17 to accommodate 60° maxH ≈ 15.3 m). Prediction question with reveal button.
+
+### Chapter Explorer (`_components/ChapterExplorer.tsx`)
+Topic selector using `role="group"` with `aria-pressed` buttons (not tablist/tab). Six chapter buttons, active panel with illustration and link, compact grid of all topics.
+
+### Feature Pills
+Centered row: No login required · Hindi & English · Lessons cached offline after first visit · Free forever
+
+### Footer
+Logo image (dimmed), guide navigation links, tagline.
+
+## Visual Language
+
+### Colors (Tailwind: `fb.*`)
+- Page: `#FAF9F6` (warm off-white paper)
+- Ink: `#1B2249` (logo navy)
+- Accent: `#E8740C` (logo orange)
+- Accent hover: `#D16A0A`
+- Muted: `#6B7186` (body text gray)
+- Rule: `#E5E2DC` (ruling lines)
+- Dim: `#9B9EAD` (annotations)
+- Paper: `#F3F1EC` (section backgrounds)
+- Field: `#141830` (dark containers for illustrations)
+
+### Typography
+- Headlines: Source Serif 4 via `--font-serif` CSS variable (loaded in root layout)
+- Body: system stack
+- Labels/readouts: monospace
+
+### Illustrations
+Existing `TopicIllustrations.tsx` SVGs rendered inside dark `fb-field` containers, preserving their designed appearance.
+
+## Accessibility
+- Mobile menu: `aria-expanded`, `aria-controls`, Escape closes, focus managed
+- Experiment: `role="img"` with descriptive `aria-label`, slider with full ARIA value attributes
+- `prefers-reduced-motion`: global CSS rule suppresses animation/transition durations; homepage experiment skips requestAnimationFrame loop; lesson-page canvas animations do not currently check the preference
+- Chapter explorer: `role="group"` with `aria-pressed` buttons
+- All interactive elements keyboard-accessible
+
+## Offline Behavior
+Unchanged from previous revision. Service worker registered inside SimulationPage (not the homepage). Lesson pages cached after first visit. Homepage says "Lessons cached offline after first visit."
+
+## Safety Constraints
+- No fabricated statistics, testimonials, or awards
+- No dead links or placeholder actions
+- No chatbot UI, dependencies, or placeholder
+- No scroll hijacking, no mandatory intro
+- Navigation never delayed by animation
+- `prefers-reduced-motion` honored (CSS global rule + homepage experiment)
+- All 6 lesson links verified working (HTTP 200)
+- Offline claim qualified accurately

@@ -5,7 +5,7 @@ import {
   criticalAngle,
   lensImageDistance,
   lensMagnification,
-  lensPower,
+
 } from '@/lib/physics/optics'
 import type { RulerState, ProtractorState } from '@/store/toolStore'
 import { drawRuler, drawProtractor } from './measurementTools'
@@ -198,20 +198,24 @@ function renderRefraction(
   const incStartX = midX - rayLen * Math.cos(theta1Rad)
   const incStartY = midY - rayLen * Math.sin(theta1Rad)
 
-  const animIncX = incStartX + (midX - incStartX) * progress
-  const animIncY = incStartY + (midY - incStartY) * progress
-
-  ctx.strokeStyle = C.incidentRay
-  ctx.lineWidth = 2.5
-  ctx.beginPath()
-  ctx.moveTo(incStartX, incStartY)
-  ctx.lineTo(animIncX, animIncY)
-  ctx.stroke()
-  drawArrowHead(ctx, incStartX, incStartY, animIncX, animIncY, C.incidentRay, 10)
+  const showRays = opts.activeLayers.rays !== false
 
   let refEndX = midX
   let refEndY = midY
   let outRayDrawn = false
+
+  if (showRays) {
+    const animIncX = incStartX + (midX - incStartX) * progress
+    const animIncY = incStartY + (midY - incStartY) * progress
+
+    ctx.strokeStyle = C.incidentRay
+    ctx.lineWidth = 2.5
+    ctx.beginPath()
+    ctx.moveTo(incStartX, incStartY)
+    ctx.lineTo(animIncX, animIncY)
+    ctx.stroke()
+    drawArrowHead(ctx, incStartX, incStartY, animIncX, animIncY, C.incidentRay, 10)
+  }
 
   if (theta2 !== null && progress > 0.35) {
     const theta2Rad = theta2 * Math.PI / 180
@@ -219,16 +223,18 @@ function renderRefraction(
     refEndY = midY + rayLen * Math.sin(theta2Rad)
     const refProgress = Math.min((currentTime * 0.25 - 0.35) / 0.65, 1)
 
-    const animRefX = midX + (refEndX - midX) * Math.max(0, refProgress)
-    const animRefY = midY + (refEndY - midY) * Math.max(0, refProgress)
+    if (showRays) {
+      const animRefX = midX + (refEndX - midX) * Math.max(0, refProgress)
+      const animRefY = midY + (refEndY - midY) * Math.max(0, refProgress)
 
-    ctx.strokeStyle = C.refractedRay
-    ctx.lineWidth = 2.5
-    ctx.beginPath()
-    ctx.moveTo(midX, midY)
-    ctx.lineTo(animRefX, animRefY)
-    ctx.stroke()
-    if (refProgress > 0.1) drawArrowHead(ctx, midX, midY, animRefX, animRefY, C.refractedRay, 10)
+      ctx.strokeStyle = C.refractedRay
+      ctx.lineWidth = 2.5
+      ctx.beginPath()
+      ctx.moveTo(midX, midY)
+      ctx.lineTo(animRefX, animRefY)
+      ctx.stroke()
+      if (refProgress > 0.1) drawArrowHead(ctx, midX, midY, animRefX, animRefY, C.refractedRay, 10)
+    }
     outRayDrawn = refProgress >= 1
 
     if (opts.activeLayers.angles !== false) {
@@ -240,16 +246,18 @@ function renderRefraction(
     refEndY = midY + rayLen * Math.sin(theta1Rad)
     const refProgress = Math.min((currentTime * 0.25 - 0.35) / 0.65, 1)
 
-    const animReflX = midX + (refEndX - midX) * Math.max(0, refProgress)
-    const animReflY = midY + (refEndY - midY) * Math.max(0, refProgress)
+    if (showRays) {
+      const animReflX = midX + (refEndX - midX) * Math.max(0, refProgress)
+      const animReflY = midY + (refEndY - midY) * Math.max(0, refProgress)
 
-    ctx.strokeStyle = C.reflectedRay
-    ctx.lineWidth = 2.5
-    ctx.beginPath()
-    ctx.moveTo(midX, midY)
-    ctx.lineTo(animReflX, animReflY)
-    ctx.stroke()
-    if (refProgress > 0.1) drawArrowHead(ctx, midX, midY, animReflX, animReflY, C.reflectedRay, 10)
+      ctx.strokeStyle = C.reflectedRay
+      ctx.lineWidth = 2.5
+      ctx.beginPath()
+      ctx.moveTo(midX, midY)
+      ctx.lineTo(animReflX, animReflY)
+      ctx.stroke()
+      if (refProgress > 0.1) drawArrowHead(ctx, midX, midY, animReflX, animReflY, C.reflectedRay, 10)
+    }
     outRayDrawn = refProgress >= 1
 
     ctx.fillStyle = C.reflectedRay
@@ -259,7 +267,7 @@ function renderRefraction(
   }
 
   // Continuous photon pulse traveling along ray path
-  if (progress >= 1 && outRayDrawn) {
+  if (showRays && progress >= 1 && outRayDrawn) {
     const pulseLen = 3
     const p = (currentTime % pulseLen) / pulseLen
     if (p < 0.5) {
@@ -403,7 +411,7 @@ function renderLens(
     drawImageArrow(ctx, imgScreenX, midY, animImgH, isVirtual ? C.imageArrowVirtual : C.imageArrow, isVirtual, lang === 'hi' ? 'प्रतिबिम्ब' : 'Image', cw, focalXs)
 
     if (opts.activeLayers.rays !== false && imgProgress > 0.15) {
-      drawPrincipalRays(ctx, midX, midY, objScreenX, objScreenH, imgScreenX, animImgH, fpLeft, fpRight, isConvex, isVirtual, cw, isDark)
+      drawPrincipalRays(ctx, midX, midY, objScreenX, objScreenH, imgScreenX, imgScreenH, fpLeft, fpRight, isConvex, isVirtual, cw, isDark)
     }
 
     // Continuous photon pulse along ray 1 (parallel → through F)
@@ -511,16 +519,20 @@ function renderTIR(
   const incStartX = midX - rayLen * Math.sin(theta1Rad)
   const incStartY = midY + rayLen * Math.cos(theta1Rad)
 
-  const animIncX = incStartX + (midX - incStartX) * progress
-  const animIncY = incStartY + (midY - incStartY) * progress
+  const showRays = opts.activeLayers.rays !== false
 
-  ctx.strokeStyle = C.incidentRay
-  ctx.lineWidth = 2.5
-  ctx.beginPath()
-  ctx.moveTo(incStartX, incStartY)
-  ctx.lineTo(animIncX, animIncY)
-  ctx.stroke()
-  drawArrowHead(ctx, incStartX, incStartY, animIncX, animIncY, C.incidentRay, 10)
+  if (showRays) {
+    const animIncX = incStartX + (midX - incStartX) * progress
+    const animIncY = incStartY + (midY - incStartY) * progress
+
+    ctx.strokeStyle = C.incidentRay
+    ctx.lineWidth = 2.5
+    ctx.beginPath()
+    ctx.moveTo(incStartX, incStartY)
+    ctx.lineTo(animIncX, animIncY)
+    ctx.stroke()
+    drawArrowHead(ctx, incStartX, incStartY, animIncX, animIncY, C.incidentRay, 10)
+  }
 
   let outEndX = midX
   let outEndY = midY
@@ -536,16 +548,18 @@ function renderTIR(
       outEndX = refEndX
       outEndY = refEndY
 
-      const animRefX = midX + (refEndX - midX) * Math.max(0, refProgress)
-      const animRefY = midY + (refEndY - midY) * Math.max(0, refProgress)
+      if (showRays) {
+        const animRefX = midX + (refEndX - midX) * Math.max(0, refProgress)
+        const animRefY = midY + (refEndY - midY) * Math.max(0, refProgress)
 
-      ctx.strokeStyle = C.refractedRay
-      ctx.lineWidth = 2.5
-      ctx.beginPath()
-      ctx.moveTo(midX, midY)
-      ctx.lineTo(animRefX, animRefY)
-      ctx.stroke()
-      if (refProgress > 0.1) drawArrowHead(ctx, midX, midY, animRefX, animRefY, C.refractedRay, 10)
+        ctx.strokeStyle = C.refractedRay
+        ctx.lineWidth = 2.5
+        ctx.beginPath()
+        ctx.moveTo(midX, midY)
+        ctx.lineTo(animRefX, animRefY)
+        ctx.stroke()
+        if (refProgress > 0.1) drawArrowHead(ctx, midX, midY, animRefX, animRefY, C.refractedRay, 10)
+      }
     }
 
     const reflEndX = midX + rayLen * Math.sin(theta1Rad)
@@ -554,24 +568,27 @@ function renderTIR(
     const reflAlpha = isTIR ? 1 : Math.max(0, (theta1 - (crit ?? 90) * 0.5) / ((crit ?? 90) * 0.5))
     if (reflAlpha > 0.05) {
       if (isTIR) { outEndX = reflEndX; outEndY = reflEndY }
-      const animReflX = midX + (reflEndX - midX) * Math.max(0, refProgress)
-      const animReflY = midY + (reflEndY - midY) * Math.max(0, refProgress)
 
-      ctx.globalAlpha = isTIR ? 1 : reflAlpha * 0.5
-      ctx.strokeStyle = C.reflectedRay
-      ctx.lineWidth = isTIR ? 2.5 : 1.5
-      ctx.beginPath()
-      ctx.moveTo(midX, midY)
-      ctx.lineTo(animReflX, animReflY)
-      ctx.stroke()
-      if (refProgress > 0.1) drawArrowHead(ctx, midX, midY, animReflX, animReflY, C.reflectedRay, 10)
-      ctx.globalAlpha = 1
+      if (showRays) {
+        const animReflX = midX + (reflEndX - midX) * Math.max(0, refProgress)
+        const animReflY = midY + (reflEndY - midY) * Math.max(0, refProgress)
+
+        ctx.globalAlpha = isTIR ? 1 : reflAlpha * 0.5
+        ctx.strokeStyle = C.reflectedRay
+        ctx.lineWidth = isTIR ? 2.5 : 1.5
+        ctx.beginPath()
+        ctx.moveTo(midX, midY)
+        ctx.lineTo(animReflX, animReflY)
+        ctx.stroke()
+        if (refProgress > 0.1) drawArrowHead(ctx, midX, midY, animReflX, animReflY, C.reflectedRay, 10)
+        ctx.globalAlpha = 1
+      }
     }
     allDrawn = refProgress >= 1
   }
 
   // Continuous photon pulse
-  if (progress >= 1 && allDrawn) {
+  if (showRays && progress >= 1 && allDrawn) {
     const pulseLen = 3
     const p = (currentTime % pulseLen) / pulseLen
     if (p < 0.5) {
@@ -772,47 +789,70 @@ function drawPrincipalRays(
   imgX: number, imgH: number,
   fpLeft: number, fpRight: number,
   isConvex: boolean, isVirtual: boolean,
-  cw: number, isDark: boolean,
+  cw: number, _isDark: boolean,
 ) {
   const objTop = lensY - objH
   const imgTop = lensY - imgH
 
   ctx.lineWidth = 1.2
-
-  if (isVirtual) {
-    ctx.setLineDash([4, 3])
-  }
-
-  // Ray 1: Parallel to axis, then through F (or appears to come from F)
-  ctx.strokeStyle = '#EF4444'
   ctx.globalAlpha = 0.7
+
+  // Ray 1: Parallel to axis → through/from focal point
+  ctx.strokeStyle = '#EF4444'
   ctx.beginPath()
   ctx.moveTo(objX, objTop)
   ctx.lineTo(lensX, objTop)
   ctx.stroke()
-  ctx.beginPath()
-  ctx.moveTo(lensX, objTop)
+
   if (isVirtual) {
-    ctx.lineTo(objX, imgTop)
-  } else {
+    const dx = lensX - imgX
+    const dy = objTop - imgTop
+    const edgeX = cw - 20
+    const edgeY = objTop + (dy / dx) * (edgeX - lensX)
+    ctx.beginPath()
+    ctx.moveTo(lensX, objTop)
+    ctx.lineTo(edgeX, edgeY)
+    ctx.stroke()
+    ctx.setLineDash([4, 3])
+    ctx.beginPath()
+    ctx.moveTo(lensX, objTop)
     ctx.lineTo(imgX, imgTop)
+    ctx.stroke()
+    ctx.setLineDash([])
+  } else {
+    ctx.beginPath()
+    ctx.moveTo(lensX, objTop)
+    ctx.lineTo(imgX, imgTop)
+    ctx.stroke()
   }
-  ctx.stroke()
 
   // Ray 2: Through center of lens (undeviated)
   ctx.strokeStyle = '#059669'
-  ctx.beginPath()
-  ctx.moveTo(objX, objTop)
   if (isVirtual) {
-    ctx.lineTo(imgX < 0 ? 20 : cw - 20, lensY + (lensY - objTop) * ((imgX < 0 ? 20 : cw - 20) - objX) / (lensX - objX))
-  } else {
+    const dx = lensX - objX
+    const dy = lensY - objTop
+    const edgeX = cw - 20
+    const edgeY = objTop + (dy / dx) * (edgeX - objX)
+    ctx.beginPath()
+    ctx.moveTo(objX, objTop)
+    ctx.lineTo(edgeX, edgeY)
+    ctx.stroke()
+    ctx.setLineDash([4, 3])
+    ctx.beginPath()
+    ctx.moveTo(lensX, lensY)
     ctx.lineTo(imgX, imgTop)
+    ctx.stroke()
+    ctx.setLineDash([])
+  } else {
+    ctx.beginPath()
+    ctx.moveTo(objX, objTop)
+    ctx.lineTo(imgX, imgTop)
+    ctx.stroke()
   }
-  ctx.stroke()
 
-  // Ray 3: Through F on object side, then parallel after lens
+  // Ray 3: Through/toward focal point
+  ctx.strokeStyle = '#8B5CF6'
   if (isConvex && !isVirtual) {
-    ctx.strokeStyle = '#8B5CF6'
     ctx.beginPath()
     ctx.moveTo(objX, objTop)
     ctx.lineTo(lensX, imgTop)
@@ -821,6 +861,23 @@ function drawPrincipalRays(
     ctx.moveTo(lensX, imgTop)
     ctx.lineTo(imgX, imgTop)
     ctx.stroke()
+  } else if (!isConvex) {
+    const slopeToF = (lensY - objTop) / (fpRight - objX)
+    const yAtLens = objTop + slopeToF * (lensX - objX)
+    ctx.beginPath()
+    ctx.moveTo(objX, objTop)
+    ctx.lineTo(lensX, yAtLens)
+    ctx.stroke()
+    ctx.beginPath()
+    ctx.moveTo(lensX, yAtLens)
+    ctx.lineTo(cw - 20, yAtLens)
+    ctx.stroke()
+    ctx.setLineDash([4, 3])
+    ctx.beginPath()
+    ctx.moveTo(lensX, yAtLens)
+    ctx.lineTo(imgX, yAtLens)
+    ctx.stroke()
+    ctx.setLineDash([])
   }
 
   ctx.globalAlpha = 1

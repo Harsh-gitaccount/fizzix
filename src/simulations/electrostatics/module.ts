@@ -43,12 +43,12 @@ const electrostaticsModule: SimulationModule = {
   },
 
   paramDefs: [
-    { key: 'q1', symbol: 'q₁', unit: 'µC', min: -10, max: 10, step: 0.5, help: 'Charge 1 — positive (+) or negative (–). Like charges repel, unlike attract.', helpHi: 'आवेश 1 — धन (+) या ऋण (–)। समान आवेश प्रतिकर्षित, विपरीत आकर्षित।' },
-    { key: 'q2', symbol: 'q₂', unit: 'µC', min: -10, max: 10, step: 0.5, help: 'Charge 2 — positive (+) or negative (–).', helpHi: 'आवेश 2 — धन (+) या ऋण (–)।' },
+    { key: 'q1', symbol: 'q₁', unit: 'µC', min: -10, max: 10, step: 0.5, help: 'Charge 1 - positive (+) or negative (-). Like charges repel, unlike attract.', helpHi: 'आवेश 1 - धन (+) या ऋण (-)। समान आवेश प्रतिकर्षित, विपरीत आकर्षित।' },
+    { key: 'q2', symbol: 'q₂', unit: 'µC', min: -10, max: 10, step: 0.5, help: 'Charge 2 - positive (+) or negative (-).', helpHi: 'आवेश 2 - धन (+) या ऋण (-)।' },
     { key: 'distance', symbol: 'r', unit: 'm', min: 0.05, max: 2, step: 0.05, help: 'Distance between the two charges. Force drops as r².', helpHi: 'दोनों आवेशों के बीच दूरी। बल r² से घटता है।' },
-    { key: 'voltage', symbol: 'V', unit: 'V', min: 1, max: 24, step: 0.5, help: 'Battery voltage — the push that drives current through the circuit.', helpHi: 'बैटरी वोल्टेज — वह धक्का जो धारा को परिपथ में चलाता है।' },
-    { key: 'r1', symbol: 'R₁', unit: 'Ω', min: 1, max: 1000, step: 1, help: 'Resistance 1 — opposes current flow. Higher R means less current.', helpHi: 'प्रतिरोध 1 — धारा के प्रवाह का विरोध करता है। अधिक R = कम धारा।' },
-    { key: 'r2', symbol: 'R₂', unit: 'Ω', min: 1, max: 1000, step: 1, help: 'Resistance 2 — second resistor for series/parallel comparison.', helpHi: 'प्रतिरोध 2 — श्रेणी/समानांतर तुलना के लिए दूसरा प्रतिरोध।' },
+    { key: 'voltage', symbol: 'V', unit: 'V', min: 1, max: 24, step: 0.5, help: 'Battery voltage - the push that drives current through the circuit.', helpHi: 'बैटरी वोल्टेज - वह धक्का जो धारा को परिपथ में चलाता है।' },
+    { key: 'r1', symbol: 'R₁', unit: 'Ω', min: 1, max: 1000, step: 1, help: 'Resistance 1 - opposes current flow. Higher R means less current.', helpHi: 'प्रतिरोध 1 - धारा के प्रवाह का विरोध करता है। अधिक R = कम धारा।' },
+    { key: 'r2', symbol: 'R₂', unit: 'Ω', min: 1, max: 1000, step: 1, help: 'Resistance 2 - second resistor for series/parallel comparison.', helpHi: 'प्रतिरोध 2 - श्रेणी/समानांतर तुलना के लिए दूसरा प्रतिरोध।' },
   ],
 
   tabs: [

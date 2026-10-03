@@ -18,7 +18,7 @@ import {
 // Constants for verification
 const R = 8.314
 const k_B = 1.38e-23
-const N_A = 6.022e23
+
 
 describe('thermodynamics: ideal gas law (NCERT Class 11 Ch.13)', () => {
   // PV = nRT  =>  P = nRT/V
@@ -305,14 +305,10 @@ describe('thermodynamics: particle simulation', () => {
 
   it('elastic collision conserves total momentum', () => {
     const p = initParticles(30, 200, 200, 300, 28)
-    let px0 = 0, py0 = 0
-    for (const pp of p) { px0 += pp.mass * pp.vx; py0 += pp.mass * pp.vy }
     for (let i = 0; i < 50; i++) stepParticles(p, 0.5, 200, 200)
-    let px1 = 0, py1 = 0
-    for (const pp of p) { px1 += pp.mass * pp.vx; py1 += pp.mass * pp.vy }
     // Momentum change is from wall collisions, not particle-particle
     // Total kinetic energy should be roughly conserved
-    let ke0 = 0, ke1 = 0
+    let ke1 = 0
     for (const pp of p) { ke1 += 0.5 * pp.mass * (pp.vx * pp.vx + pp.vy * pp.vy) }
     // Just verify KE is positive and finite
     expect(Number.isFinite(ke1)).toBe(true)

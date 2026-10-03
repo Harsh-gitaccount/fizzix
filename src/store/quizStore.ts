@@ -98,8 +98,8 @@ export const useQuizStore = create<QuizStore>((set, get) => ({
       difficulty: newDifficulty,
     })
 
-    saveQuizResult(q.topicId, q.id, selectedIndex, correct, s.difficulty)
-    trackEvent('Quiz Answer', { topic: q.topicId, correct, difficulty: s.difficulty })
+    saveQuizResult(q.topicId, q.id, selectedIndex, correct, q.difficulty)
+    trackEvent('Quiz Answer', { topic: q.topicId, correct, difficulty: q.difficulty })
   },
 
   nextQuestion: () => {
@@ -120,8 +120,10 @@ export const useQuizStore = create<QuizStore>((set, get) => ({
     set({
       currentIndex: 0,
       answers: [],
+      sessionQuestions: [],
       streak: 0,
       completed: false,
+      difficulty: 'easy',
     })
   },
 }))

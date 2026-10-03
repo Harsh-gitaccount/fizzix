@@ -8,6 +8,13 @@
 
 # testing
 /coverage
+/test-results
+
+# e2e disposable outputs (regenerated on each run)
+/e2e/results/redesign/
+/e2e/results/homepage/
+/e2e/results/desktop-*.png
+/e2e/results/mobile-*.png
 
 # next.js
 /.next/

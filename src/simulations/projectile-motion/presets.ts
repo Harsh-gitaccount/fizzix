@@ -43,7 +43,7 @@ export const PRESETS: TeachingPreset[] = [
   {
     id: 'low-drive',
     label: 'Low Drive',
-    hookQuestion: 'Why does a low throw cover more ground?',
+    hookQuestion: 'How does a low angle change the trajectory shape?',
     params: { v0: 20, theta: 15, g: 9.8, y0: 0 },
     defaultLayers: ['grid', 'trajectory', 'velocity'],
     defaultTab: 'vectors',
@@ -72,7 +72,7 @@ export const PRESETS: TeachingPreset[] = [
   {
     id: 'moon-vs-earth',
     label: 'Moon vs Earth',
-    hookQuestion: 'Same throw, different worlds',
+    hookQuestion: 'How far would this same throw go on the Moon?',
     params: { v0: 20, theta: 45, g: 9.8, y0: 0 },
     compareParams: { v0: 20, theta: 45, g: 1.62, y0: 0 },
     specialMode: 'split-view',
@@ -83,10 +83,11 @@ export const PRESETS: TeachingPreset[] = [
   {
     id: 'does-mass-matter',
     label: 'Does Mass Matter?',
-    hookQuestion: 'Same trajectory?',
-    params: { v0: 20, theta: 45, g: 9.8, y0: 0 },
+    hookQuestion: 'A 1 kg ball and a 10 kg ball are launched identically (no air resistance). Do their paths differ?',
+    params: { v0: 20, theta: 45, g: 9.8, y0: 0, drag: 0, mass: 1 },
+    compareParams: { v0: 20, theta: 45, g: 9.8, y0: 0, drag: 0, mass: 10 },
     defaultLayers: ['grid', 'trajectory'],
-    defaultTab: 'free-play',
+    defaultTab: 'compare',
     canvasBackground: 'default-sky',
   },
   {

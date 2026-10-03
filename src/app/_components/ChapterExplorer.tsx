@@ -113,9 +113,9 @@ export function ChapterExplorer({ topics }: { topics: Topic[] }) {
           </div>
         )}
 
-        {/* Compact chapter grid — all chapters accessible */}
+        {/* Compact chapter grid */}
         <div className="mt-5 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2">
-          {topics.map((topic, i) => (
+          {topics.map((topic) => (
             <Link
               key={topic.slug}
               href={`/${topic.slug}`}

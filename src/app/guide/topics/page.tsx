@@ -4,7 +4,7 @@ import { getAllModules } from '@/simulations/registry'
 import { t } from '@/lib/i18n'
 
 export const metadata: Metadata = {
-  title: 'Topic Reference – Fizzix Guide',
+  title: 'Topic Reference - Fizzix Guide',
   description: 'Parameters, layers, and presets for all Fizzix physics simulations.',
 }
 
@@ -18,7 +18,7 @@ const CONCEPTS: Record<string, string> = {
 }
 
 const MODEL_NOTES: Record<string, string> = {
-  'thermodynamics': 'The particle motion on screen is illustrative — particle positions are randomised for visual clarity. The Speed Distribution histogram bins the simulated particle speeds, showing their distribution at that instant rather than the theoretical Maxwell–Boltzmann curve.',
+  'thermodynamics': 'The particle motion on screen is illustrative - particle positions are randomised for visual clarity. The Speed Distribution histogram bins the simulated particle speeds, showing their distribution at that instant rather than the theoretical Maxwell-Boltzmann curve.',
   'shm': 'The Pendulum tab uses the small-angle approximation. At angles above about 20°, the true period deviates from T = 2π√(L/g).',
   'modern-physics': 'Transition energy calculations use the Bohr model for hydrogen-like atoms. Multi-electron atoms and quantum mechanical corrections are not modelled.',
 }
@@ -74,8 +74,8 @@ export default function TopicReferencePage() {
                   {mod.paramDefs.map(p => (
                     <tr key={p.key} className="border-b border-fb-rule/30">
                       <td className="py-1.5 pr-3"><code>{p.symbol}</code></td>
-                      <td className="py-1.5 pr-3 text-fb-muted">{p.unit || '—'}</td>
-                      <td className="py-1.5 pr-3 font-mono text-xs text-fb-muted">{p.min}–{p.max}</td>
+                      <td className="py-1.5 pr-3 text-fb-muted">{p.unit || '-'}</td>
+                      <td className="py-1.5 pr-3 font-mono text-xs text-fb-muted">{p.min}-{p.max}</td>
                       <td className="py-1.5 text-fb-muted">{p.help}</td>
                     </tr>
                   ))}

@@ -82,7 +82,7 @@ export function DiscoverySection() {
             {/* launcher dot */}
             <circle cx={wx(0)} cy={wy(0)} r="5" fill="#1B2249" opacity="0.6" />
 
-            {/* landing point — shared */}
+            {/* landing point */}
             <circle cx={wx(trajA.rangeM)} cy={wy(0)} r="5" fill="#1B2249" opacity="0.3" />
             <text x={wx(trajA.rangeM)} y={GROUND_Y + 18} fill="#1B2249" fontSize="11" fontFamily="monospace" opacity="0.5" textAnchor="middle">
               {trajA.rangeM.toFixed(1)} m
@@ -111,7 +111,7 @@ export function DiscoverySection() {
               <p>
                 <strong className="text-fb-ink">Observation:</strong>{' '}
                 {rangeMatch
-                  ? `Both land at ${trajA.rangeM.toFixed(1)} m — the same distance.`
+                  ? `Both land at ${trajA.rangeM.toFixed(1)} m - the same distance.`
                   : `30° lands at ${trajA.rangeM.toFixed(1)} m, 60° at ${trajB.rangeM.toFixed(1)} m.`}
               </p>
               <p>

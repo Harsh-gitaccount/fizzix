@@ -97,7 +97,7 @@ export default function GuideLayout({ children }: { children: React.ReactNode })
       </header>
 
       <div className="max-w-5xl mx-auto px-4 sm:px-6 py-10 sm:py-14 flex gap-10">
-        {/* Sidebar — desktop only */}
+        {/* Sidebar (desktop only) */}
         <aside className="hidden lg:block w-48 shrink-0">
           <nav className="sticky top-20 space-y-1" aria-label="Guide navigation">
             {NAV.map(n => (

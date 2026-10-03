@@ -2,7 +2,7 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 
 export const metadata: Metadata = {
-  title: 'Getting Started – Fizzix Guide',
+  title: 'Getting Started - Fizzix Guide',
   description: 'Learn how to use Fizzix interactive physics simulations.',
 }
 

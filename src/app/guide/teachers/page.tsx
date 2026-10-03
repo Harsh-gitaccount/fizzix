@@ -2,7 +2,7 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 
 export const metadata: Metadata = {
-  title: 'Teacher Guide – Fizzix',
+  title: 'Teacher Guide - Fizzix',
   description: 'Classroom activities using Fizzix physics simulations.',
 }
 

@@ -1,7 +1,7 @@
 # Homepage Verification Report
 
 **Branch:** `homepage/living-physics-atlas`
-**Revision:** Fieldbook revision — corrections and completions
+**Revision:** Fieldbook revision - final cleanup
 **Date:** 2026-10-03
 
 ## Test Environment
@@ -9,13 +9,15 @@
 - Chromium headless via Playwright
 - Node.js 22.22.0
 
-## Build
+## Gates
 
-| Check | Result |
-|-------|--------|
-| TypeScript (`tsc --noEmit`) | 0 errors |
-| Production build (`next build`) | Success, `/` static |
-| Guide pages static | `/guide`, `/guide/teachers`, `/guide/topics` all `○` static |
+| Gate | Result |
+|------|--------|
+| `npm run lint` | PASS (0 warnings, 0 errors) |
+| `npm run lint:dashes` | PASS (no em/en dashes) |
+| TypeScript (`tsc --noEmit`) | PASS (0 errors) |
+| `npm test` (vitest) | PASS (13 files, 358 tests) |
+| Production build (`next build`) | PASS, all pages static |
 
 ## Navigation — Lesson Links
 

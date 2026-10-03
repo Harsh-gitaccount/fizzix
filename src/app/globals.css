@@ -366,7 +366,7 @@ button {
   .guide-prose h3 { break-after: avoid; }
   .guide-prose p, .guide-prose li { orphans: 3; widows: 3; }
   .guide-prose a { color: inherit; text-decoration: none; }
-  .guide-prose a[href^="/"]::after { content: " (fizzix.app" attr(href) ")"; font-size: 0.8em; color: #6B7186; }
+  .guide-prose a[href^="/"]::after { content: " (" attr(href) ")"; font-size: 0.8em; color: #6B7186; }
   .guide-prose hr { break-after: avoid; }
   header, footer, aside, nav[aria-label="Guide pages"] { display: none !important; }
 }

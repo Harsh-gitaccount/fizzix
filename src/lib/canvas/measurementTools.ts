@@ -256,23 +256,27 @@ function drawHandle(ctx: CanvasRenderingContext2D, x: number, y: number, isDark:
 }
 
 // Hit testing helpers
+const HIT_SLOP = 4
+const TOUCH_HIT_SLOP = 16
+
 export function hitTestRulerHandle(
   mx: number, my: number,
   ruler: RulerState,
   toSX: (x: number) => number,
-  toSY: (y: number) => number
+  toSY: (y: number) => number,
+  isTouch = false
 ): 'start' | 'end' | 'body' | null {
   const sx1 = toSX(ruler.x1)
   const sy1 = toSY(ruler.y1)
   const sx2 = toSX(ruler.x2)
   const sy2 = toSY(ruler.y2)
 
-  if (dist(mx, my, sx1, sy1) <= HANDLE_RADIUS + 4) return 'start'
-  if (dist(mx, my, sx2, sy2) <= HANDLE_RADIUS + 4) return 'end'
+  const slop = isTouch ? TOUCH_HIT_SLOP : HIT_SLOP
+  if (dist(mx, my, sx1, sy1) <= HANDLE_RADIUS + slop) return 'start'
+  if (dist(mx, my, sx2, sy2) <= HANDLE_RADIUS + slop) return 'end'
 
-  // Body hit test: point-to-segment distance
   const d = pointToSegmentDist(mx, my, sx1, sy1, sx2, sy2)
-  if (d <= 18) return 'body'
+  if (d <= (isTouch ? 28 : 18)) return 'body'
 
   return null
 }
@@ -281,7 +285,8 @@ export function hitTestProtractorHandle(
   mx: number, my: number,
   protractor: ProtractorState,
   toSX: (x: number) => number,
-  toSY: (y: number) => number
+  toSY: (y: number) => number,
+  isTouch = false
 ): 'center' | 'arm' | null {
   const cx = toSX(protractor.cx)
   const cy = toSY(protractor.cy)
@@ -290,8 +295,9 @@ export function hitTestProtractorHandle(
   const armEndX = cx + radius * Math.cos(armRad)
   const armEndY = cy + radius * Math.sin(armRad)
 
-  if (dist(mx, my, armEndX, armEndY) <= HANDLE_RADIUS + 4) return 'arm'
-  if (dist(mx, my, cx, cy) <= HANDLE_RADIUS + 4) return 'center'
+  const slop = isTouch ? TOUCH_HIT_SLOP : HIT_SLOP
+  if (dist(mx, my, armEndX, armEndY) <= HANDLE_RADIUS + slop) return 'arm'
+  if (dist(mx, my, cx, cy) <= HANDLE_RADIUS + slop) return 'center'
 
   return null
 }

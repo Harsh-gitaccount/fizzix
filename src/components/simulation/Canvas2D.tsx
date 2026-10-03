@@ -189,16 +189,20 @@ export default function Canvas2D() {
     return () => document.removeEventListener('visibilitychange', handler)
   }, [playbackState, setPlaybackState])
 
-  const getMousePhysics = useCallback((e: React.MouseEvent) => {
+  const getPhysicsAt = useCallback((clientX: number, clientY: number) => {
     const canvas = canvasRef.current
     if (!canvas) return null
     const rect = canvas.getBoundingClientRect()
-    const mx = e.clientX - rect.left
-    const my = e.clientY - rect.top
+    const mx = clientX - rect.left
+    const my = clientY - rect.top
     const bounds = topic.computeBounds(params, compareMode, paramsB, ghostTrails)
     const { toSX, toSY, fromSX, fromSY } = getCanvasTransforms(canvas, bounds)
     return { mx, my, toSX, toSY, fromSX, fromSY, physX: fromSX(mx), physY: fromSY(my) }
   }, [params, compareMode, paramsB, ghostTrails, topic])
+
+  const getMousePhysics = useCallback((e: React.MouseEvent) => {
+    return getPhysicsAt(e.clientX, e.clientY)
+  }, [getPhysicsAt])
 
   const handleMouseDown = useCallback((e: React.MouseEvent) => {
     const info = getMousePhysics(e)
@@ -289,6 +293,78 @@ export default function Canvas2D() {
     }
   }, [dragTarget, stopDrag])
 
+  const handleTouchStart = useCallback((e: React.TouchEvent) => {
+    if (e.touches.length !== 1) return
+    const touch = e.touches[0]
+    const info = getPhysicsAt(touch.clientX, touch.clientY)
+    if (!info) return
+    const { mx, my, toSX, toSY } = info
+
+    if (activeTools.protractor) {
+      const ph = hitTestProtractorHandle(mx, my, protractor, toSX, toSY, true)
+      if (ph) {
+        const dx = info.physX - protractor.cx
+        const dy = info.physY - protractor.cy
+        startDrag({ tool: 'protractor', handle: ph }, { dx, dy })
+        e.preventDefault()
+        return
+      }
+    }
+
+    if (activeTools.ruler) {
+      const rh = hitTestRulerHandle(mx, my, ruler, toSX, toSY, true)
+      if (rh) {
+        if (rh === 'body') {
+          const dx = info.physX - ruler.x1
+          const dy = info.physY - ruler.y1
+          startDrag({ tool: 'ruler', handle: rh }, { dx, dy })
+        } else {
+          startDrag({ tool: 'ruler', handle: rh }, { dx: 0, dy: 0 })
+        }
+        e.preventDefault()
+        return
+      }
+    }
+  }, [getPhysicsAt, activeTools, ruler, protractor, startDrag])
+
+  const handleTouchMove = useCallback((e: React.TouchEvent) => {
+    if (!dragTarget || e.touches.length !== 1) return
+    e.preventDefault()
+    const touch = e.touches[0]
+    const info = getPhysicsAt(touch.clientX, touch.clientY)
+    if (!info) return
+
+    if (dragTarget.tool === 'ruler') {
+      if (dragTarget.handle === 'start') {
+        setRuler({ x1: info.physX, y1: info.physY })
+      } else if (dragTarget.handle === 'end') {
+        setRuler({ x2: info.physX, y2: info.physY })
+      } else {
+        const dx = ruler.x2 - ruler.x1
+        const dy = ruler.y2 - ruler.y1
+        const newX1 = info.physX - dragOffset.dx
+        const newY1 = info.physY - dragOffset.dy
+        setRuler({ x1: newX1, y1: newY1, x2: newX1 + dx, y2: newY1 + dy })
+      }
+    } else if (dragTarget.tool === 'protractor') {
+      if (dragTarget.handle === 'center') {
+        setProtractor({ cx: info.physX - dragOffset.dx, cy: info.physY - dragOffset.dy })
+      } else {
+        const cx = protractor.cx
+        const cy = protractor.cy
+        const ddx = info.physX - cx
+        const ddy = info.physY - cy
+        let angle = Math.atan2(ddy, ddx) * 180 / Math.PI
+        angle = Math.max(0, Math.min(180, angle))
+        setProtractor({ armAngle: Math.round(angle) })
+      }
+    }
+  }, [dragTarget, dragOffset, getPhysicsAt, ruler, protractor, setRuler, setProtractor])
+
+  const handleTouchEnd = useCallback(() => {
+    if (dragTarget) stopDrag()
+  }, [dragTarget, stopDrag])
+
   return (
     <div ref={containerRef} className="relative w-full h-full min-h-0">
       <canvas
@@ -300,6 +376,10 @@ export default function Canvas2D() {
         onMouseMove={handleMouseMove}
         onMouseUp={handleMouseUp}
         onMouseLeave={handleMouseUp}
+        onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={handleTouchEnd}
+        onTouchCancel={handleTouchEnd}
       />
       <div ref={liveRef} className="sr-only" aria-live="polite" />
     </div>

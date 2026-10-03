@@ -46,7 +46,7 @@ export default function Scene3D({ builder }: Scene3DProps) {
 
   const isDark =
     typeof window !== 'undefined' &&
-    window.matchMedia('(prefers-color-scheme: dark)').matches
+    document.documentElement.classList.contains('dark')
 
   const updateCamera = useCallback(() => {
     const camera = cameraRef.current

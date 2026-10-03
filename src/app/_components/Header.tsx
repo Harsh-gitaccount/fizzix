@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect, useCallback } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
+import ThemeToggle from '@/components/ui/ThemeToggle'
 
 interface HeaderModule {
   slug: string
@@ -35,16 +36,25 @@ export function Header({ modules }: { modules: HeaderModule[] }) {
     <header className="fixed top-0 left-0 right-0 z-50 border-b border-fb-rule/60">
       <div className="backdrop-blur-xl bg-fb-page/90 supports-[backdrop-filter]:bg-fb-page/80">
         <nav className="max-w-6xl mx-auto px-4 sm:px-6 h-14 flex items-center justify-between">
-          <Link href="/" className="flex items-center gap-2 shrink-0" aria-label="Fizzix home">
-            <Image
-              src="/fizzix-logo.png"
-              alt="Fizzix"
-              width={140}
-              height={40}
-              className="h-9 w-auto"
-              priority
-            />
-          </Link>
+          <div className="flex items-center gap-2 shrink-0">
+            <Link href="/" className="flex items-center gap-2" aria-label="Fizzix home">
+              <Image
+                src="/fizzix-logo.png"
+                alt="Fizzix"
+                width={140}
+                height={40}
+                className="h-9 w-auto"
+                priority
+              />
+            </Link>
+            <a
+              href="mailto:harshchaudhary.tech@gmail.com?subject=Fizzix%20Beta%20Feedback"
+              className="px-1.5 py-0.5 bg-amber-50 text-amber-700 rounded text-[10px] font-semibold hover:bg-amber-100 transition-colors"
+              title="Fizzix is in beta - click to send feedback"
+            >
+              Beta
+            </a>
+          </div>
 
           <div className="hidden md:flex items-center gap-7">
             <a href="#chapters" className="text-[13px] text-fb-muted hover:text-fb-ink transition-colors">
@@ -56,6 +66,7 @@ export function Header({ modules }: { modules: HeaderModule[] }) {
             <Link href="/guide" className="text-[13px] text-fb-muted hover:text-fb-ink transition-colors">
               Guide
             </Link>
+            <ThemeToggle className="w-8 h-8 flex items-center justify-center rounded hover:bg-fb-rule/60 text-fb-muted" />
             <a
               href="#experiment"
               className="text-[13px] font-semibold text-white bg-fb-accent hover:bg-fb-accent-hover transition-colors px-4 py-1.5 rounded-full"

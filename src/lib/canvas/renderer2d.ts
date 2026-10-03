@@ -393,7 +393,7 @@ function drawGrid(
     ctx.lineTo(w, sy)
     ctx.stroke()
     if (isBold && Math.abs(y) > 0.001) {
-      ctx.fillText(`${y}m`, offsetX - 4, sy)
+      ctx.fillText(`${y}m`, offsetX - 14, sy)
     }
   }
 }

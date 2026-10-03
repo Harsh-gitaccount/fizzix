@@ -1,8 +1,8 @@
 # Homepage Verification Report
 
-**Branch:** `homepage/living-physics-atlas`
-**Revision:** `e7129fd` + handoff fixes
-**Date:** 2026-10-02
+**Branch:** `claude/brave-ramanujan-s4hhf9`
+**Revision:** Fieldbook redesign
+**Date:** 2026-10-03
 
 ## Test Environment
 - Next.js 16.3.8 (Turbopack dev + production build)
@@ -15,17 +15,9 @@
 |-------|--------|
 | TypeScript (`tsc --noEmit`) | 0 errors |
 | Production build (`next build`) | Success, `/` static |
+| Guide pages static | `/guide`, `/guide/teachers`, `/guide/topics` all `○` static |
 
-## Composition Checks
-
-| Element | Present | Method |
-|---------|---------|--------|
-| Fixed header | Yes | `page.$('header')` |
-| Hero angle slider (`#hero-angle`) | Yes | `page.$('#hero-angle')` |
-| How-it-works section (`#how-it-works`) | Yes | `page.$('#how-it-works')` |
-| Atlas section (`#atlas`) | Yes | `page.$('#atlas')` |
-
-## Navigation
+## Navigation — Lesson Links
 
 | Topic | href | HTTP Status |
 |-------|------|-------------|
@@ -35,6 +27,14 @@
 | Optics & Light | `/optics` | 200 |
 | Thermodynamics | `/thermodynamics` | 200 |
 | Modern Physics | `/modern-physics` | 200 |
+
+## Navigation — Guide Links
+
+| Page | href | HTTP Status |
+|------|------|-------------|
+| Getting Started | `/guide` | 200 |
+| Teacher Guide | `/guide/teachers` | 200 |
+| Topic Reference | `/guide/topics` | 200 |
 
 ## Horizontal Overflow
 
@@ -46,11 +46,6 @@
 | 320px | No | PASS |
 
 ## Accessibility
-
-### Mobile Atlas Semantics
-- Container: `role="group"` with `aria-label="Select a topic"`
-- Each topic button: `aria-pressed` (true/false)
-- No `role="tablist"` or `role="tab"` — avoids requiring arrow-key roving
 
 ### Mobile Menu Keyboard
 - Button: `aria-expanded`, `aria-controls="mobile-menu"`
@@ -64,17 +59,19 @@
 - Arrow keys adjust angle (step ±1)
 - `prefers-reduced-motion`: animation disabled, ball shown at trajectory apex
 
-### Reduced Motion
-- Hero experiment: no requestAnimationFrame when reduced motion active
-- Ball rendered at peak position as static indicator
+### Chapter Rail
+- Each numbered circle: `aria-label` with topic name and class range
+- Links navigate to lesson pages
 
 ## Screenshot Evidence
 
 Saved to `e2e/results/evidence/`:
-- `desktop-1440-full.png` — full-page at 1440×900
-- `desktop-atlas-selected.png` — atlas section with second topic selected
-- `mobile-390-full.png` — full-page at 390×844
-- `mobile-390-menu-open.png` — mobile menu expanded
+- `fieldbook-desktop-full.png` — full-page at 1440×900
+- `fieldbook-desktop-chapters.png` — chapters section at 1440×900
+- `fieldbook-mobile-full.png` — full-page at 390×844
+- `fieldbook-mobile-menu.png` — mobile menu expanded
+- `fieldbook-guide-desktop.png` — guide page at 1440×900
+- `fieldbook-guide-mobile.png` — guide page at 390×844
 
 ## Console Errors
 Only `ERR_TUNNEL_CONNECTION_FAILED` from proxy environment (analytics hosts blocked). No application errors.
@@ -87,3 +84,5 @@ Only `ERR_TUNNEL_CONNECTION_FAILED` from proxy environment (analytics hosts bloc
 - `prefers-reduced-motion` honored
 - All lesson links verified working
 - Offline claim qualified: "Lessons cached offline after first visit"
+- No chatbot UI or dependencies
+- All guide links lead to completed, useful content

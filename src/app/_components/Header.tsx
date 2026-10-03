@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect, useCallback } from 'react'
 import Link from 'next/link'
-import { AtomMark } from './AtomMark'
+import Image from 'next/image'
 
 interface HeaderModule {
   slug: string
@@ -32,33 +32,42 @@ export function Header({ modules }: { modules: HeaderModule[] }) {
   }, [open, close])
 
   return (
-    <header className="fixed top-0 left-0 right-0 z-50 border-b border-white/[0.06]">
-      <div className="backdrop-blur-xl bg-[#0C1222]/85 supports-[backdrop-filter]:bg-[#0C1222]/70">
+    <header className="fixed top-0 left-0 right-0 z-50 border-b border-fb-rule/60">
+      <div className="backdrop-blur-xl bg-fb-page/90 supports-[backdrop-filter]:bg-fb-page/80">
         <nav className="max-w-6xl mx-auto px-4 sm:px-6 h-14 flex items-center justify-between">
-          <Link href="/" className="flex items-center gap-2.5 shrink-0" aria-label="Fizzix home">
-            <AtomMark size={26} />
-            <span className="text-[15px] font-bold text-white tracking-tight">Fizzix</span>
+          <Link href="/" className="flex items-center gap-2 shrink-0" aria-label="Fizzix home">
+            <Image
+              src="/fizzix-logo.png"
+              alt="Fizzix"
+              width={110}
+              height={32}
+              className="h-7 w-auto"
+              priority
+            />
           </Link>
 
-          <div className="hidden md:flex items-center gap-8">
-            <a href="#how-it-works" className="text-[13px] text-slate-400 hover:text-white transition-colors">
-              How it works
-            </a>
-            <a href="#atlas" className="text-[13px] text-slate-400 hover:text-white transition-colors">
+          <div className="hidden md:flex items-center gap-7">
+            <a href="#chapters" className="text-[13px] text-fb-muted hover:text-fb-ink transition-colors">
               Explore
             </a>
+            <Link href="/guide/teachers" className="text-[13px] text-fb-muted hover:text-fb-ink transition-colors">
+              For teachers
+            </Link>
+            <Link href="/guide" className="text-[13px] text-fb-muted hover:text-fb-ink transition-colors">
+              Guide
+            </Link>
             <a
-              href="#atlas"
-              className="text-[13px] font-semibold text-atlas-accent hover:text-atlas-accent-light transition-colors px-4 py-1.5 rounded-full border border-atlas-accent/30 hover:border-atlas-accent/50"
+              href="#experiment"
+              className="text-[13px] font-semibold text-white bg-fb-accent hover:bg-fb-accent-hover transition-colors px-4 py-1.5 rounded-full"
             >
-              Enter the lab
+              Start experimenting
             </a>
           </div>
 
           <button
             ref={toggleRef}
             onClick={() => open ? close() : setOpen(true)}
-            className="md:hidden w-10 h-10 flex items-center justify-center text-slate-300"
+            className="md:hidden w-10 h-10 flex items-center justify-center text-fb-muted"
             aria-label={open ? 'Close menu' : 'Open menu'}
             aria-expanded={open}
             aria-controls="mobile-menu"
@@ -74,17 +83,23 @@ export function Header({ modules }: { modules: HeaderModule[] }) {
         </nav>
 
         {open && (
-          <div id="mobile-menu" ref={menuRef} className="md:hidden border-t border-white/[0.06] px-4 pb-4 pt-2">
-            <a href="#how-it-works" onClick={close} className="block py-2.5 text-sm text-slate-300 hover:text-white">
-              How it works
+          <div id="mobile-menu" ref={menuRef} className="md:hidden border-t border-fb-rule/60 px-4 pb-4 pt-2 bg-fb-page">
+            <a href="#experiment" onClick={close} className="block py-2.5 text-sm text-fb-ink hover:text-fb-accent">
+              Start experimenting
             </a>
-            <a href="#atlas" onClick={close} className="block py-2.5 text-sm text-slate-300 hover:text-white">
-              Explore all topics
+            <a href="#chapters" onClick={close} className="block py-2.5 text-sm text-fb-muted hover:text-fb-ink">
+              Explore topics
             </a>
-            <div className="mt-3 pt-3 border-t border-white/[0.06]">
-              <div className="text-[10px] font-bold text-slate-600 uppercase tracking-[0.15em] mb-1">Subjects</div>
+            <Link href="/guide/teachers" onClick={close} className="block py-2.5 text-sm text-fb-muted hover:text-fb-ink">
+              For teachers
+            </Link>
+            <Link href="/guide" onClick={close} className="block py-2.5 text-sm text-fb-muted hover:text-fb-ink">
+              Guide
+            </Link>
+            <div className="mt-3 pt-3 border-t border-fb-rule/60">
+              <div className="text-[10px] font-bold text-fb-dim uppercase tracking-[0.15em] mb-1">Subjects</div>
               {modules.map(mod => (
-                <Link key={mod.slug} href={`/${mod.slug}`} onClick={close} className="block py-2 text-sm text-slate-400 hover:text-white">
+                <Link key={mod.slug} href={`/${mod.slug}`} onClick={close} className="block py-2 text-sm text-fb-muted hover:text-fb-ink">
                   {mod.name}
                 </Link>
               ))}

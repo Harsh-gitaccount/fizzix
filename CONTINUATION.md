@@ -1,39 +1,45 @@
 # Continuation Checkpoint
 
 ## Session State
-- **Branch**: `homepage/living-physics-atlas`
-- **Base commit**: `47a5ea9` (stabilization baseline)
+- **Branch**: `claude/brave-ramanujan-s4hhf9`
+- **Base**: `homepage/living-physics-atlas` at `3ee6417`
 - **TypeScript**: 0 errors
-- **Production build**: success
+- **Production build**: success (all pages static)
 
-## Homepage Branch Commits
+## What Changed — Fizzix Fieldbook Redesign
 
-1. `0b5526d` — feat: homepage — The Living Physics Atlas (original six-card grid)
-2. `e7129fd` — feat: homepage redesign — interactive editorial cover
-3. `9bd1edf` — chore: ignore e2e screenshot results
+### Art direction change
+Replaced the conventional dark-background homepage (headline + boxed experiment card + 3 feature columns + topic grid) with "The Fizzix Fieldbook" — a warm paper-background design where the experiment is an open diagram integrated into the page.
 
-## Handoff Fixes (this session, uncommitted → to be committed)
+### Files created
+- `src/app/_components/FieldbookStage.tsx` — open experiment stage with chapter rail
+- `src/app/guide/layout.tsx` — shared guide layout with sidebar nav
+- `src/app/guide/page.tsx` — Getting Started guide
+- `src/app/guide/teachers/page.tsx` — Teacher Guide
+- `src/app/guide/topics/page.tsx` — Topic Reference
+- `DOCUMENTATION_CONTENT_MAP.md` — guide routes and content sources
 
-### 1. `.gitignore` narrowed
-Blanket `/e2e/results` replaced with targeted rules for disposable directories only (`/e2e/results/redesign`, `/e2e/results/homepage`). Already-tracked evidence files preserved.
+### Files modified
+- `tailwind.config.ts` — added `fb.*` color palette
+- `src/app/globals.css` — added `.fieldbook-slider` and `.guide-prose` styles
+- `src/app/layout.tsx` — moved Source Serif 4 font to root layout, added `--font-serif` variable to body
+- `src/app/_components/Header.tsx` — real logo, light background, fieldbook nav
+- `src/app/page.tsx` — complete rewrite with fieldbook composition
+- `HOMEPAGE_DESIGN.md` — updated for fieldbook design
+- `HOMEPAGE_VERIFICATION.md` — updated with full verification results
 
-### 2. Offline claim qualified
-`src/app/page.tsx` line 65: "Works offline once installed" → "Lessons cached offline after first visit". Reflects actual SW behavior (precaches only `/`, manifest, icons; lessons cached on visit).
+### Brand
+- Official logo at `public/fizzix-logo.png` replaces AtomMark SVG on homepage and guides
+- AtomMark component still exists for topic simulation pages (not modified)
 
-### 3. Mobile atlas ARIA semantics
-`src/app/_components/AtlasIndex.tsx`: Changed mobile topic selector from improper `role="tablist"`/`role="tab"` to `role="group"` with `aria-pressed` buttons. Desktop already correct.
+### Verification
+- TypeScript: 0 errors
+- Production build: success
+- All 6 lesson links: HTTP 200
+- All 3 guide pages: HTTP 200
+- No horizontal overflow at 1440/768/390/320px
+- Mobile menu Escape key: working
+- Screenshots saved to `e2e/results/evidence/`
 
-### 4. Mobile menu keyboard
-`src/app/_components/Header.tsx`: Added Escape-to-close, focus-on-open (first link), focus-return-on-close (toggle button). `aria-controls="mobile-menu"` links button to panel.
-
-### 5. Smoke check hardened
-`e2e/scripts/smoke-check.mjs`: Slider interaction now reads value before/after click, asserts change. `sliderWorked` added to pass criteria.
-
-### 6. Documentation updated
-`HOMEPAGE_DESIGN.md`, `HOMEPAGE_VERIFICATION.md`, `CONTINUATION.md` rewritten to describe current revision (`e7129fd`+).
-
-### 7. Screenshots saved
-`e2e/results/evidence/`: desktop-1440-full, desktop-atlas-selected, mobile-390-full, mobile-390-menu-open.
-
-## Next Step
-Visual acceptance review. Design not yet approved.
+## Existing topic simulations
+Unchanged. All at stable baseline. `src/app/[topic]/page.tsx` not modified.

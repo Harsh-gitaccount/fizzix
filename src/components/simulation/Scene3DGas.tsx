@@ -35,11 +35,13 @@ export default function Scene3DGas() {
   const [isDark, setIsDark] = useState(false)
 
   useEffect(() => {
-    const mq = window.matchMedia('(prefers-color-scheme: dark)')
-    setIsDark(mq.matches)
-    const handler = (e: MediaQueryListEvent) => setIsDark(e.matches)
-    mq.addEventListener('change', handler)
-    return () => mq.removeEventListener('change', handler)
+    const el = document.documentElement
+    setIsDark(el.classList.contains('dark'))
+    const observer = new MutationObserver(() => {
+      setIsDark(el.classList.contains('dark'))
+    })
+    observer.observe(el, { attributes: true, attributeFilter: ['class'] })
+    return () => observer.disconnect()
   }, [])
 
   const positionCamera = useCallback(() => {

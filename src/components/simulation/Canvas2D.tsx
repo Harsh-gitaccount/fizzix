@@ -43,7 +43,7 @@ export default function Canvas2D() {
 
   const isDark =
     typeof window !== 'undefined' &&
-    window.matchMedia('(prefers-color-scheme: dark)').matches
+    document.documentElement.classList.contains('dark')
 
   const resizeCanvas = useCallback(() => {
     const canvas = canvasRef.current

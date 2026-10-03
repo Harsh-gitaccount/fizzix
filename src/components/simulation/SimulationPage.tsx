@@ -12,6 +12,7 @@ import LayerToggles from './LayerToggles'
 import QuizPanel from '@/components/quiz/QuizPanel'
 import ToastContainer from '@/components/ui/Toast'
 import OfflineBanner from '@/components/ui/OfflineBanner'
+import MobileHint from '@/components/ui/MobileHint'
 import { useKeyboardShortcuts } from '@/hooks/useKeyboardShortcuts'
 import { useSoundEffects } from '@/hooks/useSoundEffects'
 import { useServiceWorker } from '@/hooks/useServiceWorker'
@@ -115,6 +116,7 @@ export default function SimulationPage() {
 
       <OfflineBanner />
       <TopBar />
+      <MobileHint />
 
       <div className="flex flex-col md:flex-row flex-1 min-h-0 overflow-y-auto md:overflow-hidden">
         <div className="shrink-0 md:shrink md:flex-[2] min-w-0 min-h-[200px] md:min-h-0 flex flex-col">

@@ -8,6 +8,8 @@ import { useTopic } from '@/simulations/TopicContext'
 import { captureScreenshot, copyShareURL } from '@/lib/share'
 import { t } from '@/lib/i18n'
 import { trackEvent } from '@/lib/analytics'
+import ThemeToggle from '@/components/ui/ThemeToggle'
+import { useTheme } from '@/hooks/useTheme'
 
 export default function TopBar() {
   const topic = useTopic()
@@ -22,6 +24,7 @@ export default function TopBar() {
   const params = useSimulationStore((s) => s.params)
   const setCompareMode = useSimulationStore((s) => s.setCompareMode)
   const clearGhostTrails = useSimulationStore((s) => s.clearGhostTrails)
+  const { choice: themeChoice, cycle: cycleTheme } = useTheme()
   const [menuOpen, setMenuOpen] = useState(false)
   const menuRef = useRef<HTMLDivElement>(null)
 
@@ -141,6 +144,7 @@ export default function TopBar() {
           >
             {lang === 'en' ? 'हिं' : 'En'}
           </button>
+          <ThemeToggle className={iconBtn} />
         </div>
 
         {/* Mobile: overflow menu for secondary actions */}
@@ -189,13 +193,37 @@ export default function TopBar() {
                 <span className="w-5 text-center font-bold text-[11px]">{lang === 'en' ? 'हिं' : 'En'}</span>
                 <span>{lang === 'en' ? 'हिंदी में बदलें' : 'Switch to English'}</span>
               </button>
+              <button onClick={() => { cycleTheme(); setMenuOpen(false) }} className={menuItem}>
+                <span className="w-5 text-center">
+                  {themeChoice === 'light' ? (
+                    <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" className="inline-block">
+                      <circle cx="8" cy="8" r="3" />
+                      <path d="M8 1.5v1M8 13.5v1M1.5 8h1M13.5 8h1M3.4 3.4l.7.7M11.9 11.9l.7.7M3.4 12.6l.7-.7M11.9 4.1l.7-.7" />
+                    </svg>
+                  ) : themeChoice === 'dark' ? (
+                    <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" className="inline-block">
+                      <path d="M13.5 8.5a5.5 5.5 0 01-7-7A5.5 5.5 0 1013.5 8.5z" />
+                    </svg>
+                  ) : (
+                    <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" className="inline-block">
+                      <rect x="2" y="3" width="12" height="8" rx="1" />
+                      <path d="M5 14h6M8 11v3" />
+                    </svg>
+                  )}
+                </span>
+                <span>{themeChoice === 'light' ? 'Light mode' : themeChoice === 'dark' ? 'Dark mode' : 'System theme'}</span>
+              </button>
             </div>
           )}
         </div>
 
-        <span className="px-1.5 md:px-2 py-1 bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 rounded font-semibold text-[10px] md:text-xs">
-          {t('app.brand', lang)}
-        </span>
+        <a
+          href="mailto:harshchaudhary.tech@gmail.com?subject=Fizzix%20Beta%20Feedback"
+          className="px-1.5 md:px-2 py-1 bg-amber-50 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400 rounded font-semibold text-[10px] md:text-xs hover:bg-amber-100 dark:hover:bg-amber-900/50 transition-colors"
+          title="Fizzix is in beta - tap to send feedback"
+        >
+          Beta
+        </a>
       </div>
     </div>
   )

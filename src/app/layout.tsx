@@ -45,11 +45,16 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       <head>
         <meta name="mobile-web-app-capable" content="yes" />
         <link rel="icon" href="/icon-192.svg" type="image/svg+xml" />
         <link rel="apple-touch-icon" href="/icon-192.svg" />
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `(function(){try{var v=localStorage.getItem('fizzix-theme');if(v==='dark'||(v!=='light'&&window.matchMedia('(prefers-color-scheme: dark)').matches))document.documentElement.classList.add('dark')}catch(e){}})()`,
+          }}
+        />
         <script
           defer
           data-domain="fizzix.app"

@@ -77,7 +77,7 @@ function drawModernLegend(
   isDark: boolean,
   lang?: Lang,
 ) {
-  const x = cw - 10
+  const x = modernType === 1 ? cw * 0.62 : cw - 10
   const startY = 16
   ctx.textAlign = 'right'
   ctx.font = '10px Inter, system-ui, sans-serif'

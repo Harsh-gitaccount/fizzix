@@ -178,30 +178,31 @@ export function renderFrame(
     drawGhostTrail(ctx, ghost, toSX, toSY)
   }
 
+  const hasCompare = compareMode && !!paramsB
+
+  // Compare trajectory B (drawn first so A renders on top when overlapping)
+  if (hasCompare && activeLayers.trajectory !== false) {
+    const tofB = getTimeOfFlight(paramsB!)
+    const tB = Math.min(currentTime, tofB)
+    drawTrajectory(ctx, paramsB!, tB, toSX, toSY, COLORS.trajectoryB)
+  }
+
   // Trajectory A
   if (activeLayers.trajectory !== false) {
     drawTrajectory(ctx, params, currentTime, toSX, toSY, COLORS.trajectory)
   }
 
-  // Compare trajectory B
-  if (compareMode && paramsB && activeLayers.trajectory !== false) {
-    const tofB = getTimeOfFlight(paramsB)
-    const tB = Math.min(currentTime, tofB)
-    drawTrajectory(ctx, paramsB, tB, toSX, toSY, COLORS.trajectoryB)
-  }
-
-  // Ball A
-  const stateA = stateAtTime(params, currentTime)
-  const hasCompare = compareMode && !!paramsB
-  drawBall(ctx, toSX(stateA.x), toSY(stateA.y), toSY(0), h / dpr, COLORS.ball, hasCompare ? 'A' : undefined)
-
-  // Ball B (compare)
+  // Ball B (drawn first so A renders on top when overlapping)
   if (hasCompare) {
     const tofB = getTimeOfFlight(paramsB!)
     const tB = Math.min(currentTime, tofB)
     const stateB = stateAtTime(paramsB!, tB)
     drawBall(ctx, toSX(stateB.x), toSY(stateB.y), toSY(0), h / dpr, COLORS.ballB, 'B')
   }
+
+  // Ball A
+  const stateA = stateAtTime(params, currentTime)
+  drawBall(ctx, toSX(stateA.x), toSY(stateA.y), toSY(0), h / dpr, COLORS.ball, hasCompare ? 'A' : undefined)
 
   // Vectors on ball A
   if (activeLayers.velocity) {

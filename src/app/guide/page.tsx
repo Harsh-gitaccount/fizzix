@@ -26,46 +26,79 @@ export default function GettingStartedPage() {
         There is no login, no download, and no fee. Open any topic in your browser and start experimenting.
       </p>
 
-      <h2>Opening a simulation</h2>
+      <h2>Your first experiment</h2>
+      <p>
+        Open <Link href="/projectile-motion">Projectile Motion</Link> and try this:
+      </p>
       <ol>
-        <li>Go to the <Link href="/">Fizzix homepage</Link> and scroll to the topic chapters, or use the header navigation.</li>
-        <li>Click on any topic &mdash; for example, <Link href="/projectile-motion">Projectile Motion</Link>.</li>
-        <li>The simulation loads in your browser. You will see a diagram, parameter sliders, and readout displays.</li>
+        <li>
+          You will see a projectile diagram with parameter sliders on the side. The <strong>Intro</strong> tab
+          is selected by default.
+        </li>
+        <li>
+          Find the <code>θ</code> (launch angle) slider. Drag it to <strong>30°</strong> and note the
+          range reading.
+        </li>
+        <li>
+          Now drag <code>θ</code> to <strong>60°</strong>. The range should be the same &mdash; complementary
+          angles (30° and 60°) produce equal range when launched and landing on flat ground with no drag.
+        </li>
+        <li>
+          Try <strong>45°</strong>. This gives the maximum range for any given speed.
+        </li>
+        <li>
+          Turn on the <strong>Velocity</strong> layer using the layer toggles. You will see a green velocity
+          arrow that changes direction along the path.
+        </li>
       </ol>
+      <p>
+        This &ldquo;change &rarr; observe &rarr; understand&rdquo; loop is the same across all six simulations.
+      </p>
 
       <h2>Using the controls</h2>
       <p>Every simulation has the same structure:</p>
       <ul>
-        <li><strong>Sliders</strong> &mdash; drag to change a parameter (angle, velocity, wavelength, etc.). You can also use arrow keys for fine adjustments.</li>
-        <li><strong>Tabs</strong> &mdash; switch between different views of the same simulation. For example, Projectile Motion has Intro, Vectors, Compare, and Free-play tabs.</li>
-        <li><strong>Layers</strong> &mdash; toggle visual overlays like grid lines, velocity vectors, or force components.</li>
-        <li><strong>Presets</strong> &mdash; load a curated starting configuration to explore a specific concept.</li>
-        <li><strong>Quiz</strong> &mdash; test your understanding with multiple-choice questions drawn from the current topic.</li>
+        <li>
+          <strong>Sliders</strong> &mdash; drag to change a parameter (angle, velocity, wavelength, etc.).
+          Use arrow keys for single-step adjustments.
+        </li>
+        <li>
+          <strong>Tabs</strong> &mdash; switch between different views. For example, Projectile Motion has
+          Intro, Vectors, Compare, and Free-play tabs.
+        </li>
+        <li>
+          <strong>Layers</strong> &mdash; toggle visual overlays like grid lines, velocity vectors, or
+          force components. Each layer can be shown or hidden independently.
+        </li>
+        <li>
+          <strong>Presets</strong> &mdash; load a curated starting configuration. For example, &ldquo;Moon vs
+          Earth&rdquo; in Projectile Motion sets gravity to 1.6 m/s².
+        </li>
+        <li>
+          <strong>Quiz</strong> &mdash; test your understanding with multiple-choice questions about the
+          current topic.
+        </li>
       </ul>
 
       <h2>Language support</h2>
       <p>
-        Simulations support both Hindi and English. Parameter labels, help text, and layer names are
-        available in both languages. Use the language toggle within each simulation to switch.
+        Parameter labels, help text, and layer names are available in both Hindi and English.
+        Use the language toggle within each simulation to switch.
       </p>
 
       <h2>Offline use</h2>
       <p>
-        Fizzix uses a service worker to cache lesson pages after your first visit. Once you have loaded
-        a simulation with an internet connection, you can revisit it offline. The homepage and app shell
-        are precached automatically when you first open the site.
-      </p>
-      <p>
-        Note: you must visit each lesson at least once while online for it to be available offline.
-        New content or updates require a connection to download.
+        Fizzix uses a service worker to cache simulation pages after your first visit. Once you have
+        loaded a simulation while online, you can revisit it offline. You must visit each simulation at
+        least once while online for it to be available offline. New content or updates require a
+        connection to download.
       </p>
 
       <h2>Keyboard and accessibility</h2>
       <ul>
         <li>All controls are keyboard-accessible. Tab to navigate, Enter or Space to activate, and arrow keys to adjust sliders.</li>
-        <li>The mobile menu closes with the Escape key and returns focus to the menu button.</li>
-        <li>Animations respect the <code>prefers-reduced-motion</code> system setting. When reduced motion is active, animations are disabled and static indicators are shown instead.</li>
-        <li>All interactive elements have accessible labels for screen readers.</li>
+        <li>Interactive elements have accessible labels for screen readers.</li>
+        <li>Animations respect the <code>prefers-reduced-motion</code> system setting. When reduced motion is active, CSS animations are suppressed and simulation animations show static positions.</li>
       </ul>
 
       <h2>Browser compatibility</h2>
@@ -76,8 +109,8 @@ export default function GettingStartedPage() {
 
       <h2>Next steps</h2>
       <ul>
-        <li><Link href="/guide/topics">Topic Reference</Link> &mdash; details on each of the six available simulations.</li>
-        <li><Link href="/guide/teachers">Teacher Guide</Link> &mdash; suggestions for using Fizzix in a classroom setting.</li>
+        <li><Link href="/guide/topics">Topic Reference</Link> &mdash; parameters, layers, and presets for each simulation.</li>
+        <li><Link href="/guide/teachers">Teacher Guide</Link> &mdash; classroom activities with specific settings and procedures.</li>
       </ul>
     </article>
   )

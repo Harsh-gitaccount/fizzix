@@ -39,9 +39,9 @@ export function Header({ modules }: { modules: HeaderModule[] }) {
             <Image
               src="/fizzix-logo.png"
               alt="Fizzix"
-              width={110}
-              height={32}
-              className="h-7 w-auto"
+              width={140}
+              height={40}
+              className="h-9 w-auto"
               priority
             />
           </Link>

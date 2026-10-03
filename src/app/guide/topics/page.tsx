@@ -4,91 +4,22 @@ import { getAllModules } from '@/simulations/registry'
 
 export const metadata: Metadata = {
   title: 'Topic Reference – Fizzix Guide',
-  description: 'Detailed reference for all six Fizzix physics topics.',
+  description: 'Parameters, layers, and presets for all Fizzix physics simulations.',
 }
 
-const TOPIC_DETAILS: Record<string, {
-  concepts: string
-  parameters: string[]
-  layers: string[]
-  presetExamples: string[]
-}> = {
-  'projectile-motion': {
-    concepts: 'Parabolic trajectory under uniform gravity, range and height dependence on angle, velocity components, air drag effects.',
-    parameters: [
-      'v₀ (initial speed, 0–50 m/s)',
-      'θ (launch angle, 0–90°)',
-      'g (gravity, 0.5–20 m/s²)',
-      'y₀ (starting height, 0–50 m)',
-      'b (drag factor, 0–0.5 1/m)',
-    ],
-    layers: ['Grid', 'Trajectory', 'Velocity', 'Components', 'Acceleration'],
-    presetExamples: ['45° classic', 'Moon gravity', 'With drag'],
-  },
-  shm: {
-    concepts: 'Simple pendulum, spring-mass oscillations, period dependence on length and stiffness, damping, energy exchange.',
-    parameters: [
-      'L (string length, 0.1–5 m)',
-      'θ₀ (starting angle, 1–60°)',
-      'g (gravity, 0.5–20 m/s²)',
-      'b (damping, 0–5 kg/s)',
-      'k (spring stiffness, 1–100 N/m)',
-      'm (mass, 0.1–10 kg)',
-      'A (amplitude, 0.01–1 m)',
-    ],
-    layers: ['Grid', 'Trail', 'Velocity', 'Angle', 'Energy Bar'],
-    presetExamples: ['Simple Pendulum', 'Moon Pendulum', 'Bouncy Spring', 'Damped Swing'],
-  },
-  electrostatics: {
-    concepts: 'Coulomb\'s law, electric field lines, force between charges, simple DC circuits with Ohm\'s law, series and parallel resistors.',
-    parameters: [
-      'q₁, q₂ (charges, ±10 µC)',
-      'r (distance, 0.05–2 m)',
-      'V (battery voltage, 1–24 V)',
-      'R₁, R₂ (resistances, 1–1000 Ω)',
-    ],
-    layers: ['Grid', 'Force Vectors', 'Field Lines', 'Values', 'Current Flow'],
-    presetExamples: ['Opposite Charges', 'Like Charges', 'Simple Bulb', 'Series vs Parallel'],
-  },
-  optics: {
-    concepts: 'Snell\'s law of refraction, total internal reflection, critical angle, thin-lens image formation, convex and concave lenses.',
-    parameters: [
-      'n₁, n₂ (refractive indices, 1.0–2.5)',
-      'θ₁ (angle of incidence, 0–89°)',
-      'u (object distance, −100 to −5 cm)',
-      'f (focal length, −50 to 50 cm)',
-      'h (object height, 1–30 cm)',
-    ],
-    layers: ['Grid', 'Rays', 'Angles', 'Values'],
-    presetExamples: ['Air to Glass', 'Diamond Sparkle', 'Convex – Real Image', 'Optical Fiber'],
-  },
-  thermodynamics: {
-    concepts: 'Kinetic theory of gases, ideal gas law (PV = nRT), Maxwell-Boltzmann speed distribution, Brownian motion, compression and expansion.',
-    parameters: [
-      'T (temperature, 100–1000 K)',
-      'n (amount, 0.1–5 mol)',
-      'V (volume, 1–100 L)',
-      'M (molar mass, 2–44 g/mol)',
-      'x (piston position)',
-      'N (molecule count for Brownian motion, 20–150)',
-    ],
-    layers: ['Speed Colors', 'Pressure Arrows', 'Speed Distribution', 'Brownian Trace'],
-    presetExamples: ['Room Temp N₂', 'Hot Gas', 'Boyle\'s Law', 'Pollen Grain'],
-  },
-  'modern-physics': {
-    concepts: 'Photoelectric effect and threshold frequency, Bohr model energy levels and spectral transitions, radioactive decay and half-life.',
-    parameters: [
-      'λ (wavelength, 100–800 nm)',
-      'φ (work function, 1.5–6 eV)',
-      'I (intensity, 10–100%)',
-      'n (orbit number, 1–6)',
-      'n₁, n₂ (transition levels)',
-      'T½ (half-life, 1–100 s)',
-      'N₀ (initial nuclei, 100–10000)',
-    ],
-    layers: ['Energy Bars', 'Energy Levels', 'Transition', 'Half-life Markers'],
-    presetExamples: ['Cs + Violet Light', 'Cu + UV Light', 'Balmer Alpha', 'Fast Decay'],
-  },
+const CONCEPTS: Record<string, string> = {
+  'projectile-motion': 'Parabolic trajectory under uniform gravity, range and height dependence on angle, velocity components, air drag effects.',
+  'shm': 'Simple pendulum period and length, spring-mass oscillations and stiffness, damping, energy exchange between kinetic and potential.',
+  'electrostatics': 'Coulomb\'s law and inverse-square force, electric field lines, simple DC circuits with Ohm\'s law, series and parallel resistors.',
+  'optics': 'Snell\'s law of refraction, total internal reflection and critical angle, thin-lens image formation with convex and concave lenses.',
+  'thermodynamics': 'Kinetic theory of gases, ideal gas law (PV = nRT), molecular speed distributions, Brownian motion, compression and expansion with a piston.',
+  'modern-physics': 'Photoelectric effect and threshold frequency, Bohr model energy levels and spectral transitions, radioactive decay and half-life.',
+}
+
+const MODEL_NOTES: Record<string, string> = {
+  'thermodynamics': 'The particle motion on screen is illustrative — particle positions are randomised for visual clarity. The Speed Distribution histogram shows the correct analytical Maxwell–Boltzmann distribution for the given temperature and molar mass.',
+  'shm': 'The Pendulum tab uses the small-angle approximation. At angles above about 20°, the true period deviates from T = 2π√(L/g).',
+  'modern-physics': 'Transition energy calculations use the Bohr model for hydrogen-like atoms. Multi-electron atoms and quantum mechanical corrections are not modelled.',
 }
 
 export default function TopicReferencePage() {
@@ -100,12 +31,12 @@ export default function TopicReferencePage() {
         Topic Reference
       </h1>
       <p className="text-fb-muted text-base mb-10">
-        Parameters, layers, and presets for each of the six simulations.
+        Parameters, layers, and presets derived from the simulation definitions.
       </p>
 
       {modules.map(mod => {
-        const details = TOPIC_DETAILS[mod.slug]
-        if (!details) return null
+        const concepts = CONCEPTS[mod.slug]
+        const modelNote = MODEL_NOTES[mod.slug]
         return (
           <section key={mod.slug} className="mb-12 pb-8 border-b border-fb-rule/60 last:border-0">
             <div className="flex items-center gap-3 mb-1">
@@ -120,29 +51,58 @@ export default function TopicReferencePage() {
             </div>
             <p className="!text-sm !text-fb-muted mb-4">{mod.description}</p>
 
-            <h3>Concepts covered</h3>
-            <p>{details.concepts}</p>
+            {concepts && (
+              <>
+                <h3>Concepts covered</h3>
+                <p>{concepts}</p>
+              </>
+            )}
 
             <h3>Parameters</h3>
-            <ul>
-              {details.parameters.map(p => (
-                <li key={p}><code>{p.split(' (')[0]}</code> &mdash; {p.split(' (')[1]?.replace(')', '') || p}</li>
-              ))}
-            </ul>
+            <div className="overflow-x-auto mb-4">
+              <table className="w-full text-sm border-collapse">
+                <thead>
+                  <tr className="border-b border-fb-rule/60">
+                    <th className="text-left py-1.5 pr-3 font-semibold text-fb-ink">Symbol</th>
+                    <th className="text-left py-1.5 pr-3 font-semibold text-fb-ink">Unit</th>
+                    <th className="text-left py-1.5 pr-3 font-semibold text-fb-ink">Range</th>
+                    <th className="text-left py-1.5 font-semibold text-fb-ink">Description</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {mod.paramDefs.map(p => (
+                    <tr key={p.key} className="border-b border-fb-rule/30">
+                      <td className="py-1.5 pr-3"><code>{p.symbol}</code></td>
+                      <td className="py-1.5 pr-3 text-fb-muted">{p.unit || '—'}</td>
+                      <td className="py-1.5 pr-3 font-mono text-xs text-fb-muted">{p.min}–{p.max}</td>
+                      <td className="py-1.5 text-fb-muted">{p.help}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
 
             <h3>Visual layers</h3>
-            <p>{details.layers.join(', ')}</p>
+            <p>{mod.layerDefs.map(l => l.label).join(', ')}</p>
 
-            <h3>Example presets</h3>
-            <p>{details.presetExamples.join(' · ')}</p>
+            <h3>Tabs</h3>
+            <p>{mod.tabs.map(t => t.id.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase())).join(', ')}</p>
+
+            <h3>Presets</h3>
+            <p>{mod.presets.map(p => p.label).join(' · ')}</p>
+
+            {modelNote && (
+              <>
+                <h3>Model notes</h3>
+                <p>{modelNote}</p>
+              </>
+            )}
           </section>
         )
       })}
 
       <h2>Common features</h2>
-      <p>
-        All six simulations share these features:
-      </p>
+      <p>All six simulations share these features:</p>
       <ul>
         <li><strong>Tabs</strong> &mdash; multiple views of the same topic (intro, comparison, free-play, etc.)</li>
         <li><strong>Presets</strong> &mdash; curated starting configurations for guided exploration</li>
@@ -150,13 +110,12 @@ export default function TopicReferencePage() {
         <li><strong>Quiz questions</strong> &mdash; multiple-choice questions tied to the current topic</li>
         <li><strong>Hindi labels</strong> &mdash; every parameter, layer, and help string has a Hindi translation</li>
         <li><strong>Keyboard control</strong> &mdash; all sliders respond to arrow keys for fine adjustment</li>
-        <li><strong>Offline caching</strong> &mdash; revisit any topic without a connection after first load</li>
       </ul>
 
       <h2>Further reading</h2>
       <ul>
         <li><Link href="/guide">Getting Started</Link> &mdash; basics for new users</li>
-        <li><Link href="/guide/teachers">Teacher Guide</Link> &mdash; classroom suggestions</li>
+        <li><Link href="/guide/teachers">Teacher Guide</Link> &mdash; classroom activities with specific settings</li>
       </ul>
     </article>
   )

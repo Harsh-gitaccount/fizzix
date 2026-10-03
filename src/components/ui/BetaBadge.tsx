@@ -69,12 +69,14 @@ export default function BetaBadge() {
               {copied ? 'Copied!' : 'Copy'}
             </button>
           </div>
-          <a
-            href={`mailto:${EMAIL}?subject=Fizzix%20Beta%20Feedback`}
-            className="mt-2 block text-center text-[11px] font-medium text-fb-accent hover:text-fb-accent-hover transition-colors"
+          <button
+            onClick={() => {
+              window.location.href = `mailto:${EMAIL}?subject=Fizzix%20Beta%20Feedback`
+            }}
+            className="mt-2 w-full text-center text-[11px] font-medium text-fb-accent hover:text-fb-accent-hover transition-colors"
           >
             Open in email app
-          </a>
+          </button>
         </div>
       )}
     </div>
